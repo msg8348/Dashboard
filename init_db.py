@@ -93,7 +93,7 @@ def save_high_prices(data):
 
 
 # ==========================================
-# 3. 국토교통부 실거래가 API 수집 (최신 Endpoint)
+# 3. 국토교통부 실거래가 API 수집 (최신 apis.data.go.kr 주소 적용)
 # ==========================================
 def fetch_molit_real_estate_data(lawd_cd, deal_ym):
     """국토교통부 아파트매매 실거래 상세 자료 API 호출"""
@@ -118,7 +118,7 @@ def fetch_molit_real_estate_data(lawd_cd, deal_ym):
             
             result_code = root.find(".//resultCode")
             if result_code is not None and result_code.text != "00":
-                print(f"⚠️ API 키 미승인 또는 응답 오류 ({lawd_cd}): {root.findtext('.//resultMsg', '')}")
+                print(f"⚠️ API 응답 상태 ({lawd_cd}): {root.findtext('.//resultMsg', '')}")
                 return trades
 
             items = root.findall(".//item")
