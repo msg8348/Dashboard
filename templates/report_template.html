@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>부산 아파트 실거래 대시보드</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Malgun Gothic', sans-serif; background: #f4f6f9; padding: 24px; display: flex; flex-direction: column; align-items: center; }
+  .btn-wrapper { width: 750px; display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .download-btn { background-color: #3182ce; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+  .download-btn:hover { background-color: #2b6cb0; }
+  .container { background: #ffffff; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 750px; }
+  .header-title { font-size: 24px; font-weight: bold; color: #111; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+  .summary-grid { display: flex; gap: 12px; margin-bottom: 24px; }
+  .card { flex: 1; padding: 16px; border-radius: 12px; text-align: center; }
+  .card-blue { background-color: #ebf8ff; color: #2b6cb0; }
+  .card-red { background-color: #fff5f5; color: #c53030; }
+  .card-green { background-color: #f0fff4; color: #276749; }
+  .card-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .card-value { font-size: 24px; font-weight: 800; }
+  .section-grid { display: flex; gap: 16px; margin-bottom: 24px; }
+  .half-box { flex: 1; background: #f7fafc; border-radius: 12px; padding: 18px; border: 1px solid #edf2f7; }
+  .section-title { font-size: 16px; font-weight: bold; margin-bottom: 14px; color: #2d3748; }
+  .list-item { display: flex; justify-content: space-between; font-size: 13px; padding: 7px 0; border-bottom: 1px dashed #cbd5e0; }
+  .rank-badge { font-weight: bold; margin-right: 6px; color: #4a5568; }
+  .indicator-box { background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #edf2f7; }
+  .district-title { font-weight: bold; color: #2b6cb0; margin-top: 14px; font-size: 14px; }
+  .apt-item { font-size: 13px; margin-left: 12px; color: #4a5568; margin-top: 4px; }
+  .footer-text { margin-top: 20px; font-size: 12px; color: #a0aec0; text-align: center; }
+</style>
+</head>
+<body>
+<div class="btn-wrapper">
+  <button class="download-btn" onclick="downloadReport()">🖼️ 리포트 이미지 저장</button>
+</div>
+<div class="container" id="report-container">
+  <div class="header-title">부산 아파트 매매 ({{ date_label }} 기준)</div>
+  <div class="summary-grid">
+    <div class="card card-blue"><div class="card-title">{{ date_label }} 실거래</div><div class="card-value">{{ today_cnt }}건</div></div>
+    <div class="card card-red"><div class="card-title">신고가</div><div class="card-value">{{ high_cnt }}건</div></div>
+    <div class="card card-green"><div class="card-title">최근 3개월 월평균</div><div class="card-value">{{ avg_3m }}건</div></div>
+  </div>
+  <div class="section-grid">
+    <div class="half-box">
+      <div class="section-title">🏆 최고 거래가 Top10</div>
+      {% for item in top10_list %}
+      <div class="list-item"><span><span class="rank-badge">{{ loop.index }}</span>{{ item.apt_name }}</span><b>{{ item.price }}</b></div>
+      {% endfor %}
+    </div>
+    <div class="half-box">
+      <div class="section-title">🔥 신고가 Top5</div>
+      {% for item in high5_list %}
+      <div class="list-item"><span><span class="rank-badge">{{ loop.index }}</span>{{ item.apt_name }}</span><b style="color: #c53030;">{{ item.price }}</b></div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="indicator-box">
+    <div class="section-title">📊 부산 주요 구별 지표단지 거래 회전율 (최근 3개월)</div>
+    {% for district, apts in indicator_data.items() %}
+    <div class="district-title">• {{ district }}</div>
+    {% for apt in apts %}
+    <div class="apt-item">- {{ apt.name }} ({{ apt.households }}세대): {{ apt.deals }}건 ({{ apt.turnover }}%)</div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+  <div class="footer-text">⚠️ 본 리포트는 실거래가 신고 기준 데이터로 자동 생성되었습니다.</div>
+</div>
+<script>
+function downloadReport() {
+  const container = document.getElementById('report-container');
+  html2canvas(container, { scale: 2 }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'busan_real_estate_report.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+</script>
+</body>
+</html>
