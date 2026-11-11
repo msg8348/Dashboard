@@ -1,222 +1,264 @@
-name: INIT REAL ESTATE DB (1 YEAR)
+import os
+import json
+import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta, timezone
+import requests
+from jinja2 import Environment, FileSystemLoader
 
-on:
-  workflow_dispatch:
+# ==========================================
+# 1. 설정 및 기본 데이터 (부산 16개 구/군 법정동 코드)
+# ==========================================
+MOLIT_API_KEY = os.environ.get("MOLIT_API_KEY", "")
+JSON_DB_PATH = "data/high_prices.json"
 
-jobs:
-  build-db:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: 저장소 체크아웃
-        uses: actions/checkout@v4
+BUSAN_LAWD_CD = {
+    "중구": "26110", "서구": "26140", "동구": "26170", "영도구": "26200",
+    "부산진구": "26230", "동래구": "26260", "남구": "26290", "북구": "26320",
+    "해운대구": "26350", "사하구": "26380", "금정구": "26410", "강서구": "26440",
+    "연제구": "26470", "수영구": "26500", "사상구": "26530", "기장군": "26710"
+}
 
-      - name: 파이썬 3.10 설치
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+# 22개 주요 지표단지 설정
+INDICATOR_COMPLEXES = {
+    "수영구": [
+        {"name": "삼익비치", "households": 3060},
+        {"name": "남천자이", "households": 913},
+        {"name": "남천더샵프레스티지", "households": 975},
+    ],
+    "해운대구": [
+        {"name": "해운대자이2차1단지", "households": 813},
+        {"name": "더샵센텀파크1차", "households": 2752},
+    ],
+    "남구": [
+        {"name": "대연힐스테이트푸르지오", "households": 2304},
+        {"name": "더비치푸르지오써밋", "households": 1384},
+    ],
+    "동래구": [
+        {"name": "동래래미안아이파크", "households": 3853},
+        {"name": "사직롯데캐슬더클래식", "households": 1064},
+    ],
+    "연제구": [
+        {"name": "레이카운티", "households": 4470},
+        {"name": "연산롯데캐슬골드포레", "households": 1450},
+    ],
+    "부산진구": [
+        {"name": "삼한골든뷰센트럴파크", "households": 1272},
+    ],
+    "금정구": [
+        {"name": "래미안장전", "households": 1938},
+    ],
+    "강서구": [
+        {"name": "명지더샵퍼스트월드3단지", "households": 1530},
+    ],
+    "북구": [
+        {"name": "화명롯데캐슬카이저", "households": 5239},
+    ],
+    "사상구": [
+        {"name": "사상중흥S-클래스그랜드센트럴", "households": 1508},
+    ],
+    "사하구": [
+        {"name": "힐스테이트사하역", "households": 1314},
+    ],
+    "동구": [
+        {"name": "두산위브더제니스하버시티", "households": 2040},
+    ],
+    "서구": [
+        {"name": "대신푸르지오2차", "households": 815},
+    ],
+    "영도구": [
+        {"name": "봉래에일린의뜰", "households": 1216},
+    ],
+    "기장군": [
+        {"name": "일광자이푸르지오", "households": 1547},
+    ],
+}
 
-      - name: 의존성 패키지 설치
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
 
-      - name: 부산 1년치 아파트 및 분양권 실거래가(날짜 포함) 데이터 수집
-        env:
-          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
-        run: |
-          cat << 'EOF' > run_init.py
-          import os
-          import json
-          import re
-          import time
-          import xml.etree.ElementTree as ET
-          from datetime import datetime, timedelta, timezone
-          import requests
+# ==========================================
+# 2. JSON DB 로드 및 저장 함수
+# ==========================================
+def load_high_prices():
+    if os.path.exists(JSON_DB_PATH):
+        try:
+            with open(JSON_DB_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
 
-          MOLIT_API_KEY = os.environ.get("MOLIT_API_KEY", "")
+def save_high_prices(data):
+    os.makedirs(os.path.dirname(JSON_DB_PATH), exist_ok=True)
+    with open(JSON_DB_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
-          # 부산 16개 구·군 법정동 시군구코드
-          BUSAN_LAWD_CD = {
-              "중구": "26110", "서구": "26140", "동구": "26170", "영도구": "26200",
-              "부산진구": "26230", "동래구": "26260", "남구": "26290", "북구": "26320",
-              "해운대구": "26350", "사하구": "26380", "금정구": "26410", "강서구": "26440",
-              "연제구": "26470", "수영구": "26500", "사상구": "26530", "기장군": "26710"
-          }
 
-          def strip_html_tags(text):
-              if not text:
-                  return ""
-              clean = re.sub(r"<[^>]*>", "", str(text))
-              return clean.replace("&lt;", "").replace("&gt;", "").strip()
+# ==========================================
+# 3. 국토교통부 실거래가 API 수집 (최신 Endpoint)
+# ==========================================
+def fetch_molit_real_estate_data(lawd_cd, deal_ym):
+    """국토교통부 아파트매매 실거래 상세 자료 API 호출"""
+    if not MOLIT_API_KEY:
+        return []
 
-          # 1) 일반 아파트 매매 수집 (거래일자 포함)
-          def fetch_apt_trades(lawd_cd, deal_ym, district_name):
-              if not MOLIT_API_KEY:
-                  return []
+    # 공공데이터포털 최신 표준 Endpoint
+    url = "http://apis.data.go.kr/1613000/RTMSOBJSvc/getRTMSDataSvcAptTradeDev"
+    params = {
+        "serviceKey": requests.utils.unquote(MOLIT_API_KEY),
+        "LAWD_CD": lawd_cd,
+        "DEAL_YMD": deal_ym,
+        "pageNo": "1",
+        "numOfRows": "1000"
+    }
+    
+    trades = []
+    try:
+        res = requests.get(url, params=params, timeout=15)
+        if res.status_code == 200:
+            root = ET.fromstring(res.text)
+            
+            result_code = root.find(".//resultCode")
+            if result_code is not None and result_code.text != "00":
+                print(f"⚠️ API 키 미승인 또는 응답 오류 ({lawd_cd}): {root.findtext('.//resultMsg', '')}")
+                return trades
 
-              url = "http://apis.data.go.kr/1613000/RTMSOBJSvc/getRTMSDataSvcAptTradeDev"
-              params = {
-                  "serviceKey": requests.utils.unquote(MOLIT_API_KEY),
-                  "LAWD_CD": lawd_cd,
-                  "DEAL_YMD": deal_ym,
-                  "pageNo": "1",
-                  "numOfRows": "2000"
-              }
-              
-              trades = []
-              for attempt in range(2):
-                  try:
-                      res = requests.get(url, params=params, timeout=30)
-                      if res.status_code == 200:
-                          root = ET.fromstring(res.text)
-                          result_code = root.find(".//resultCode")
-                          if result_code is not None and result_code.text != "00":
-                              break
+            items = root.findall(".//item")
+            for item in items:
+                apt_name = (item.findtext("단지", "") or item.findtext("아파트", "")).strip()
+                price_str = item.findtext("거래금액", "0").strip().replace(",", "")
+                price = int(price_str) if price_str.isdigit() else 0
+                area = item.findtext("전용면적", "0").strip()
+                day = item.findtext("일", "").strip()
+                cancel_deal_day = item.findtext("해제사유발생일", "").strip()
+                
+                # 계약 해제건 제외
+                if cancel_deal_day:
+                    continue
 
-                          for item in root.findall(".//item"):
-                              apt_name = strip_html_tags(item.findtext("aptNm") or item.findtext("단지") or item.findtext("아파트") or "")
-                              price_str = (item.findtext("dealAmount") or item.findtext("거래금액") or "0").strip().replace(",", "")
-                              price = int(price_str) if price_str.isdigit() else 0
-                              area = (item.findtext("excluUseAr") or item.findtext("전용면적") or "0").strip()
-                              day = (item.findtext("dealDay") or item.findtext("일") or "0").strip().zfill(2)
-                              cancel_day = (item.findtext("cancellDealDay") or item.findtext("해제사유발생일") or "").strip()
-                              
-                              if cancel_day: # 해제된 거래 제외
-                                  continue
+                if apt_name and price > 0:
+                    trades.append({
+                        "apt_name": apt_name,
+                        "price": price,
+                        "area": area,
+                        "day": day,
+                        "deal_ym": deal_ym
+                    })
+    except Exception as e:
+        print(f"⚠️ API 수집 실패 (지역: {lawd_cd}, 조회월: {deal_ym}): {e}")
+        
+    return trades
 
-                              if apt_name and price > 0:
-                                  trades.append({
-                                      "apt_name": apt_name,
-                                      "area": area,
-                                      "price": price,
-                                      "deal_ymd": f"{deal_ym}{day}", # YYYYMMDD 날짜 표기
-                                      "district": district_name,
-                                      "type": "매매"
-                                  })
-                          break
-                  except Exception as e:
-                      time.sleep(1)
-                      
-              time.sleep(0.15)
-              return trades
 
-          # 2) 분양권/입주권 매매 수집 (거래일자 포함)
-          def fetch_right_trades(lawd_cd, deal_ym, district_name):
-              if not MOLIT_API_KEY:
-                  return []
+# ==========================================
+# 4. HTML 생성
+# ==========================================
+def generate_web_dashboard(context_data, output_html_path="index.html"):
+    env = Environment(loader=FileSystemLoader("templates"))
+    template = env.get_template("report_template.html")
+    html_content = template.render(context_data)
+    
+    with open(output_html_path, "w", encoding="utf-8") as f:
+        f.write(html_content)
+    print("✅ index.html 파일 생성 완료")
 
-              url = "http://apis.data.go.kr/1613000/RTMSDataSvcAptLoaderAct/getRTMSDataSvcAptLoaderAct"
-              params = {
-                  "serviceKey": requests.utils.unquote(MOLIT_API_KEY),
-                  "LAWD_CD": lawd_cd,
-                  "DEAL_YMD": deal_ym,
-                  "pageNo": "1",
-                  "numOfRows": "2000"
-              }
-              
-              trades = []
-              for attempt in range(2):
-                  try:
-                      res = requests.get(url, params=params, timeout=30)
-                      if res.status_code == 200:
-                          root = ET.fromstring(res.text)
-                          result_code = root.find(".//resultCode")
-                          if result_code is not None and result_code.text != "00":
-                              break
 
-                          for item in root.findall(".//item"):
-                              apt_name = strip_html_tags(item.findtext("untyAptNm") or item.findtext("aptNm") or item.findtext("buildingNm") or item.findtext("단지명") or "")
-                              price_str = (item.findtext("dealAmount") or item.findtext("거래금액") or "0").strip().replace(",", "")
-                              price = int(price_str) if price_str.isdigit() else 0
-                              area = (item.findtext("excluUseAr") or item.findtext("전용면적") or "0").strip()
-                              day = (item.findtext("dealDay") or item.findtext("일") or "0").strip().zfill(2)
-                              cancel_day = (item.findtext("cancellDealDay") or item.findtext("해제사유발생일") or "").strip()
-                              
-                              if cancel_day:
-                                  continue
+# ==========================================
+# 5. 메인 데이터 처리 및 리포트 데이터 생성
+# ==========================================
+def main():
+    kst = timezone(timedelta(hours=9))
+    now = datetime.now(kst)
+    date_label = now.strftime("%y.%m.%d")
+    
+    current_ym = now.strftime("%Y%m")
+    first_day_this_month = now.replace(day=1)
+    last_month = first_day_this_month - timedelta(days=1)
+    last_ym = last_month.strftime("%Y%m")
 
-                              if apt_name and price > 0:
-                                  trades.append({
-                                      "apt_name": f"[분양권]{apt_name}",
-                                      "area": area,
-                                      "price": price,
-                                      "deal_ymd": f"{deal_ym}{day}", # YYYYMMDD 날짜 표기
-                                      "district": district_name,
-                                      "type": "분양권"
-                                  })
-                          break
-                  except Exception as e:
-                      time.sleep(1)
-                      
-              time.sleep(0.15)
-              return trades
+    print(f"🔍 국토교통부 실거래가 데이터 조회 시작 ({current_ym}, {last_ym})...")
+    
+    db_high_prices = load_high_prices()
+    all_trades = []
+    
+    # 부산 16개 구/군 데이터 수집
+    for district, lawd_cd in BUSAN_LAWD_CD.items():
+        all_trades.extend(fetch_molit_real_estate_data(lawd_cd, current_ym))
+        all_trades.extend(fetch_molit_real_estate_data(lawd_cd, last_ym))
 
-          def main():
-              kst = timezone(timedelta(hours=9))
-              now = datetime.now(kst)
-              
-              # 최근 12개월(1년) 년월 리스트 생성
-              months = []
-              for i in range(12):
-                  year = now.year
-                  month = now.month - i
-                  while month <= 0:
-                      month += 12
-                      year -= 1
-                  months.append(f"{year}{month:02d}")
-                  
-              print(f"🚀 부산광역시 최근 1년치({months[-1]} ~ {months[0]}) 아파트/분양권 수집 시작!")
-              
-              all_trades = []
-              high_prices = {}
-              
-              for ym in months:
-                  print(f"📅 {ym} 데이터 수집 중...")
-                  for district, lawd_cd in BUSAN_LAWD_CD.items():
-                      # 아파트 매매 수집
-                      apt_list = fetch_apt_trades(lawd_cd, ym, district)
-                      # 분양권/입주권 수집
-                      right_list = fetch_right_trades(lawd_cd, ym, district)
-                      
-                      for t in apt_list + right_list:
-                          all_trades.append(t)
-                          
-                          # 최고가 저장 (단지명_면적 기준)
-                          key = f"{t['apt_name']}_{t['area']}"
-                          if t['price'] > high_prices.get(key, 0):
-                              high_prices[key] = t['price']
+    new_high_trades = []
 
-              # 동일 거래건 중복 제거 (단지명 + 면적 + 거래일자 + 금액 기준)
-              unique_trades = {f"{t['apt_name']}_{t['area']}_{t['deal_ymd']}_{t['price']}": t for t in all_trades}.values()
+    if all_trades:
+        print(f"✅ 총 {len(all_trades)}건의 실거래가 데이터를 수집했습니다.")
+        
+        today_str = str(now.day)
+        today_trades = [t for t in all_trades if t["deal_ym"] == current_ym and t["day"] == today_str]
+        today_cnt = len(today_trades)
+        
+        # 1. 금액순 최고가 Top 10
+        sorted_trades = sorted(all_trades, key=lambda x: x["price"], reverse=True)
+        top10_list = []
+        for t in sorted_trades[:10]:
+            p = t['price']
+            price_str = f"{p // 10000}억 {p % 10000:,}만" if p >= 10000 else f"{p:,}만"
+            top10_list.append({"apt_name": t["apt_name"], "price": price_str.replace(" 0만", "")})
 
-              db_data = {
-                  "trades": list(unique_trades),
-                  "high_prices": high_prices
-              }
+        # 2. 신고가 비교 및 DB 처리
+        for t in all_trades:
+            key = f"{t['apt_name']}_{t['area']}"
+            old_high = db_high_prices.get(key, 0)
+            
+            if t["price"] > old_high and old_high > 0:
+                diff = t["price"] - old_high
+                diff_str = f"(+{diff // 10000}억)" if diff >= 10000 else f"(+{diff:,}만)"
+                
+                p = t['price']
+                price_str = f"{p // 10000}억 {p % 10000:,}만" if p >= 10000 else f"{p:,}만"
+                
+                new_high_trades.append({
+                    "apt_name": f"{t['apt_name']}({round(float(t['area']))}㎡)",
+                    "price": f"{price_str.replace(' 0만', '')} {diff_str}"
+                })
+                db_high_prices[key] = t["price"]
+            elif old_high == 0:
+                db_high_prices[key] = t["price"]
 
-              if len(db_data['trades']) > 0:
-                  os.makedirs("data", exist_ok=True)
-                  with open("data/real_estate_db.json", "w", encoding="utf-8") as f:
-                      json.dump(db_data, f, ensure_ascii=False, indent=2)
-                  print(f"🎉 부산 1년치 데이터 수집 완료! (총 {len(db_data['trades'])}건 거래 및 {len(high_prices)}개 단지/평형 최고가 기록)")
-              else:
-                  print("⚠️ 수집된 거래 데이터가 없습니다. API 인증키 승인 상태를 확인하세요.")
+        save_high_prices(db_high_prices)
 
-          if __name__ == "__main__":
-              main()
-          EOF
-          python run_init.py
-          rm run_init.py
+        high5_list = new_high_trades[:5] if new_high_trades else [{"apt_name": "신규 신고가 없음", "price": "-"}]
+        high_cnt = len(new_high_trades)
+        avg_3m = f"{len(all_trades) // 2:,}"
+    else:
+        print("⚠️ 국토부 API 응답이 없거나 키 동기화 중입니다.")
+        today_cnt = 0
+        high_cnt = 0
+        avg_3m = "0"
+        top10_list = [{"apt_name": "API 수집 준비 중입니다", "price": "-"}]
+        high5_list = [{"apt_name": "API 수집 준비 중입니다", "price": "-"}]
 
-      - name: Git 자동 커밋 및 푸시
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          if [ -f "data/real_estate_db.json" ]; then
-            git add data/real_estate_db.json
-            git diff --quiet && git diff --staged --quiet || (git commit -m "data: 최근 1년치 부산 실거래가(날짜포함) DB 최초 구축 [skip ci]" && git push)
-          else
-            echo "수집된 데이터가 없어서 Git 커밋을 건너뜁니다."
-          fi
+    # 3. 22개 지표단지 거래 회전율 계산
+    indicator_data = {}
+    for district, apts in INDICATOR_COMPLEXES.items():
+        indicator_data[district] = []
+        for apt in apts:
+            matched_deals = sum(1 for t in all_trades if apt["name"] in t["apt_name"])
+            turnover = round((matched_deals / apt["households"]) * 100, 2)
+            indicator_data[district].append({
+                "name": apt["name"],
+                "households": f"{apt['households']:,}",
+                "deals": matched_deals,
+                "turnover": turnover
+            })
+
+    context_data = {
+        "date_label": date_label,
+        "today_cnt": today_cnt,
+        "high_cnt": high_cnt,
+        "avg_3m": avg_3m,
+        "top10_list": top10_list,
+        "high5_list": high5_list,
+        "indicator_data": indicator_data
+    }
+
+    generate_web_dashboard(context_data)
+
+if __name__ == "__main__":
+    main()
