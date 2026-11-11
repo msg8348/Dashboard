@@ -3,10 +3,9 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 import requests
 from jinja2 import Environment, FileSystemLoader
-from playwright.sync_api import sync_playwright
 
 # ==========================================
-# 1. 설정 및 부산 16개 구/군 법정동 시군구코드 (5자리)
+# 1. 설정 및 부산 16개 구/군 법정동 시군구코드
 # ==========================================
 MOLIT_API_KEY = os.environ.get("MOLIT_API_KEY", "")
 
@@ -17,7 +16,6 @@ BUSAN_LAWD_CD = {
     "연제구": "26470", "수영구": "26500", "사상구": "26530", "기장군": "26710"
 }
 
-# 22개 주요 지표단지 설정
 INDICATOR_COMPLEXES = {
     "수영구": [
         {"name": "삼익비치", "households": 3060},
@@ -77,7 +75,6 @@ INDICATOR_COMPLEXES = {
 # 2. 국토교통부 실거래가 API 수집
 # ==========================================
 def fetch_molit_real_estate_data(lawd_cd, deal_ym):
-    """국토교통부 아파트매매 실거래 상세 자료 API 호출"""
     if not MOLIT_API_KEY:
         return []
 
@@ -102,7 +99,6 @@ def fetch_molit_real_estate_data(lawd_cd, deal_ym):
                 day = item.findtext("일", "").strip()
                 cancel_deal_day = item.findtext("해제사유발생일", "").strip()
                 
-                # 계약 해제건은 제외
                 if cancel_deal_day:
                     continue
 
@@ -120,24 +116,16 @@ def fetch_molit_real_estate_data(lawd_cd, deal_ym):
 
 
 # ==========================================
-# 3. HTML 생성 및 Playwright 이미지 캡처
+# 3. HTML 생성 함수
 # ==========================================
-def generate_web_dashboard(context_data, output_html_path="index.html", output_image_path="busan_report.png"):
+def generate_web_dashboard(context_data, output_html_path="index.html"):
     env = Environment(loader=FileSystemLoader("templates"))
     template = env.get_template("report_template.html")
     html_content = template.render(context_data)
     
     with open(output_html_path, "w", encoding="utf-8") as f:
         f.write(html_content)
-    print(f"✅ index.html 파일 생성 완료")
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page(viewport={"width": 800, "height": 1600}, device_scale_factor=2)
-        page.goto(f"file://{os.path.abspath(output_html_path)}")
-        page.locator(".container").screenshot(path=output_image_path)
-        browser.close()
-    print(f"✅ 이미지 캡처 완료")
+    print(f"✅ index.html 생성 완료")
 
 
 # ==========================================
@@ -156,12 +144,10 @@ def main():
     print(f"🔍 국토교통부 실거래가 데이터 실시간 조회 중 ({current_ym}, {last_ym})...")
     
     all_trades = []
-    # 부산 16개 구/군 데이터 수집
     for district, lawd_cd in BUSAN_LAWD_CD.items():
         all_trades.extend(fetch_molit_real_estate_data(lawd_cd, current_ym))
         all_trades.extend(fetch_molit_real_estate_data(lawd_cd, last_ym))
 
-    # 데이터 수집 성공 시 실제 거래 정보 추출
     if all_trades:
         print(f"✅ 총 {len(all_trades)}건의 실거래가 데이터를 수집했습니다.")
         
@@ -169,7 +155,6 @@ def main():
         today_trades = [t for t in all_trades if t["deal_ym"] == current_ym and t["day"] == today_str]
         today_cnt = len(today_trades)
         
-        # 1. 금액순 최고가 Top 10
         sorted_trades = sorted(all_trades, key=lambda x: x["price"], reverse=True)
         top10_list = []
         for t in sorted_trades[:10]:
@@ -178,7 +163,6 @@ def main():
             price_str = price_str.replace(" 0만", "")
             top10_list.append({"apt_name": t["apt_name"], "price": price_str})
 
-        # 2. 최근 거래가 상위 Top 5
         high5_list = []
         for t in sorted_trades[:5]:
             p = t['price']
@@ -189,15 +173,13 @@ def main():
         high_cnt = len(high5_list)
         avg_3m = f"{len(all_trades) // 2:,}"
     else:
-        # API 동기화 지연(발급 직후 1~2시간) 시 표시될 임시 안내 데이터
-        print("⚠️ 국토부 API 응답이 없거나 동기화 중입니다. 임시 데이터를 표시합니다.")
+        print("⚠️ 국토부 API 응답 대기 중입니다. 기본 레이아웃을 생성합니다.")
         today_cnt = 0
         high_cnt = 0
         avg_3m = "0"
         top10_list = [{"apt_name": "API 수집 준비 중입니다", "price": "-"}]
         high5_list = [{"apt_name": "API 수집 준비 중입니다", "price": "-"}]
 
-    # 3. 22개 지표단지 거래건수 및 회전율 계산
     indicator_data = {}
     for district, apts in INDICATOR_COMPLEXES.items():
         indicator_data[district] = []
