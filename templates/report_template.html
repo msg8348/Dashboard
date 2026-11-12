@@ -54,7 +54,10 @@
   .wtag{display:inline-block;font-size:10.5px;font-weight:800;color:var(--amber);background:var(--amber-bg);padding:1px 5px;border-radius:4px;margin-right:4px;vertical-align:1px}
 
   /* 요약 4분할 */
-  .quad{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  .quad{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
+  /* 좌우 아래 선 맞춤: 각 열의 마지막 칸이 남는 높이를 채우고, 그 안의 줄 간격을 고르게 벌림 */
+  .colA > :last-child,.colB > :last-child{flex:1;display:flex;flex-direction:column}
+  .colA > :last-child > .r,.colB > :last-child > .r,.colB > :last-child > .tb{flex:1}
   .colA,.colB{display:flex;flex-direction:column;gap:14px;min-width:0}
   .q{border-radius:18px;padding:16px 18px 8px;border:1px solid var(--line)}
   .q h3{font-size:17px;font-weight:800;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline}
@@ -225,10 +228,6 @@
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
   </div><div class="colB">
-    <div class="q j"><h3>전월세 Top5</h3>
-      {% for r in rent.top5 %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
-      {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
-    </div>
     <div class="q j"><h3>전세 Top5 <small>보증금순</small></h3>
       {% for r in rent.jeonse_top5 %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
