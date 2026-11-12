@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -39,6 +39,13 @@ jobs:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
         run: |
           python Dashboard.py
+
+      - name: 실거래 DB 저장 (다음날 신규 거래·신고가 비교용)
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/real_estate_db.json
+          git diff --cached --quiet || (git commit -m "data: 실거래 DB 갱신 [skip ci]" && git push)
 
       - name: GitHub Pages 업로드 설정
         uses: actions/upload-pages-artifact@v3
