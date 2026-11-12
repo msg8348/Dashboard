@@ -528,6 +528,8 @@ def main():
         print("🔍 국토교통부 실거래가 수집 시작...")
         bootstrap, errors = update_db(db, now, rebuild=args.rebuild)
         print(f"✅ DB 거래 {len(db['trades']):,}건 (실패 {len(errors)}건)")
+        # 전체 재수집 직후 첫 실행처럼 아직 '신규 공개'로 표시된 거래가 하나도 없으면 전일 계약분으로 대체
+        bootstrap = bootstrap or not any(t.get("seen") for t in db["trades"])
     else:
         print("⚠️ MOLIT_API_KEY 가 없어 기존 DB 로만 리포트를 만듭니다.")
         bootstrap = not any(t.get("seen") for t in db["trades"])
