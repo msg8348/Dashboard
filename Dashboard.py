@@ -419,13 +419,14 @@ def build_trades(dbs, today):
     sale_ctx = {
         "title": title, "cnt": len(srows),
         "pre_cnt": sum(1 for r in srows if r["pre"]), "high_cnt": sum(1 for r in srows if r["up"]),
-        "type_cnt": type_cnt, "lists": by_type(srows), "top10": srows[:10],
+        "type_cnt": type_cnt, "lists": by_type(srows), "top15": srows[:15],
     }
     rent_ctx = {
         "title": title, "cnt": len(rrows),
         "jeonse": sum(1 for r in rrows if not r["monthly"]), "wolse": sum(1 for r in rrows if r["monthly"]),
         "high_cnt": sum(1 for r in rrows if r["up"]), "type_cnt": rent_type_cnt,
         "lists": by_type(rrows), "top5": rrows[:5],
+        "jeonse_top5": [r for r in rrows if not r["monthly"]][:5],
     }
     return sale_ctx, rent_ctx, highs_s, highs_r
 
