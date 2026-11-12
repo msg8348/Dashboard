@@ -115,15 +115,57 @@
   .trend.down { background: #eaf0f8; color: #4b6a99; }
 
   .foot { display: flex; justify-content: space-between; margin-top: 18px; font-size: 12px; color: var(--muted); }
+
+  /* 지표단지 요약 (1페이지) */
+  .big2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px 22px 0; }
+  .big { background: #fff; border-radius: 16px; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; }
+  .big .t { font-size: 15px; font-weight: 800; }
+  .big .p { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 4px; }
+  .big .nums { display: flex; gap: 22px; align-items: flex-end; text-align: right; }
+  .big .nums .k { font-size: 12px; color: var(--muted); font-weight: 700; }
+  .big .nums .n { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .big .nums .n small { font-size: 18px; margin-left: 1px; }
+  .big.y1 .t, .big.y1 .n { color: var(--teal); }
+  .big.m3 .t, .big.m3 .n { color: var(--amber); }
+  .big .sep { width: 1px; align-self: stretch; background: var(--line); }
+  .top2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px 22px 22px; }
+  .topbox { background: #fff; border-radius: 16px; padding: 16px 20px 8px; }
+  .topbox h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+  .topbox.y1 h3 { color: var(--teal); }
+  .topbox.m3 h3 { color: var(--amber); }
+  .trow { display: grid; grid-template-columns: 24px 1fr 120px 64px; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid #edf1f3; }
+  .trow:first-of-type { border-top: 0; }
+  .trow .rk { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff; }
+  .topbox.y1 .rk { background: var(--teal); }
+  .topbox.m3 .rk { background: var(--amber); }
+  .trow .nm { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .trow .nm small { display: block; font-size: 11.5px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+  .trow .pct { font-size: 17px; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+  .topbox.y1 .pct { color: var(--teal); }
+  .topbox.m3 .pct { color: var(--amber); }
+  .trow .cnt { font-size: 12.5px; color: var(--ink-2); font-weight: 600; text-align: right; }
+  .more { text-align: center; font-size: 12.5px; color: var(--teal); font-weight: 700; padding: 0 0 18px; }
+
+  /* 페이지 전환 */
+  .toolbar { justify-content: space-between; align-items: center; }
+  .tabs { display: flex; background: #fff; border: 1px solid #dfe5ea; border-radius: 12px; padding: 4px; gap: 4px; }
+  .tab { border: 0; background: transparent; font: inherit; font-size: 14px; font-weight: 700; color: var(--ink-2); padding: 8px 16px; border-radius: 8px; cursor: pointer; }
+  .tab.on { background: var(--ink); color: #fff; }
+  .page[hidden] { display: none; }
+  .report.p2 .ind { margin-top: 0; }
 </style>
 </head>
 <body>
 <div class="toolbar">
-  <button class="btn" id="save-btn" onclick="downloadReport()">⬇ 이미지 저장</button>
+  <div class="tabs">
+    <button class="tab on" data-page="1" onclick="showPage(1)">1 · 요약</button>
+    <button class="tab" data-page="2" onclick="showPage(2)">2 · 지표단지 상세</button>
+  </div>
+  <button class="btn" id="save-btn" onclick="downloadReport()">⬇ 이 페이지 이미지 저장</button>
 </div>
 
 <div class="scroller">
-<div class="report" id="report">
+<div class="report page" id="page1">
   <div class="head">
     <h1>부산 아파트 매매 <small>({{ date_label }} 기준)</small></h1>
     <div class="src">국토교통부 실거래가 공개시스템<br>계약 해제 건 제외</div>
@@ -180,20 +222,71 @@
           <div class="eyebrow">세대수 대비 거래량 (거래 회전율)</div>
           <h2>부산 지표단지 거래량</h2>
         </div>
+      </div>
+    </div>
+
+    <div class="big2">
+      <div class="big y1">
+        <div><div class="t">최근 1년</div><div class="p">{{ ind.period_1y }} · {{ ind.count }}개 단지</div></div>
+        <div class="nums">
+          <div><div class="k">거래</div><div class="n">{{ "{:,}".format(ind.c1) }}<small>건</small></div></div>
+          <div class="sep"></div>
+          <div><div class="k">회전율</div><div class="n">{{ "%.2f"|format(ind.r1) }}<small>%</small></div></div>
+        </div>
+      </div>
+      <div class="big m3">
+        <div><div class="t">최근 3개월</div><div class="p">{{ ind.period_3m }} · {{ ind.count }}개 단지</div></div>
+        <div class="nums">
+          <div><div class="k">거래</div><div class="n">{{ "{:,}".format(ind.c3) }}<small>건</small></div></div>
+          <div class="sep"></div>
+          <div><div class="k">회전율</div><div class="n">{{ "%.2f"|format(ind.r3) }}<small>%</small></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="top2">
+      {% for key, cls, title, rk, ck in [('top5_1y','y1','최근 1년 회전율 Top5','r1','c1'), ('top5_3m','m3','최근 3개월 회전율 Top5','r3','c3')] %}
+      <div class="topbox {{ cls }}">
+        <h3>{{ title }}</h3>
+        {% for a in ind[key] %}
+        <div class="trow">
+          <span class="rk">{{ loop.index }}</span>
+          <div class="nm">{{ a.name }}<small>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</small></div>
+          <div class="cnt">{{ a[ck] }}건</div>
+          <div class="pct">{{ "%.2f"|format(a[rk]) }}%</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="more">단지별 상세 내역은 2페이지(지표단지 상세)에서 확인하세요</div>
+  </div>
+
+  <div class="foot">
+    <span>회전율 = 기간 내 거래 건수 ÷ 세대수</span>
+    <span>{{ date_label }} 자동 생성</span>
+  </div>
+</div>
+
+<!-- 2페이지: 지표단지 상세 -->
+<div class="report page p2" id="page2" hidden>
+  <div class="head">
+    <h1>부산 지표단지 거래량 <small>({{ date_label }} 기준)</small></h1>
+    <div class="src">세대수 대비 거래량 (거래 회전율)<br>국토교통부 실거래 · 계약 해제 건 제외</div>
+  </div>
+  <div class="ind">
+    <div class="ind-head">
+      <div class="row">
+        <div>
+          <div class="eyebrow">{{ ind.count }}개 지표단지 · 구·군별</div>
+          <h2>지표단지별 상세</h2>
+        </div>
         <div class="legend">
           <span><i style="background:#0f6b5c;box-shadow:0 0 0 1.5px #fff"></i>최근 1년 ({{ ind.period_1y }})</span>
           <span><i style="background:#f6b350"></i>최근 3개월 ({{ ind.period_3m }})</span>
         </div>
       </div>
     </div>
-
-    <div class="stats">
-      <div class="stat"><div class="k">지표단지 {{ ind.count }}곳 · 총 세대</div><div class="v">{{ "{:,}".format(ind.households) }}<small>세대</small></div></div>
-      <div class="stat"><div class="k">최근 1년 거래 · 회전율</div><div class="v t1">{{ "{:,}".format(ind.c1) }}건<small>{{ "%.2f"|format(ind.r1) }}%</small></div></div>
-      <div class="stat"><div class="k">최근 3개월 거래 · 회전율</div><div class="v t3">{{ "{:,}".format(ind.c3) }}건<small>{{ "%.2f"|format(ind.r3) }}%</small></div></div>
-      <div class="stat"><div class="k">1년 회전율 1위</div><div class="v nm">{% if ind.best and ind.best.c1 %}{{ ind.best.name }}<br><small style="margin:0">{{ "%.2f"|format(ind.best.r1) }}% · {{ ind.best.c1 }}건</small>{% else %}-{% endif %}</div></div>
-    </div>
-
     <div class="tbl">
       <div class="tbl-head"><span>구·군</span><span>단지 (세대수)</span><span class="r">최근 1년 거래 · 회전율</span><span class="r">최근 3개월 거래 · 회전율</span><span class="r">추세</span></div>
       {% for g in ind.groups %}
@@ -220,24 +313,34 @@
 </div>
 
 <script>
+let currentPage = 1;
+function showPage(n) {
+  currentPage = n;
+  document.querySelectorAll('.page').forEach(el => { el.hidden = el.id !== 'page' + n; });
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.page == n));
+  try { localStorage.setItem('busanPage', n); } catch (e) {}
+}
+try { const saved = +localStorage.getItem('busanPage'); if (saved === 2) showPage(2); } catch (e) {}
+
 async function downloadReport() {
   const btn = document.getElementById('save-btn');
+  const label = btn.textContent;
   btn.disabled = true; btn.textContent = '저장 중…';
   try {
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
-    const el = document.getElementById('report');
+    const el = document.getElementById('page' + currentPage);
     const canvas = await html2canvas(el, {
       scale: 2, backgroundColor: '#ffffff', useCORS: true,
       windowWidth: 1200, scrollX: 0, scrollY: -window.scrollY
     });
     const link = document.createElement('a');
-    link.download = 'busan_apt_{{ date_label|replace(".", "") }}.png';
+    link.download = 'busan_apt_{{ date_label|replace(".", "") }}_' + (currentPage === 1 ? '1_summary' : '2_indicator') + '.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
   } catch (e) {
     alert('이미지 저장에 실패했습니다: ' + e);
   } finally {
-    btn.disabled = false; btn.textContent = '⬇ 이미지 저장';
+    btn.disabled = false; btn.textContent = label;
   }
 }
 </script>
