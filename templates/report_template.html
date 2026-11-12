@@ -161,7 +161,8 @@
     body { padding: 12px 10px 32px; }
     .toolbar { width: 100%; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
     .tabs { flex: 1 1 auto; }
-    .tab { flex: 1; padding: 9px 8px; font-size: 13px; }
+    .tabs { width: 100%; }
+    .tab { flex: 1; padding: 9px 4px; font-size: 12.5px; white-space: nowrap; }
     .btn { flex: 1 1 100%; justify-content: center; padding: 11px; }
     .scroller { overflow: visible; }
     .report { width: 100%; padding: 22px 14px 18px; border-radius: 18px; }
@@ -219,13 +220,24 @@
 
     .foot { flex-direction: column; gap: 4px; font-size: 11px; }
   }
+
+  /* 모바일 저장 미리보기 */
+  .save-sheet { position: fixed; inset: 0; background: rgba(15,20,28,.72); z-index: 50; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px; }
+  .save-sheet[hidden] { display: none; }
+  .save-sheet .msg { color: #fff; font-size: 14px; font-weight: 600; text-align: center; line-height: 1.5; }
+  .save-sheet .imgwrap { flex: 1; min-height: 0; overflow: auto; width: 100%; max-width: 520px; border-radius: 12px; background: #fff; -webkit-overflow-scrolling: touch; }
+  .save-sheet img { width: 100%; display: block; -webkit-touch-callout: default; }
+  .save-sheet .acts { display: flex; gap: 8px; width: 100%; max-width: 520px; }
+  .save-sheet .acts .btn { flex: 1; justify-content: center; }
+  .save-sheet .acts .btn.light { background: #fff; color: var(--ink); }
 </style>
 </head>
 <body>
 <div class="toolbar">
   <div class="tabs">
-    <button class="tab on" data-page="1" onclick="showPage(1)">1 · 요약</button>
-    <button class="tab" data-page="2" onclick="showPage(2)">2 · 지표단지 상세</button>
+    <button class="tab on" data-page="1" onclick="showPage(1)">1 · 실거래</button>
+    <button class="tab" data-page="2" onclick="showPage(2)">2 · 지표단지</button>
+    <button class="tab" data-page="3" onclick="showPage(3)">3 · 지표단지 상세</button>
   </div>
   <button class="btn" id="save-btn" onclick="downloadReport()">⬇ 이 페이지 이미지 저장</button>
 </div>
@@ -279,14 +291,25 @@
     </div>
   </div>
 
-  <!-- 3단: 지표단지 거래 회전율 -->
-  {% set ind = indicator %}
+  <div class="foot">
+    <span>신고가 = 동일 단지·전용면적 기존 최고가 경신</span>
+    <span>{{ date_label }} 자동 생성</span>
+  </div>
+</div>
+
+<!-- 2페이지: 지표단지 거래량 요약 -->
+{% set ind = indicator %}
+<div class="report page" id="page2" hidden>
+  <div class="head">
+    <h1>부산 지표단지 거래량 <small>({{ date_label }} 기준)</small></h1>
+    <div class="src">국토교통부 실거래가 공개시스템<br>계약 해제 건 제외</div>
+  </div>
   <div class="ind">
     <div class="ind-head">
       <div class="row">
         <div>
           <div class="eyebrow">세대수 대비 거래량 (거래 회전율)</div>
-          <h2>부산 지표단지 거래량</h2>
+          <h2>{{ ind.count }}개 지표단지 요약</h2>
         </div>
       </div>
     </div>
@@ -325,7 +348,7 @@
       </div>
       {% endfor %}
     </div>
-    <div class="more">단지별 상세 내역은 2페이지(지표단지 상세)에서 확인하세요</div>
+    <div class="more">단지별 상세 내역은 3페이지(지표단지 상세)에서 확인하세요</div>
   </div>
 
   <div class="foot">
@@ -334,10 +357,10 @@
   </div>
 </div>
 
-<!-- 2페이지: 지표단지 상세 -->
-<div class="report page p2" id="page2" hidden>
+<!-- 3페이지: 지표단지 상세 -->
+<div class="report page p2" id="page3" hidden>
   <div class="head">
-    <h1>부산 지표단지 거래량 <small>({{ date_label }} 기준)</small></h1>
+    <h1>부산 지표단지 거래량 상세 <small>({{ date_label }} 기준)</small></h1>
     <div class="src">세대수 대비 거래량 (거래 회전율)<br>국토교통부 실거래 · 계약 해제 건 제외</div>
   </div>
   <div class="ind">
@@ -378,6 +401,15 @@
 </div>
 </div>
 
+<div class="save-sheet" id="save-sheet" hidden>
+  <div class="msg">이미지를 <b>길게 눌러</b> '사진 앱에 저장'을 선택하거나<br>아래 <b>공유 · 저장</b> 버튼을 눌러주세요</div>
+  <div class="imgwrap"><img id="save-img" alt="리포트 이미지"></div>
+  <div class="acts">
+    <button class="btn" id="share-btn" onclick="shareImage()">공유 · 저장</button>
+    <button class="btn light" onclick="closeSheet()">닫기</button>
+  </div>
+</div>
+
 <script>
 let currentPage = 1;
 function showPage(n) {
@@ -386,12 +418,16 @@ function showPage(n) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.page == n));
   try { localStorage.setItem('busanPage', n); } catch (e) {}
 }
-try { const saved = +localStorage.getItem('busanPage'); if (saved === 2) showPage(2); } catch (e) {}
+try { const saved = +localStorage.getItem('busanPage'); if (saved === 2 || saved === 3) showPage(saved); } catch (e) {}
+
+const PAGE_FILE = { 1: '1_trades', 2: '2_indicator', 3: '3_indicator_detail' };
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+let lastBlob = null, lastName = '', lastUrl = null;
 
 async function downloadReport() {
   const btn = document.getElementById('save-btn');
   const label = btn.textContent;
-  btn.disabled = true; btn.textContent = '저장 중…';
+  btn.disabled = true; btn.textContent = '이미지 만드는 중…';
   try {
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const el = document.getElementById('page' + currentPage);
@@ -399,16 +435,38 @@ async function downloadReport() {
       scale: 2, backgroundColor: '#ffffff', useCORS: true,
       windowWidth: 1200, scrollX: 0, scrollY: -window.scrollY
     });
-    const link = document.createElement('a');
-    link.download = 'busan_apt_{{ date_label|replace(".", "") }}_' + (currentPage === 1 ? '1_summary' : '2_indicator') + '.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    lastBlob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    lastName = 'busan_apt_{{ date_label|replace(".", "") }}_' + PAGE_FILE[currentPage] + '.png';
+    if (lastUrl) URL.revokeObjectURL(lastUrl);
+    lastUrl = URL.createObjectURL(lastBlob);
+
+    if (isMobile) {
+      // 모바일(특히 iPhone)은 자동 다운로드가 막히므로 미리보기를 띄워 저장/공유하게 함
+      document.getElementById('save-img').src = lastUrl;
+      document.getElementById('share-btn').hidden = !(navigator.canShare && navigator.canShare({ files: [new File([lastBlob], lastName, { type: 'image/png' })] }));
+      document.getElementById('save-sheet').hidden = false;
+    } else {
+      const a = document.createElement('a');
+      a.href = lastUrl; a.download = lastName;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
   } catch (e) {
     alert('이미지 저장에 실패했습니다: ' + e);
   } finally {
     btn.disabled = false; btn.textContent = label;
   }
 }
+
+async function shareImage() {
+  if (!lastBlob) return;
+  try {
+    await navigator.share({ files: [new File([lastBlob], lastName, { type: 'image/png' })], title: lastName });
+  } catch (e) {
+    if (e && e.name !== 'AbortError') alert('공유에 실패했습니다. 이미지를 길게 눌러 저장해 주세요.');
+  }
+}
+
+function closeSheet() { document.getElementById('save-sheet').hidden = true; }
 </script>
 </body>
 </html>
