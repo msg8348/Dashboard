@@ -471,10 +471,22 @@ def build_indicator(sale_trades, today):
     c1 = sum(i["c1"] for i in items)
     c3 = sum(i["c3"] for i in items)
     by_r3 = sorted(items, key=lambda i: -i["r3"])
+    # 구별 거래량 (해당 구 전체 아파트 매매, 1년 / 3개월)
+    gus = []
+    for district in BUSAN_LAWD_CD:
+        ts = by_district.get(district, [])
+        g1 = sum(1 for t in ts if d_1y < t["dt"] <= today_s)
+        g3 = sum(1 for t in ts if d_3m < t["dt"] <= today_s)
+        gus.append({"name": district, "c1": g1, "c3": g3})
+    gus.sort(key=lambda g: -g["c3"])
+    m1 = max([g["c1"] for g in gus] + [1])
+    m3 = max([g["c3"] for g in gus] + [1])
+    for g in gus:
+        g["w1"], g["w3"] = round(g["c1"] / m1 * 100, 1), round(g["c3"] / m3 * 100, 1)
     return {
         "groups": groups, "count": len(items), "households": hh,
         "c1": c1, "r1": c1 / hh * 100 if hh else 0, "c3": c3, "r3": c3 / hh * 100 if hh else 0,
-        "top5_1y": sorted(items, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5],
+        "top5_1y": sorted(items, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5], "by_r3": by_r3, "gus": gus,
         "period_1y": f"{ymd_label(d_1y)}~", "period_3m": f"{ymd_label(d_3m)}~",
     }
 
