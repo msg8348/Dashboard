@@ -3,456 +3,383 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>부산 아파트 매매 ({{ date_label }})</title>
+<title>부산 아파트 실거래 ({{ date_label }})</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
-  :root {
-    --ink: #17202c; --ink-2: #4a5566; --muted: #8a94a3; --line: #e6eaef;
-    --blue: #2754d6; --blue-bg: #ebf1ff;
-    --red: #e0472c; --red-bg: #fff1ec;
-    --teal: #0f6b5c; --teal-2: #5fb3a1; --teal-bg: #e5f4f0;
-    --amber: #e08a14; --amber-bg: #fdf3e2;
-    --panel: #f7f9fb;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-    background: #eef1f4; color: var(--ink); padding: 24px 16px 48px;
-    -webkit-font-smoothing: antialiased;
-  }
-  .toolbar { width: 1080px; margin: 0 auto 14px; display: flex; justify-content: flex-end; gap: 8px; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px; background: var(--ink); color: #fff;
-    border: 0; padding: 11px 18px; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
-  }
-  .btn:hover { background: #2c3949; }
-  .btn:disabled { opacity: .6; cursor: progress; }
-  .scroller { overflow-x: auto; }
+  :root { --ink:#17202c; --ink-2:#4a5566; --muted:#8a94a3; --line:#e6eaef;
+    --blue:#2754d6; --blue-bg:#ebf1ff; --red:#e0472c; --red-bg:#fff1ec; --teal:#0f6b5c; --teal-bg:#e5f4f0;
+    --amber:#b86e0a; --amber-bg:#fdf3e2; --violet:#6c6787; --navy:#2b3a67; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#eef1f4;color:var(--ink);padding:20px 16px 40px;-webkit-font-smoothing:antialiased}
+  .wrap{width:1080px;margin:0 auto}
+  .tabs{display:flex;gap:4px;background:#fff;border:1px solid #dfe5ea;border-radius:12px;padding:4px;margin-bottom:12px}
+  .tab{flex:1;border:0;background:transparent;font:inherit;font-size:15px;font-weight:700;color:var(--ink-2);padding:10px 4px;border-radius:8px;white-space:nowrap;cursor:pointer}
+  .tab.on{background:var(--ink);color:#fff}
+  .page[hidden]{display:none}
+  .report{background:#fff;border-radius:28px;padding:34px 34px 30px;border:1px solid #dfe5ea}
+  .head{padding-bottom:16px;border-bottom:2px solid var(--line);margin-bottom:18px}
+  .head h1{font-size:34px;font-weight:800}
+  .head h1 small{font-size:20px;color:var(--ink-2);font-weight:700;margin-left:6px}
+  .notice{background:#fff7e0;color:#8a6100;font-size:13px;font-weight:600;padding:9px 14px;border-radius:10px;margin-bottom:14px;line-height:1.5}
+  .empty{color:var(--muted);font-size:14px;font-weight:600;text-align:center;padding:28px 10px}
 
-  /* ===== 리포트 (이미지로 저장되는 영역) ===== */
-  .report {
-    width: 1080px; margin: 0 auto; background: #fff; border-radius: 28px;
-    padding: 44px 40px 32px; border: 1px solid #dfe5ea;
-  }
-  .head { display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 20px; border-bottom: 2px solid var(--line); margin-bottom: 24px; }
-  .head h1 { font-size: 38px; font-weight: 800; }
-  .head h1 small { font-size: 22px; font-weight: 700; color: var(--ink-2); margin-left: 6px; }
-  .head .src { font-size: 13px; color: var(--muted); text-align: right; line-height: 1.5; }
-  .notice { background: var(--amber-bg); color: #9a5b00; font-size: 13px; font-weight: 600; padding: 10px 14px; border-radius: 10px; margin-bottom: 18px; }
+  /* 상단 건수 카드 */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .cards.c2{grid-template-columns:1fr 1fr}
+  .cd{border-radius:16px;padding:13px 18px 11px;min-height:88px;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+  .cd .l{font-size:15px;font-weight:700}
+  .cd .l span{font-size:12px;font-weight:600;color:var(--ink-2);margin-left:4px}
+  .cd .v{font-size:32px;font-weight:800;text-align:right;color:var(--ink);line-height:1.1;white-space:nowrap}
+  .cd .v span{font-size:18px;margin-left:1px}
+  .cd .h{font-size:12.5px;font-weight:800;color:var(--red);text-align:right;margin-top:3px;white-space:nowrap}
+  .cd .h.mu{color:var(--ink-2);font-weight:700}
+  .cd.b{background:#e8eefc}.cd.b .l{color:var(--blue)}
+  .cd.t{background:#dff1ec}.cd.t .l{color:var(--teal)}
+  .cd.a{background:#fbefdc}.cd.a .l{color:var(--amber)}
+  .cd.v2{background:#ebe9f1}.cd.v2 .l{color:var(--violet)}
+  .cd.g{background:#f1f3f6}.cd.g .l{color:var(--ink-2)}
+  .cd.r{background:var(--red-bg)}.cd.r .l{color:var(--red)}
+  .up2{color:var(--red);font-weight:800}.dn2{color:#4b6a99;font-weight:800}
 
-  /* 1단: KPI */
-  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
-  .kpi { border-radius: 20px; padding: 22px 26px; display: flex; justify-content: space-between; align-items: center; }
-  .kpi .label { font-size: 17px; font-weight: 700; }
-  .kpi .sub { font-size: 13px; font-weight: 500; margin-top: 6px; opacity: .8; }
-  .kpi .value { font-size: 48px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .kpi .value span { font-size: 26px; margin-left: 2px; }
-  .kpi.blue { background: var(--blue-bg); color: var(--blue); }
-  .kpi.red { background: var(--red-bg); color: var(--red); }
+  /* 순위 아이콘: 1~3위 진한 배경, 4위부터 밝은 배경 + 색 숫자 */
+  .rkc{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:11.5px;font-weight:800;color:#fff;background:var(--c);flex:none}
+  .rkc.lt{background:var(--cl);color:var(--c)}
+  .cs{--c:var(--blue);--cl:#e3eafc}.cj{--c:var(--teal);--cl:#d9efe9}.cg{--c:var(--violet);--cl:#e4e2ec}
+  .cx{--c:#6b7686;--cl:#e7eaef}.cn{--c:var(--navy);--cl:#e3e7f2}.ca{--c:#c77a10;--cl:#f8e8cc}
+  .ty{display:inline-block;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:5px;margin-right:5px;vertical-align:1px}
+  .ty84{background:var(--blue-bg);color:var(--blue)}.ty59{background:var(--teal-bg);color:var(--teal)}.tyx{background:#eef1f5;color:var(--ink-2)}
+  .stk{display:inline-block;font-size:10.5px;font-weight:800;color:#fff;background:var(--red);padding:1px 7px;border-radius:999px;margin-left:5px;vertical-align:1px}
+  .ptag{display:inline-block;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:5px;background:#fde7f0;color:#c2185b;margin-left:5px;vertical-align:1px}
+  .wtag{display:inline-block;font-size:10.5px;font-weight:800;color:var(--amber);background:var(--amber-bg);padding:1px 5px;border-radius:4px;margin-right:4px;vertical-align:1px}
 
-  /* 2단: Top10 / 신고가 */
-  .row2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; margin-bottom: 22px; }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 22px 24px; }
-  .panel.red { background: #fffaf8; border-color: #f7ddd4; }
-  .panel-title { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-  .panel-title h2 { font-size: 22px; font-weight: 800; }
-  .panel-title .hint { font-size: 12px; color: var(--muted); font-weight: 500; }
-  .item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-  .item:last-child { border-bottom: 0; }
-  .rank { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: #dfe7fb; color: var(--blue); }
-  .rank.top { background: var(--blue); color: #fff; }
-  .panel.red .rank { background: var(--red); color: #fff; }
-  .item .body { flex: 1; min-width: 0; }
-  .item .name { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item .meta { font-size: 12px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item .right { text-align: right; flex: none; }
-  .item .price { font-size: 18px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
-  .panel.red .item .price { color: var(--red); }
-  .item .diff { font-size: 11.5px; color: var(--muted); margin-top: 3px; font-weight: 600; }
-  .item .diff.up { color: var(--red); }
-  .empty { display: grid; place-items: center; min-height: 180px; color: var(--muted); font-size: 15px; font-weight: 600; text-align: center; line-height: 1.6; }
+  /* 요약 4분할 */
+  .quad{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  .colA,.colB{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .q{border-radius:18px;padding:16px 18px 8px;border:1px solid var(--line)}
+  .q h3{font-size:17px;font-weight:800;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline}
+  .q h3 small{font-size:12px;color:var(--muted);font-weight:600}
+  .q .r{display:grid;grid-template-columns:24px 1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid rgba(0,0,0,.06);font-size:14.5px}
+  .q .r:first-of-type{border-top:0}
+  .q .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .q .sub{color:var(--muted);font-size:12.5px;white-space:nowrap}
+  .q .pr{font-weight:800;white-space:nowrap;text-align:right}
+  .q.s{background:#f6f9ff}.q.s .pr{color:var(--blue)}
+  .q.j{background:#f4faf8}.q.j .pr{color:var(--teal)}
+  .q.g{background:#f6f5f9}.q.g .pr{color:var(--violet)}
+  .pr.w{color:var(--amber)!important}
 
-  /* 3단: 지표단지 */
-  .ind { border-radius: 22px; background: var(--teal-bg); border: 1px solid #cfe7e0; overflow: hidden; }
-  .ind-head { background: var(--teal); color: #fff; padding: 22px 26px 20px; }
-  .ind-head .eyebrow { font-size: 13px; opacity: .8; font-weight: 600; }
-  .ind-head h2 { font-size: 26px; font-weight: 800; margin-top: 4px; }
-  .ind-head .row { display: flex; justify-content: space-between; align-items: flex-end; }
-  .legend { display: flex; gap: 16px; font-size: 13px; font-weight: 600; }
-  .legend i { display: inline-block; width: 22px; height: 8px; border-radius: 4px; margin-right: 6px; vertical-align: middle; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 18px 22px 4px; }
-  .stat { background: #fff; border-radius: 14px; padding: 14px 16px; }
-  .stat .k { font-size: 12px; color: var(--muted); font-weight: 600; }
-  .stat .v { font-size: 22px; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; }
-  .stat .v small { font-size: 13px; font-weight: 600; color: var(--ink-2); margin-left: 4px; }
-  .stat .v.t1 { color: var(--teal); }
-  .stat .v.t3 { color: var(--amber); }
-  .stat .v.nm { font-size: 16px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* 나비형 막대 */
+  .qx{background:#fff;border:1px solid #dfe3ee;border-radius:18px;overflow:hidden}
+  .qx .hd{background:var(--navy);color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+  .qx .hd small{display:block;font-size:11.5px;opacity:.75;font-weight:600}
+  .qx .hd b{font-size:18px;font-weight:800}
+  .qx .lg{display:flex;gap:12px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .qx .lg i{display:inline-block;width:12px;height:8px;border-radius:2px;margin-right:4px}
+  .bfgrid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(var(--rows),auto);grid-auto-flow:column}
+  .bfgrid.one{grid-template-columns:1fr;grid-template-rows:none;grid-auto-flow:row}
+  .bf{display:grid;grid-template-columns:26px 128px 1fr 2px 1fr;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid #eef0f6}
+  .bfgrid .bf{border-right:1px solid #eef0f6}
+  .bfgrid.one .bf{border-right:0;padding:16px 16px}
+  .bf.short{grid-template-columns:26px 70px 1fr 2px 1fr}
+  .bf .rkc{width:26px;height:26px}
+  .bf .who{min-width:0}
+  .bf .who b{display:block;font-size:14.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bf .who span{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;display:block;overflow:hidden;text-overflow:ellipsis}
+  .bf .side{display:flex;align-items:center;gap:6px;height:24px;min-width:0}
+  .bf .side.l{justify-content:flex-end}
+  .bf .side .bw{flex:1;min-width:0;display:flex}
+  .bf .side.l .bw{justify-content:flex-end}
+  .bf .side i{display:block;height:14px;min-width:3px;flex:none}
+  .bf .side.l i{border-radius:7px 0 0 7px}.bf .side.r i{border-radius:0 7px 7px 0}
+  .bf .axis{height:30px;background:#c9cfdc;border-radius:1px}
+  .bf .val{font-size:13px;font-weight:800;white-space:nowrap;line-height:1.05;text-align:center}
+  .bf .val em{display:block;font-style:normal;font-size:10.5px;color:var(--muted);font-weight:600}
+  .i-g{background:#1f9d8b}.i-m{background:#f0a35e}.i-b{background:#5b7fd6}.i-v{background:#8f89ad}
+  .c-g{color:#137a6c}.c-m{color:#c46a1c}.c-b{color:#3559b8}.c-v{color:#5e5880}
+  .foot2{font-size:12px;color:var(--muted);text-align:center;padding:8px 0 12px;border-top:1px solid #eef0f6}
 
-  .tbl { padding: 14px 22px 20px; }
-  .tbl-head, .tr { display: grid; grid-template-columns: 70px 1fr 230px 230px 112px; align-items: center; column-gap: 14px; }
-  .tbl-head { font-size: 12px; color: var(--muted); font-weight: 700; padding: 0 16px 8px; }
-  .tbl-head .r { text-align: right; }
-  .dgroup { background: #fff; border-radius: 14px; padding: 4px 16px; margin-bottom: 8px; }
-  .dgroup:last-child { margin-bottom: 0; }
-  .tr { padding: 9px 0; border-top: 1px solid #edf1f3; }
-  .tr:first-child { border-top: 0; }
-  .tr .dist { font-size: 14px; font-weight: 800; color: var(--teal); }
-  .apt-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .apt-name small { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 5px; }
-  .cell { display: grid; grid-template-columns: 1fr 104px; align-items: center; gap: 8px; }
-  .track { height: 10px; background: #eef2f4; border-radius: 5px; overflow: hidden; }
-  .fill { height: 100%; border-radius: 5px; }
-  .fill.y1 { background: var(--teal); }
-  .fill.m3 { background: var(--amber); }
-  .val { font-size: 13px; font-weight: 600; color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .val b { font-weight: 800; }
-  .val b.y1 { color: var(--teal); }
-  .val b.m3 { color: var(--amber); }
-  .trend { justify-self: end; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 6px; white-space: nowrap; }
-  .trend.up { background: var(--red-bg); color: var(--red); }
-  .trend.down { background: #eaf0f8; color: #4b6a99; }
-  .trend.strong { background: var(--red); color: #fff; }
-  .trend.weak { background: #4b6a99; color: #fff; }
-  .sticker { display: inline-block; vertical-align: 2px; margin-left: 6px; font-size: 11px; font-weight: 800; color: #fff; background: var(--red); padding: 2px 7px; border-radius: 999px; }
-  .panel-title .hint .sticker { margin-left: 2px; vertical-align: 0; font-size: 10px; padding: 1px 6px; }
-  .kpi.gray { background: #f2f4f7; color: var(--ink-2); }
-  .item.hi { gap: 16px; }
-  .prevcol { text-align: right; flex: none; }
-  .prevcol .k { font-size: 11.5px; color: var(--muted); font-weight: 600; }
-  .prevcol .v { font-size: 15px; color: var(--ink-2); font-weight: 700; margin-top: 2px; text-decoration: line-through; text-decoration-color: #c9cfd8; }
-  .arrow { color: var(--red); font-weight: 800; font-size: 18px; flex: none; }
-  .report > .panel { margin-bottom: 4px; }
+  /* 매매·전월세 리스트 */
+  .sec{background:#f7f9fb;border:1px solid var(--line);border-radius:18px;padding:16px 22px 10px;margin-bottom:14px;min-width:0}
+  .sec h2{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .chip{font-size:15px;font-weight:800;color:#fff;padding:4px 14px;border-radius:999px;white-space:nowrap}
+  .sec h2 .n{font-size:13px;color:var(--muted);font-weight:600}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .list{display:grid;grid-template-columns:1fr}
+  .list.wide{grid-template-columns:1fr 1fr;grid-template-rows:repeat(8,auto);grid-auto-flow:column;column-gap:28px}
+  .row{display:grid;grid-template-columns:26px 1fr 52px auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #eceff3;font-size:16px}
+  .row .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .row .fl{color:var(--muted);font-size:13.5px;text-align:right;white-space:nowrap}
+  .row .pr{font-weight:800;color:var(--blue);text-align:right;white-space:nowrap;min-width:96px}
+  .row .pr.j{color:var(--teal)}
+  .row .pr.v{color:var(--violet)}
 
-  .foot { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; margin-top: 18px; font-size: 12px; color: var(--muted); }
-  .foot .date { font-size: 13px; font-weight: 600; }
-
-  /* 지표단지 요약 (1페이지) */
-  .big2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px 22px 0; }
-  .big { background: #fff; border-radius: 16px; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; }
-  .big .t { font-size: 15px; font-weight: 800; }
-  .big .p { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 4px; }
-  .big .nums { display: flex; gap: 22px; align-items: flex-end; text-align: right; }
-  .big .nums .k { font-size: 12px; color: var(--muted); font-weight: 700; }
-  .big .nums .n { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.15; }
-  .big .nums .n small { font-size: 18px; margin-left: 1px; }
-  .big.y1 .t, .big.y1 .n { color: var(--teal); }
-  .big.m3 .t, .big.m3 .n { color: var(--amber); }
-  .big .sep { width: 1px; align-self: stretch; background: var(--line); }
-  .big1 { padding: 18px 22px 0; }
-  .big1 .big .nums .n { font-size: 44px; }
-  .top1 { padding: 14px 22px 22px; }
-  .top1 .trow { grid-template-columns: 28px 1fr 120px 110px; padding: 12px 0; }
-  .top1 .trow .nm { font-size: 17px; }
-  .top1 .trow .pct { font-size: 22px; }
-  .top1 .trow .cnt { font-size: 14px; }
-  .ind.m3 { background: var(--amber-bg); border-color: #f3dfb8; }
-  .ind.m3 .ind-head { background: #b86e0a; }
-  .top2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px 22px 22px; }
-  .topbox { background: #fff; border-radius: 16px; padding: 16px 20px 8px; }
-  .topbox h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
-  .topbox.y1 h3 { color: var(--teal); }
-  .topbox.m3 h3 { color: var(--amber); }
-  .trow { display: grid; grid-template-columns: 24px 1fr 120px 64px; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid #edf1f3; }
-  .trow:first-of-type { border-top: 0; }
-  .trow .rk { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff; }
-  .topbox.y1 .rk { background: var(--teal); }
-  .topbox.m3 .rk { background: var(--amber); }
-  .trow .nm { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .trow .nm small { display: block; font-size: 11.5px; color: var(--muted); font-weight: 500; margin-top: 2px; }
-  .trow .pct { font-size: 17px; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
-  .topbox.y1 .pct { color: var(--teal); }
-  .topbox.m3 .pct { color: var(--amber); }
-  .trow .cnt { font-size: 12.5px; color: var(--ink-2); font-weight: 600; text-align: right; }
-  .more { text-align: center; font-size: 12.5px; color: var(--teal); font-weight: 700; padding: 0 0 18px; }
-
-  /* 페이지 전환 */
-  .toolbar { justify-content: space-between; align-items: center; }
-  .tabs { display: flex; background: #fff; border: 1px solid #dfe5ea; border-radius: 12px; padding: 4px; gap: 4px; }
-  .tab { border: 0; background: transparent; font: inherit; font-size: 14px; font-weight: 700; color: var(--ink-2); padding: 8px 16px; border-radius: 8px; cursor: pointer; }
-  .tab.on { background: var(--ink); color: #fff; }
-  .page[hidden] { display: none; }
-  .report.p2 .ind { margin-top: 0; }
-
-  .ml { display: none; }
-
-  /* ===== 모바일 (이미지 저장도 이 배치 그대로 캡처됨) ===== */
-  @media (max-width: 820px) {
-    body { padding: 12px 10px 32px; }
-    .toolbar { width: 100%; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-    .tabs { flex: 1 1 auto; }
-    .tabs { width: 100%; }
-    .tab { flex: 1; padding: 9px 4px; font-size: 12.5px; white-space: nowrap; }
-    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); }
-    .item.hi { flex-wrap: wrap; gap: 8px 10px; }
-    .item.hi .body { flex: 1 1 calc(100% - 40px); }
-    .item.hi .prevcol { margin-left: 36px; text-align: left; }
-    .item.hi .arrow { font-size: 15px; }
-    .item.hi .right { margin-left: auto; }
-    .tr .trend { font-size: 10.5px; }
-    .scroller { overflow: visible; }
-    .report { width: 100%; padding: 22px 14px 18px; border-radius: 18px; }
-    .head { flex-direction: column; align-items: flex-start; gap: 6px; padding-bottom: 14px; margin-bottom: 16px; }
-    .head h1 { font-size: 26px; }
-    .head h1 small { display: block; font-size: 15px; margin: 4px 0 0; }
-    .head .src { text-align: left; font-size: 11.5px; }
-
-    .kpis { gap: 10px; margin-bottom: 14px; }
-    .kpi { flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px; border-radius: 16px; }
-    .kpi .label { font-size: 14px; }
-    .kpi .sub { font-size: 11px; }
-    .kpi .value { font-size: 34px; align-self: flex-end; }
-    .kpi .value span { font-size: 18px; }
-
-    .row2 { grid-template-columns: 1fr; gap: 14px; margin-bottom: 14px; }
-    .panel { padding: 16px; border-radius: 16px; }
-    .panel-title h2 { font-size: 19px; }
-    .item { gap: 10px; align-items: flex-start; }
-    .item .name { font-size: 15px; white-space: normal; }
-    .item .meta { white-space: normal; font-size: 11.5px; }
-    .item .price { font-size: 16px; }
-    .item .diff { font-size: 11px; }
-    .empty { min-height: 90px; }
-
-    .ind { border-radius: 18px; }
-    .ind-head { padding: 18px 16px; }
-    .ind-head h2 { font-size: 21px; }
-    .ind-head .row { flex-direction: column; align-items: flex-start; gap: 10px; }
-    .legend { flex-wrap: wrap; gap: 6px 14px; font-size: 12px; }
-    .big1, .top1 { padding-left: 12px; padding-right: 12px; }
-    .big1 .big .nums .n { font-size: 30px; }
-    .top1 .trow { grid-template-columns: 22px 1fr 48px 62px; padding: 10px 0; }
-    .top1 .trow .nm { font-size: 14.5px; }
-    .top1 .trow .pct { font-size: 16px; }
-    .top1 .trow .cnt { font-size: 12.5px; }
-    .big2, .top2 { grid-template-columns: 1fr; gap: 10px; padding-left: 12px; padding-right: 12px; }
-    .big { padding: 14px 16px; flex-wrap: wrap; gap: 10px; }
-    .big .nums .n { font-size: 28px; }
-    .big .nums .n small { font-size: 15px; }
-    .topbox { padding: 14px 14px 6px; }
-    .trow { grid-template-columns: 22px 1fr 48px 62px; gap: 8px; }
-    .trow .nm { font-size: 14px; white-space: normal; overflow: visible; }
-    .trow .pct { font-size: 15.5px; }
-    .more { padding: 4px 12px 16px; }
-
-    .tbl { padding: 12px 10px 14px; }
-    .tbl-head { display: none; }
-    .dgroup { padding: 4px 12px; }
-    .tr { grid-template-columns: 1fr auto; grid-template-areas: "dist dist" "name trend" "c1 c1" "c3 c3"; row-gap: 6px; padding: 11px 0; }
-    .tr .dist { grid-area: dist; font-size: 13px; }
-    .tr .dist:empty { display: none; }
-    .tr .apt-name { grid-area: name; white-space: normal; font-size: 14.5px; }
-    .tr .trend { grid-area: trend; }
-    .tr .trend.none { display: none; }
-    .tr .y1c { grid-area: c1; }
-    .tr .m3c { grid-area: m3; grid-area: c3; }
-    .cell { grid-template-columns: 34px 1fr 98px; }
-    .ml { display: block; font-size: 11px; color: var(--muted); font-weight: 600; }
-    .val { font-size: 12.5px; }
-
-    .foot { gap: 4px; font-size: 11px; }
-  }
+  /* 지표단지 */
+  .ind-two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+  .icard{border-radius:18px;padding:16px 18px 10px}
+  .icard.y1{background:var(--teal-bg)}.icard.m3{background:var(--amber-bg)}
+  .icard h3{font-size:18px;font-weight:800}.icard.y1 h3{color:var(--teal)}.icard.m3 h3{color:var(--amber)}
+  .icard .p{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+  .nums{display:flex;gap:22px;align-items:flex-end;margin:8px 0 12px}
+  .nums .k{font-size:12px;color:var(--muted);font-weight:700}
+  .nums .n{font-size:32px;font-weight:800}.nums .n small{font-size:16px}
+  .icard.y1 .n{color:var(--teal)}.icard.m3 .n{color:var(--amber)}
+  .mini{background:#fff;border-radius:12px;padding:4px 12px}
+  .mini .mr{display:grid;grid-template-columns:24px 1fr 52px 62px;gap:8px;font-size:14px;padding:8px 0;border-bottom:1px solid #eef1f3;align-items:center}
+  .mini .mr:last-child{border-bottom:0}
+  .mini .mr span.nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .mr span.nm small{color:var(--muted);font-size:11.5px;font-weight:600;margin-left:4px}
+  .mini .mr .c{color:var(--muted);font-size:12.5px;text-align:right}
+  .mini .mr b{text-align:right;font-weight:800}
+  .icard.y1 .mini b{color:var(--teal)}.icard.m3 .mini b{color:var(--amber)}
+  .tbl{background:#f7f9fb;border:1px solid var(--line);border-radius:18px;padding:12px 16px 14px}
+  .tbl h2{font-size:18px;font-weight:800;margin:4px 2px 10px}
+  .tbl-head,.tr{display:grid;grid-template-columns:70px 1fr 230px 230px 112px;align-items:center;column-gap:14px}
+  .tbl-head{font-size:12px;color:var(--muted);font-weight:700;padding:0 14px 8px}
+  .tbl-head .r{text-align:right}
+  .dgroup{background:#fff;border-radius:12px;padding:3px 14px;margin-bottom:7px}
+  .dgroup:last-child{margin-bottom:0}
+  .tr{padding:9px 0;border-top:1px solid #edf1f3}
+  .tr:first-child{border-top:0}
+  .tr .dist{font-size:14px;font-weight:800;color:var(--teal)}
+  .apt-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .apt-name small{font-size:12px;color:var(--muted);font-weight:500;margin-left:5px}
+  .cell{display:grid;grid-template-columns:1fr 104px;align-items:center;gap:8px}
+  .ml{display:none}
+  .track{height:10px;background:#eef2f4;border-radius:5px;overflow:hidden}
+  .fill{height:100%;border-radius:5px}.fill.y1{background:var(--teal)}.fill.m3{background:#e08a14}
+  .val2{font-size:13px;font-weight:600;color:var(--ink-2);text-align:right;white-space:nowrap}
+  .val2 b{font-weight:800}.val2 b.y1{color:var(--teal)}.val2 b.m3{color:var(--amber)}
+  .trend{justify-self:end;font-size:11px;font-weight:700;padding:3px 7px;border-radius:6px;white-space:nowrap}
+  .trend.up{background:var(--red-bg);color:var(--red)}.trend.down{background:#eaf0f8;color:#4b6a99}
+  .trend.strong{background:var(--red);color:#fff}.trend.weak{background:#4b6a99;color:#fff}
+  .trend.none{color:var(--muted)}
 
   /* 공유 · 저장 버튼 */
-  .actions { width: 1080px; margin: 22px auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .actions .btn { justify-content: center; padding: 18px; font-size: 18px; border-radius: 14px; }
-  .btn.light { background: #fff; color: var(--ink-2); box-shadow: inset 0 0 0 2px #d5dbe2; }
-  .btn.light:hover { background: #f6f8fa; }
-  .actions-note { text-align: center; color: var(--muted); font-size: 15px; margin-top: 18px; }
-  @media (max-width: 820px) {
-    .actions { width: 100%; gap: 10px; margin-top: 16px; }
-    .actions .btn { padding: 16px 8px; font-size: 16px; }
-    .actions-note { font-size: 13px; margin-top: 14px; }
-  }
+  .actions{width:1080px;margin:18px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .btn{background:#fff;color:#111;border:1.5px solid #cfd6de;border-radius:14px;padding:17px;font:inherit;font-size:17px;font-weight:800;cursor:pointer}
+  .btn:hover{background:#f6f8fa}.btn:disabled{opacity:.6;cursor:progress}
+  .actions-note{text-align:center;color:var(--muted);font-size:14px;margin-top:14px}
+  .save-sheet{position:fixed;inset:0;background:rgba(15,20,28,.72);z-index:50;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px}
+  .save-sheet[hidden]{display:none}
+  .save-sheet .msg{color:#fff;font-size:14px;font-weight:600;text-align:center;line-height:1.5}
+  .save-sheet .imgwrap{flex:1;min-height:0;overflow:auto;width:100%;max-width:520px;border-radius:12px;background:#fff}
+  .save-sheet img{width:100%;display:block}
+  .save-sheet .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:520px}
 
-  /* 공유 대체 화면 */
-  .save-sheet { position: fixed; inset: 0; background: rgba(15,20,28,.72); z-index: 50; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px; }
-  .save-sheet[hidden] { display: none; }
-  .save-sheet .msg { color: #fff; font-size: 14px; font-weight: 600; text-align: center; line-height: 1.5; }
-  .save-sheet .imgwrap { flex: 1; min-height: 0; overflow: auto; width: 100%; max-width: 520px; border-radius: 12px; background: #fff; -webkit-overflow-scrolling: touch; }
-  .save-sheet img { width: 100%; display: block; -webkit-touch-callout: default; }
-  .save-sheet .acts { display: flex; gap: 8px; width: 100%; max-width: 520px; }
-  .save-sheet .acts .btn { flex: 1; justify-content: center; }
-  .save-sheet .acts .btn.light { background: #fff; color: var(--ink); }
+  /* ===== 모바일 (반드시 맨 마지막에 둠) ===== */
+  @media (max-width:820px){
+    body{padding:10px 8px 28px}
+    .wrap,.actions{width:100%}
+    .tab{font-size:11.5px;padding:9px 1px}
+    .report{padding:18px 12px 16px;border-radius:18px}
+    .head h1{font-size:22px}.head h1 small{display:block;font-size:14px;margin:4px 0 0}
+    .cards{gap:6px}
+    .cards .cd{padding:10px 10px 8px;min-height:0}
+    .cd .l{font-size:12px}.cd .l span{display:block;font-size:10px;margin:2px 0 0}
+    .cards .cd .v{font-size:19px}.cards .cd .v span{font-size:12px}
+    .cd .h{font-size:10px}
+    .quad{grid-template-columns:1fr;gap:10px}.colA,.colB{gap:10px}
+    .q{padding:12px 12px 4px}.q .r{font-size:13.5px;gap:6px}
+    .qx .hd{flex-direction:column;align-items:flex-start;gap:6px}
+    .bfgrid{grid-template-columns:1fr;grid-template-rows:none;grid-auto-flow:row}
+    .bfgrid .bf{border-right:0}
+    .bf,.bfgrid.one .bf{grid-template-columns:22px 96px 1fr 2px 1fr;gap:5px;padding:10px}
+    .bf.short{grid-template-columns:22px 58px 1fr 2px 1fr}
+    .bf .who b{font-size:12.5px;white-space:normal;word-break:keep-all}
+    .bf .who span{font-size:10px}
+    .bf .val{font-size:11.5px}
+    .two,.ind-two{grid-template-columns:1fr;gap:0}
+    .ind-two{gap:10px}
+    .sec{padding:12px 12px 6px}
+    .list.wide{grid-template-columns:1fr;grid-template-rows:none;grid-auto-flow:row}
+    .row{font-size:14.5px;grid-template-columns:24px 1fr 40px auto;gap:6px;padding:8px 0}
+    .row .pr{min-width:0}
+    .nums .n{font-size:26px}
+    .mini .mr{grid-template-columns:22px 1fr 44px 54px;font-size:13px;gap:6px}
+    .tbl{padding:10px 8px 10px}
+    .tbl-head{display:none}
+    .dgroup{padding:4px 12px}
+    .tr{grid-template-columns:1fr auto;grid-template-areas:"dist dist" "name trend" "c1 c1" "c3 c3";row-gap:6px;padding:11px 0}
+    .tr .dist{grid-area:dist;font-size:13px}.tr .dist:empty{display:none}
+    .tr .apt-name{grid-area:name;white-space:normal;font-size:14.5px}
+    .tr .trend{grid-area:trend;font-size:10.5px}.tr .trend.none{display:none}
+    .tr .y1c{grid-area:c1}.tr .m3c{grid-area:c3}
+    .cell{grid-template-columns:34px 1fr 98px}
+    .ml{display:block;font-size:11px;color:var(--muted);font-weight:600}
+    .actions{gap:8px;margin-top:14px}.btn{font-size:15px;padding:14px}
+  }
 </style>
 </head>
 <body>
-<div class="toolbar">
-  <div class="tabs">
-    <button class="tab on" data-page="1" onclick="showPage(1)">1 · 최고거래가</button>
-    <button class="tab" data-page="2" onclick="showPage(2)">2 · 신고가</button>
-    <button class="tab" data-page="3" onclick="showPage(3)">3 · 지표 1년</button>
-    <button class="tab" data-page="4" onclick="showPage(4)">4 · 지표 3개월</button>
-    <button class="tab" data-page="5" onclick="showPage(5)">5 · 지표 상세</button>
-  </div>
-</div>
-
-<div class="scroller">
-<div class="report page" id="page1">
-  <div class="head">
-    <h1>부산 아파트 매매 <small>({{ date_label }} 기준)</small></h1>
-  </div>
-
-  {% if notice %}<div class="notice">⚠ {{ notice }}</div>{% endif %}
-
-  <!-- 1단: 오늘 실거래 / 신고가 -->
-  <div class="kpis">
-    <div class="kpi blue">
-      <div><div class="label">{{ today_title }}</div><div class="sub">{{ today_note }}</div></div>
-      <div class="value">{{ "{:,}".format(today_cnt) }}<span>건</span></div>
-    </div>
-    <div class="kpi red">
-      <div><div class="label">신고가</div><div class="sub">동일 단지·평형 기존 최고가 경신{% if today_cnt %} · 비중 {{ high_ratio }}%{% endif %}</div></div>
-      <div class="value">{{ "{:,}".format(high_cnt) }}<span>건</span></div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-title"><h2>최고 거래가 Top10</h2><span class="hint">금액 순 · 기존 최고가 대비 · <b class="sticker">신고가</b> 표시</span></div>
-    {% for r in top10 %}
-    <div class="item">
-      <div class="rank {% if loop.index <= 3 %}top{% endif %}">{{ loop.index }}</div>
-      <div class="body"><div class="name">{{ r.apt_name }}{% if r.up %} <span class="sticker">신고가</span>{% endif %}</div><div class="meta">{{ r.meta }}</div></div>
-      <div class="right"><div class="price">{{ r.price }}</div><div class="diff {% if r.up %}up{% endif %}">{% if r.diff == '첫 거래' %}비교 거래 없음{% else %}최고가 대비 {{ r.diff }}{% endif %}</div></div>
-    </div>
-    {% else %}
-    <div class="empty">집계된 실거래가 없습니다</div>
-    {% endfor %}
-  </div>
-
-</div>
-
-<!-- 2페이지: 신고가 -->
-<div class="report page" id="page2" hidden>
-  <div class="head">
-    <h1>부산 아파트 신고가 <small>({{ date_label }} 기준)</small></h1>
-  </div>
-
-  <div class="kpis">
-    <div class="kpi red">
-      <div><div class="label">신고가</div><div class="sub">동일 단지·전용면적 기존 최고가 경신</div></div>
-      <div class="value">{{ "{:,}".format(high_cnt) }}<span>건</span></div>
-    </div>
-    <div class="kpi gray">
-      <div><div class="label">{{ today_title }} 중 비중</div><div class="sub">전체 {{ "{:,}".format(today_cnt) }}건 중 신고가</div></div>
-      <div class="value">{{ high_ratio }}<span>%</span></div>
-    </div>
-  </div>
-
-  <div class="panel red">
-    <div class="panel-title"><h2>신고가{% if high5 %} Top{{ high5|length }}{% endif %}</h2><span class="hint">{% if high_cnt > 5 %}전체 {{ high_cnt }}건 중 금액 상위 5건{% else %}금액 순{% endif %}</span></div>
-    {% for r in high5 %}
-    <div class="item hi">
-      <div class="rank">{{ loop.index }}</div>
-      <div class="body"><div class="name">{{ r.apt_name }}</div><div class="meta">{{ r.meta }}</div></div>
-      <div class="prevcol"><div class="k">기존 최고가</div><div class="v">{{ r.prev }}</div></div>
-      <div class="arrow">→</div>
-      <div class="right"><div class="price">{{ r.price }}</div><div class="diff up">{{ r.diff }} 상승</div></div>
-    </div>
-    {% else %}
-    <div class="empty">오늘은 신고가 거래가 없습니다</div>
-    {% endfor %}
-  </div>
-
-</div>
-
+{% macro rk(i, c) %}<span class="rkc {{ c }} {% if i >= 3 %}lt{% endif %}">{{ i + 1 }}</span>{% endmacro %}
+{% macro tyb(t) %}<span class="ty {{ 'ty84' if t == '84타입' else 'ty59' if t == '59타입' else 'tyx' }}">{{ t[:2] if t != '기타' else '기타' }}</span>{% endmacro %}
+{% macro notices_box() %}{% if notices %}<div class="notice">{% for n in notices %}⚠ {{ n }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}{% endmacro %}
+{% macro dlt(v) %}{% if v is none %}{% elif v > 0 %}<span class="up2">▲{{ "{:,}".format(v) }}</span>{% elif v < 0 %}<span class="dn2">▼{{ "{:,}".format(-v) }}</span>{% else %}<span class="mu">-</span>{% endif %}{% endmacro %}
 {% set ind = indicator %}
-{% for pg, cls, label, period, cnt, rate, key, rk, ck in [
-  (3, 'y1', '최근 1년', ind.period_1y, ind.c1, ind.r1, 'top5_1y', 'r1', 'c1'),
-  (4, 'm3', '최근 3개월', ind.period_3m, ind.c3, ind.r3, 'top5_3m', 'r3', 'c3')] %}
-<!-- {{ pg }}페이지: 지표단지 {{ label }} -->
+{% set colcls = {'84타입': 'cs', '59타입': 'cj', '기타': 'cx'} %}
+{% set colcolor = {'84타입': 'var(--blue)', '59타입': 'var(--teal)', '기타': '#6b7686'} %}
+
+<div class="wrap">
+<div class="tabs">
+  {% for t in ['요약','매매','전월세','지표단지','사라진 매물','매물현황'] %}
+  <button class="tab {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }})">{{ t }}</button>
+  {% endfor %}
+</div>
+
+<!-- ============ 1. 요약 ============ -->
+<div class="report page" id="page1">
+  <div class="head"><h1>부산 아파트 실거래 요약 <small>{{ date_label }}</small></h1></div>
+  {{ notices_box() }}
+  <div class="cards">
+    <div class="cd b"><div class="l">매매</div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
+    <div class="cd t"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">전세 신고가 {{ rent.high_cnt }}건</div></div></div>
+    <div class="cd v2"><div class="l">사라진 매물</div><div><div class="v">{% if naver and not naver.first_run %}{{ "{:,}".format(naver.gone_cnt) }}<span>건</span>{% else %}-{% endif %}</div><div class="h mu">{% if naver and not naver.first_run %}84·59타입 · 전일 대비{% else %}집계 준비 중{% endif %}</div></div></div>
+  </div>
+  <div class="quad"><div class="colA">
+    <div class="q s"><h3>매매 Top10 <small>금액순 · 분양권 포함</small></h3>
+      {% for r in sale.top10 %}<div class="r">{{ rk(loop.index0, 'cs') }}<span class="nm">{{ tyb(r.type) }}{{ r.name }}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>
+      {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
+    </div>
+    <div class="q g"><h3>사라진 매물 Top5 <small>마지막 호가순</small></h3>
+      {% if naver and not naver.first_run %}{% for r in naver.gone_top5 %}<div class="r">{{ rk(loop.index0, 'cg') }}<span class="nm">{{ tyb(r.type) }}{{ r.name }}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>
+      {% else %}<div class="empty">사라진 매물이 없습니다</div>{% endfor %}
+      {% else %}<div class="empty">네이버 매물 집계 준비 중입니다</div>{% endif %}
+    </div>
+  </div><div class="colB">
+    <div class="q j"><h3>전월세 Top5</h3>
+      {% for r in rent.top5 %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}{{ r.name }}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
+      {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
+    </div>
+    <div class="qx"><div class="hd"><div><small>최근 3개월 · 세대수 대비</small><b>지표단지 거래 · 매물 Top5</b></div>
+      <div class="lg"><span><i class="i-g"></i>거래 회전율</span><span><i class="i-m"></i>매물 비율</span></div></div>
+      <div class="bfgrid one">{% for a in ind.top5_3m %}<div class="bf">{{ rk(loop.index0, 'cn') }}<div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span></div>
+        <div class="side l"><span class="val c-g">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-g" style="width:{{ a.bl }}%"></i></span></div><div class="axis"></div>
+        <div class="side r">{% if a.lr is not none %}<span class="bw"><i class="i-m" style="width:{{ a.br }}%"></i></span><span class="val c-m">{{ "%.2f"|format(a.lr) }}%<em>{{ a.listing }}건</em></span>{% else %}<span class="val" style="color:var(--muted)">-</span>{% endif %}</div></div>{% endfor %}</div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============ 2. 매매 / 3. 전월세 ============ -->
+{% for pg, kind, d in [(2, 'sale', sale), (3, 'rent', rent)] %}
 <div class="report page" id="page{{ pg }}" hidden>
-  <div class="head">
-    <h1>부산 지표단지 거래량 <small>{{ label }} · {{ date_label }} 기준</small></h1>
+  <div class="head"><h1>부산 아파트 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ d.title }}</small></h1></div>
+  <div class="cards c2">
+    {% if kind == 'sale' %}
+    <div class="cd b"><div class="l">{{ '전일 계약' if d.fallback else '신규 실거래' }}</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">84타입 {{ d.type_cnt['84타입'] }} · 59타입 {{ d.type_cnt['59타입'] }} · 기타 {{ d.type_cnt['기타'] }}{% if d.pre_cnt %} · 분양권 {{ d.pre_cnt }} 포함{% endif %}</div></div></div>
+    <div class="cd r"><div class="l">신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div><div class="h mu">동일 단지·타입 최고가 경신</div></div></div>
+    {% else %}
+    <div class="cd t"><div class="l">{{ '전일 계약' if d.fallback else '신규 전월세' }}</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">전세 {{ d.jeonse }} · 월세 {{ d.wolse }}</div></div></div>
+    <div class="cd r"><div class="l">전세 신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div><div class="h mu">동일 단지·타입 최고 전세 보증금 경신</div></div></div>
+    {% endif %}
   </div>
-  <div class="ind {{ cls }}">
-    <div class="ind-head">
-      <div class="eyebrow">세대수 대비 거래량 (거래 회전율) · {{ period }}</div>
-      <h2>{{ ind.count }}개 지표단지 · {{ label }}</h2>
-    </div>
-
-    <div class="big1">
-      <div class="big {{ cls }}">
-        <div><div class="t">{{ label }} 합계</div><div class="p">{{ period }} · {{ ind.count }}개 단지 · {{ "{:,}".format(ind.households) }}세대</div></div>
-        <div class="nums">
-          <div><div class="k">거래</div><div class="n">{{ "{:,}".format(cnt) }}<small>건</small></div></div>
-          <div class="sep"></div>
-          <div><div class="k">회전율</div><div class="n">{{ "%.2f"|format(rate) }}<small>%</small></div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="top1">
-      <div class="topbox {{ cls }}">
-        <h3>{{ label }} 회전율 Top5</h3>
-        {% for a in ind[key] %}
-        <div class="trow">
-          <span class="rk">{{ loop.index }}</span>
-          <div class="nm">{{ a.name }}<small>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</small></div>
-          <div class="cnt">{{ a[ck] }}건</div>
-          <div class="pct">{{ "%.2f"|format(a[rk]) }}%</div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-
+  {% macro section(k, rows, wide, kind) %}
+  <div class="sec"><h2><span class="chip" style="background:{{ colcolor[k] }}">{{ k }}</span><span class="n">{{ '금액순' if kind == 'sale' else '보증금순' }} · {{ rows|length }}건</span></h2>
+    <div class="list {% if wide %}wide{% endif %}">
+    {% for r in rows %}<div class="row">{{ rk(loop.index0, colcls[k]) }}<span class="nm">{{ r.name }}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="fl">{{ r.floor }}</span>
+      {% if kind == 'sale' %}<span class="pr">{{ r.price }}</span>{% else %}<span class="pr {{ 'w' if r.monthly else 'j' }}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span>{% endif %}</div>
+    {% else %}<div class="empty">해당 거래가 없습니다</div>{% endfor %}
+    </div></div>
+  {% endmacro %}
+  <div class="two">{{ section('84타입', d.lists['84타입'], false, kind) }}{{ section('59타입', d.lists['59타입'], false, kind) }}</div>
+  {{ section('기타', d.lists['기타'], true, kind) }}
 </div>
 {% endfor %}
 
-<!-- 5페이지: 지표단지 상세 -->
-<div class="report page p2" id="page5" hidden>
-  <div class="head">
-    <h1>부산 지표단지 거래량 상세 <small>({{ date_label }} 기준)</small></h1>
-  </div>
-  <div class="ind">
-    <div class="ind-head">
-      <div class="row">
-        <div>
-          <div class="eyebrow">{{ ind.count }}개 지표단지 · 구·군별</div>
-          <h2>지표단지별 상세</h2>
-        </div>
-        <div class="legend">
-          <span><i style="background:#0f6b5c;box-shadow:0 0 0 1.5px #fff"></i>최근 1년 ({{ ind.period_1y }})</span>
-          <span><i style="background:#f6b350"></i>최근 3개월 ({{ ind.period_3m }})</span>
-        </div>
-      </div>
+<!-- ============ 4. 지표단지 ============ -->
+<div class="report page" id="page4" hidden>
+  <div class="head"><h1>부산 지표단지 거래량 <small>{{ date_label }} 기준 · 세대수 대비</small></h1></div>
+  <div class="ind-two">
+    {% for cls, label, period, cnt, rate, key, rkey, ckey, rc in [('y1','최근 1년',ind.period_1y,ind.c1,ind.r1,'top5_1y','r1','c1','cj'),('m3','최근 3개월',ind.period_3m,ind.c3,ind.r3,'top5_3m','r3','c3','ca')] %}
+    <div class="icard {{ cls }}"><h3>{{ label }}</h3><div class="p">{{ period }} · {{ ind.count }}개 단지 · {{ "{:,}".format(ind.households) }}세대</div>
+      <div class="nums"><div><div class="k">거래</div><div class="n">{{ "{:,}".format(cnt) }}<small>건</small></div></div><div><div class="k">회전율</div><div class="n">{{ "%.2f"|format(rate) }}<small>%</small></div></div></div>
+      <div class="mini">{% for a in ind[key] %}<div class="mr">{{ rk(loop.index0, rc) }}<span class="nm">{{ a.name }}<small>{{ a.district }}</small></span><span class="c">{{ a[ckey] }}건</span><b>{{ "%.2f"|format(a[rkey]) }}%</b></div>{% endfor %}</div>
     </div>
-    <div class="tbl">
-      <div class="tbl-head"><span>구·군</span><span>단지 (세대수)</span><span class="r">최근 1년 거래 · 회전율</span><span class="r">최근 3개월 거래 · 회전율</span><span class="r">추세</span></div>
-      {% for g in ind.groups %}
-      <div class="dgroup">
-        {% for a in g['items'] %}
-        <div class="tr">
-          <span class="dist">{% if loop.first %}{{ g.district }}{% endif %}</span>
-          <div class="apt-name">{{ a.name }}<small>{{ "{:,}".format(a.households) }}세대</small></div>
-          <div class="cell y1c"><span class="ml">1년</span><div class="track"><div class="fill y1" style="width:{{ a.w1 }}%"></div></div><span class="val"><b class="y1">{{ a.c1 }}건</b> · {{ "%.2f"|format(a.r1) }}%</span></div>
-          <div class="cell m3c"><span class="ml">3개월</span><div class="track"><div class="fill m3" style="width:{{ a.w3 }}%"></div></div><span class="val"><b class="m3">{{ a.c3 }}건</b> · {{ "%.2f"|format(a.r3) }}%</span></div>
-          {% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none" style="color:var(--muted)">보합</span>{% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% endfor %}
-    </div>
+    {% endfor %}
   </div>
+  <div class="tbl"><h2>지표단지별 상세</h2>
+    <div class="tbl-head"><span>구·군</span><span>단지 (세대수)</span><span class="r">최근 1년 거래 · 회전율</span><span class="r">최근 3개월 거래 · 회전율</span><span class="r">추세</span></div>
+    {% for g in ind.groups %}<div class="dgroup">{% for a in g['items'] %}
+      <div class="tr"><span class="dist">{% if loop.first %}{{ g.district }}{% endif %}</span>
+        <div class="apt-name">{{ a.name }}<small>{{ "{:,}".format(a.households) }}세대</small></div>
+        <div class="cell y1c"><span class="ml">1년</span><div class="track"><div class="fill y1" style="width:{{ a.w1 }}%"></div></div><span class="val2"><b class="y1">{{ a.c1 }}건</b> · {{ "%.2f"|format(a.r1) }}%</span></div>
+        <div class="cell m3c"><span class="ml">3개월</span><div class="track"><div class="fill m3" style="width:{{ a.w3 }}%"></div></div><span class="val2"><b class="m3">{{ a.c3 }}건</b> · {{ "%.2f"|format(a.r3) }}%</span></div>
+        {% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}
+      </div>{% endfor %}</div>{% endfor %}
+  </div>
+</div>
 
+<!-- ============ 5. 사라진 매물 ============ -->
+<div class="report page" id="page5" hidden>
+  <div class="head"><h1>사라진 매물 <small>{% if naver %}{{ naver.prev_date }} → {{ naver.date }} · 네이버부동산 매매{% else %}네이버부동산 매매{% endif %}</small></h1></div>
+  {% if naver and not naver.first_run %}
+  <div class="cards">
+    <div class="cd v2"><div class="l">사라진 매물 <span>84타입 {{ naver.gone_type['84타입'] }} · 59타입 {{ naver.gone_type['59타입'] }}</span></div><div><div class="v">{{ "{:,}".format(naver.gone_cnt) }}<span>건</span></div><div class="h mu">분양권 {{ naver.gone_pre }}건 포함</div></div></div>
+    <div class="cd g"><div class="l">가격 바꿔 재등록</div><div><div class="v">{{ "{:,}".format(naver.relisted) }}<span>건</span></div><div class="h mu">사라진 매물에서 제외</div></div></div>
+    <div class="cd b"><div class="l">신규 등록</div><div><div class="v">{{ "{:,}".format(naver.new) }}<span>건</span></div><div class="h mu">전일 대비 새 매물</div></div></div>
+  </div>
+  <div class="two">
+    {% for k in ['84타입', '59타입'] %}
+    <div class="sec"><h2><span class="chip" style="background:{{ colcolor[k] }}">{{ k }}</span><span class="n">마지막 호가순 · {{ naver.gone_lists[k]|length }}건</span></h2><div class="list">
+      {% for r in naver.gone_lists[k] %}<div class="row">{{ rk(loop.index0, 'cg') }}<span class="nm">{{ r.name }}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}</span><span class="fl">{{ r.floor }}</span><span class="pr v">{{ r.price }}</span></div>
+      {% else %}<div class="empty">사라진 매물이 없습니다</div>{% endfor %}</div></div>
+    {% endfor %}
+  </div>
+  {% if naver.gone_by_gu %}
+  <div class="qx"><div class="hd"><div><small>84·59타입 · 전일 대비 · 사라진 매물 많은 순</small><b>구별 사라진 매물 · 신규 등록</b></div>
+    <div class="lg"><span><i class="i-v"></i>사라진 매물</span><span><i class="i-b"></i>신규 등록</span></div></div>
+    <div class="bfgrid" style="--rows:{{ ((naver.gone_by_gu|length) / 2)|round(0, 'ceil')|int }}">{% for g in naver.gone_by_gu %}<div class="bf short">{{ rk(loop.index0, 'cn') }}<div class="who"><b>{{ g.name }}</b></div>
+      <div class="side l"><span class="val c-v">{{ g.gone }}건</span><span class="bw"><i class="i-v" style="width:{{ g.bl }}%"></i></span></div><div class="axis"></div>
+      <div class="side r"><span class="bw"><i class="i-b" style="width:{{ g.br }}%"></i></span><span class="val c-b">{{ g.new }}건</span></div></div>{% endfor %}</div>
+  </div>
+  {% endif %}
+  {% elif naver %}
+  <div class="empty">첫 수집일({{ naver.date }})이라 비교할 전날 매물이 없습니다. 내일부터 사라진 매물이 집계됩니다.</div>
+  {% else %}
+  <div class="empty">네이버 매물 집계 준비 중입니다.</div>
+  {% endif %}
+</div>
+
+<!-- ============ 6. 매물현황 ============ -->
+<div class="report page" id="page6" hidden>
+  <div class="head"><h1>부산 아파트 매물현황 <small>{% if naver %}{{ naver.date }} · {% endif %}네이버부동산 · 분양권 포함</small></h1></div>
+  {% if naver %}
+  <div class="cards">
+    {% for cls, label, i in [('b','매매 매물',0),('t','전세 매물',1),('a','월세 매물',2)] %}
+    <div class="cd {{ cls }}"><div class="l">{{ label }}</div><div><div class="v">{{ "{:,}".format(naver.tot[i]) }}<span>건</span></div><div class="h mu">{% if naver.dtot %}전일 대비 {{ dlt(naver.dtot[i]) }}{% else %}&nbsp;{% endif %}</div></div></div>
+    {% endfor %}
+  </div>
+  <div class="qx" style="margin-bottom:14px"><div class="hd"><div><small>{{ naver.gus|length }}개 구·군 · 아파트 세대수 대비 · 매매 매물 비율 순</small><b>구별 매물 비율</b></div>
+    <div class="lg"><span><i class="i-b"></i>매매 매물</span><span><i class="i-g"></i>전월세 매물</span></div></div>
+    <div class="bfgrid" style="--rows:{{ ((naver.gus|length) / 2)|round(0, 'ceil')|int }}">{% for g in naver.gus %}<div class="bf">{{ rk(loop.index0, 'cn') }}<div class="who"><b>{{ g.name }}</b><span>아파트 {{ "{:,}".format(g.hh) }}세대</span></div>
+      <div class="side l"><span class="val c-b">{{ "%.2f"|format(g.rd) }}%<em>{{ "{:,}".format(g.deal) }}건 {{ dlt(g.dd) }}</em></span><span class="bw"><i class="i-b" style="width:{{ g.bl }}%"></i></span></div><div class="axis"></div>
+      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ g.br }}%"></i></span><span class="val c-g">{{ "%.2f"|format(g.rj) }}%<em>{{ "{:,}".format(g.jw) }}건 {{ dlt(g.dj) }}</em></span></div></div>{% endfor %}</div>
+    <div class="foot2">세대수: 네이버부동산 단지 정보의 아파트 세대수 합계</div>
+  </div>
+  <div class="qx"><div class="hd"><div><small>{{ ind.count }}개 지표단지 · 세대수 대비 · 3개월 거래 회전율 순</small><b>지표단지 거래 · 매물</b></div>
+    <div class="lg"><span><i class="i-g"></i>거래 회전율 (3개월)</span><span><i class="i-m"></i>매매 매물 비율</span></div></div>
+    <div class="bfgrid" style="--rows:{{ ((ind.by_r3|length) / 2)|round(0, 'ceil')|int }}">{% for a in ind.by_r3 %}<div class="bf">{{ rk(loop.index0, 'cn') }}<div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span></div>
+      <div class="side l"><span class="val c-g">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-g" style="width:{{ a.bl }}%"></i></span></div><div class="axis"></div>
+      <div class="side r">{% if a.lr is not none %}<span class="bw"><i class="i-m" style="width:{{ a.br }}%"></i></span><span class="val c-m">{{ "%.2f"|format(a.lr) }}%<em>{{ a.listing }}건</em></span>{% else %}<span class="val" style="color:var(--muted)">-</span>{% endif %}</div></div>{% endfor %}</div>
+  </div>
+  {% else %}
+  <div class="empty">네이버 매물 집계 준비 중입니다.</div>
+  {% endif %}
 </div>
 </div>
 
 <div class="actions">
-  <button class="btn" id="share-btn" onclick="shareReport()">이미지 공유</button>
-  <button class="btn light" id="save-btn" onclick="saveReport()">이미지 저장</button>
+  <button class="btn" id="share-btn" onclick="shareReport()">공유하기</button>
+  <button class="btn" id="save-btn" onclick="saveReport()">저장하기</button>
 </div>
 <div class="actions-note">부산 · 20{{ date_label|replace(".", "-") }}</div>
 
-<!-- 공유가 막힌 경우(브라우저 제한)에만 쓰는 대체 화면 -->
 <div class="save-sheet" id="save-sheet" hidden>
   <div class="msg">이미지를 <b>길게 눌러</b> 저장하거나<br>아래 <b>공유하기</b>를 다시 눌러주세요</div>
   <div class="imgwrap"><img id="save-img" alt="리포트 이미지"></div>
   <div class="acts">
     <button class="btn" onclick="shareReport(true)">공유하기</button>
-    <button class="btn light" onclick="closeSheet()">닫기</button>
+    <button class="btn" onclick="closeSheet()">닫기</button>
   </div>
 </div>
 
@@ -462,17 +389,17 @@ function showPage(n) {
   currentPage = n;
   document.querySelectorAll('.page').forEach(el => { el.hidden = el.id !== 'page' + n; });
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.page == n));
-  try { localStorage.setItem('busanPage', n); } catch (e) {}
+  try { localStorage.setItem('busanPage2', n); } catch (e) {}
   prerender();
 }
 
-const PAGE_NAME = { 1: '1_최고거래가', 2: '2_신고가', 3: '3_지표단지_1년', 4: '4_지표단지_3개월', 5: '5_지표단지_상세' };
-const DATE = '20{{ date_label|replace(".", "") }}';
-const PAGE_FILE = { 1: '1_top_price', 2: '2_new_high', 3: '3_indicator_1y', 4: '4_indicator_3m', 5: '5_indicator_detail' };
-const fileName = n => `부산아파트_${DATE}_${PAGE_NAME[n]}.png`;      // 공유창에 보이는 이름
-const saveName = n => `busan_apt_${DATE}_${PAGE_FILE[n]}.png`;       // 다운로드 파일명 (브라우저 호환을 위해 영문)
+const PAGE_NAME = { 1: '1_요약', 2: '2_매매', 3: '3_전월세', 4: '4_지표단지', 5: '5_사라진매물', 6: '6_매물현황' };
+const PAGE_FILE = { 1: '1_summary', 2: '2_sale', 3: '3_rent', 4: '4_indicator', 5: '5_gone', 6: '6_listings' };
+const DATE = '{{ date_full }}';
+const fileName = n => `부산아파트_${DATE}_${PAGE_NAME[n]}.png`;   // 공유창에 보이는 이름
+const saveName = n => `busan_apt_${DATE}_${PAGE_FILE[n]}.png`;     // 다운로드 파일명 (영문)
 
-// 페이지별 이미지 캐시: 탭을 열면 미리 만들어 두어, 공유 버튼을 누르는 즉시 공유창이 뜨도록 함
+// 페이지별 이미지 캐시: 탭을 열면 미리 만들어 두어 공유 버튼을 누르면 바로 공유창이 뜨도록 함
 let cache = {}, cacheWidth = 0;
 function render(n) {
   const w = document.documentElement.clientWidth;
@@ -480,7 +407,7 @@ function render(n) {
   if (!cache[n]) {
     cache[n] = (async () => {
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
-      const el = document.getElementById('page' + n);   // 둥근 네모 박스(리포트 카드) 영역만 캡처
+      const el = document.getElementById('page' + n);   // 둥근 리포트 카드 영역만 캡처
       const canvas = await html2canvas(el, {
         scale: Math.max(2, 1080 / el.offsetWidth), backgroundColor: null, useCORS: true,
         windowWidth: w, scrollX: 0, scrollY: -window.scrollY
@@ -495,7 +422,7 @@ let prerenderTimer;
 function prerender() { clearTimeout(prerenderTimer); prerenderTimer = setTimeout(() => render(currentPage).catch(() => {}), 400); }
 window.addEventListener('load', prerender);
 window.addEventListener('resize', prerender);
-try { const saved = +localStorage.getItem('busanPage'); if (saved >= 2 && saved <= 5) showPage(saved); } catch (e) {}
+try { const saved = +localStorage.getItem('busanPage2'); if (saved >= 2 && saved <= 6) showPage(saved); } catch (e) {}
 
 function busy(id, on, text) {
   const b = document.getElementById(id);
@@ -519,9 +446,8 @@ async function shareReport(fromSheet) {
     await navigator.share({ files: [file] });
     if (fromSheet) closeSheet();
   } catch (e) {
-    if (e.name === 'AbortError') return;          // 사용자가 공유창을 닫음
+    if (e.name === 'AbortError') return;
     if (e.name === 'NotAllowedError' && !fromSheet) {
-      // 이미지 생성이 길어져 브라우저가 공유를 막은 경우: 미리보기에서 한 번 더 누르면 공유됨
       document.getElementById('save-img').src = URL.createObjectURL(blob);
       document.getElementById('save-sheet').hidden = false;
       return;
@@ -545,7 +471,6 @@ function download(blob, name) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
-
 function closeSheet() { document.getElementById('save-sheet').hidden = true; }
 </script>
 </body>
