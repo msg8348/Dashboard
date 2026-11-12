@@ -57,7 +57,11 @@ class Naver:
         self.fails = 0
 
     def login(self):
-        r = self.s.get(BASE + "/complexes", timeout=20)
+        try:
+            r = self.s.get(BASE + "/complexes", timeout=20)
+        except requests.RequestException as e:
+            print(f"[token] 접속 실패: {type(e).__name__}")
+            return
         print(f"[token] GET /complexes -> {r.status_code}, {len(r.text)} bytes")
         m = re.search(r'"token"\s*:\s*"([A-Za-z0-9._-]+)"', r.text)
         if m:
@@ -193,10 +197,26 @@ def diff(prev_units, units):
     return gone, relisted, new, new_by_gu
 
 
+def probe():
+    """접속 진단: 네이버 부동산 주요 주소에 접속되는지 확인"""
+    urls = ["https://land.naver.com/", "https://new.land.naver.com/", "https://m.land.naver.com/",
+            "https://fin.land.naver.com/", "https://new.land.naver.com/api/regions/list?cortarNo=2600000000",
+            "https://m.land.naver.com/map/getRegionList?cortarNo=2600000000", "https://www.naver.com/"]
+    for u in urls:
+        t0 = time.time()
+        try:
+            r = requests.get(u, headers={"User-Agent": UA, "Referer": "https://new.land.naver.com/"}, timeout=15)
+            print(f"[probe] {r.status_code} {time.time()-t0:.1f}s {u} {r.text[:100]!r}")
+        except requests.RequestException as e:
+            print(f"[probe] FAIL {time.time()-t0:.1f}s {u} {type(e).__name__}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--test", action="store_true")
     args = ap.parse_args()
+    if args.test:
+        probe()
 
     started = time.time()
     nv = Naver(delay=0.6)
