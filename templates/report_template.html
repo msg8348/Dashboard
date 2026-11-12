@@ -139,6 +139,15 @@
   .big.y1 .t, .big.y1 .n { color: var(--teal); }
   .big.m3 .t, .big.m3 .n { color: var(--amber); }
   .big .sep { width: 1px; align-self: stretch; background: var(--line); }
+  .big1 { padding: 18px 22px 0; }
+  .big1 .big .nums .n { font-size: 44px; }
+  .top1 { padding: 14px 22px 22px; }
+  .top1 .trow { grid-template-columns: 28px 1fr 120px 110px; padding: 12px 0; }
+  .top1 .trow .nm { font-size: 17px; }
+  .top1 .trow .pct { font-size: 22px; }
+  .top1 .trow .cnt { font-size: 14px; }
+  .ind.m3 { background: var(--amber-bg); border-color: #f3dfb8; }
+  .ind.m3 .ind-head { background: #b86e0a; }
   .top2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px 22px 22px; }
   .topbox { background: #fff; border-radius: 16px; padding: 16px 20px 8px; }
   .topbox h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
@@ -174,7 +183,7 @@
     .tabs { flex: 1 1 auto; }
     .tabs { width: 100%; }
     .tab { flex: 1; padding: 9px 4px; font-size: 12.5px; white-space: nowrap; }
-    .tabs { display: grid; grid-template-columns: 1fr 1fr; }
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); }
     .item.hi { flex-wrap: wrap; gap: 8px 10px; }
     .item.hi .body { flex: 1 1 calc(100% - 40px); }
     .item.hi .prevcol { margin-left: 36px; text-align: left; }
@@ -211,6 +220,12 @@
     .ind-head h2 { font-size: 21px; }
     .ind-head .row { flex-direction: column; align-items: flex-start; gap: 10px; }
     .legend { flex-wrap: wrap; gap: 6px 14px; font-size: 12px; }
+    .big1, .top1 { padding-left: 12px; padding-right: 12px; }
+    .big1 .big .nums .n { font-size: 30px; }
+    .top1 .trow { grid-template-columns: 22px 1fr 48px 62px; padding: 10px 0; }
+    .top1 .trow .nm { font-size: 14.5px; }
+    .top1 .trow .pct { font-size: 16px; }
+    .top1 .trow .cnt { font-size: 12.5px; }
     .big2, .top2 { grid-template-columns: 1fr; gap: 10px; padding-left: 12px; padding-right: 12px; }
     .big { padding: 14px 16px; flex-wrap: wrap; gap: 10px; }
     .big .nums .n { font-size: 28px; }
@@ -255,8 +270,9 @@
   <div class="tabs">
     <button class="tab on" data-page="1" onclick="showPage(1)">1 · 최고거래가</button>
     <button class="tab" data-page="2" onclick="showPage(2)">2 · 신고가</button>
-    <button class="tab" data-page="3" onclick="showPage(3)">3 · 지표단지</button>
-    <button class="tab" data-page="4" onclick="showPage(4)">4 · 지표단지 상세</button>
+    <button class="tab" data-page="3" onclick="showPage(3)">3 · 지표 1년</button>
+    <button class="tab" data-page="4" onclick="showPage(4)">4 · 지표 3개월</button>
+    <button class="tab" data-page="5" onclick="showPage(5)">5 · 지표 상세</button>
   </div>
   <button class="btn" id="save-btn" onclick="downloadReport()">⬇ 이 페이지 이미지 저장</button>
 </div>
@@ -340,46 +356,36 @@
   </div>
 </div>
 
-<!-- 3페이지: 지표단지 거래량 요약 -->
 {% set ind = indicator %}
-<div class="report page" id="page3" hidden>
+{% for pg, cls, label, period, cnt, rate, key, rk, ck in [
+  (3, 'y1', '최근 1년', ind.period_1y, ind.c1, ind.r1, 'top5_1y', 'r1', 'c1'),
+  (4, 'm3', '최근 3개월', ind.period_3m, ind.c3, ind.r3, 'top5_3m', 'r3', 'c3')] %}
+<!-- {{ pg }}페이지: 지표단지 {{ label }} -->
+<div class="report page" id="page{{ pg }}" hidden>
   <div class="head">
-    <h1>부산 지표단지 거래량 <small>({{ date_label }} 기준)</small></h1>
+    <h1>부산 지표단지 거래량 <small>{{ label }} · {{ date_label }} 기준</small></h1>
     <div class="src">국토교통부 실거래가 공개시스템<br>계약 해제 건 제외</div>
   </div>
-  <div class="ind">
+  <div class="ind {{ cls }}">
     <div class="ind-head">
-      <div class="row">
-        <div>
-          <div class="eyebrow">세대수 대비 거래량 (거래 회전율)</div>
-          <h2>{{ ind.count }}개 지표단지 요약</h2>
+      <div class="eyebrow">세대수 대비 거래량 (거래 회전율) · {{ period }}</div>
+      <h2>{{ ind.count }}개 지표단지 · {{ label }}</h2>
+    </div>
+
+    <div class="big1">
+      <div class="big {{ cls }}">
+        <div><div class="t">{{ label }} 합계</div><div class="p">{{ period }} · {{ ind.count }}개 단지 · {{ "{:,}".format(ind.households) }}세대</div></div>
+        <div class="nums">
+          <div><div class="k">거래</div><div class="n">{{ "{:,}".format(cnt) }}<small>건</small></div></div>
+          <div class="sep"></div>
+          <div><div class="k">회전율</div><div class="n">{{ "%.2f"|format(rate) }}<small>%</small></div></div>
         </div>
       </div>
     </div>
 
-    <div class="big2">
-      <div class="big y1">
-        <div><div class="t">최근 1년</div><div class="p">{{ ind.period_1y }} · {{ ind.count }}개 단지</div></div>
-        <div class="nums">
-          <div><div class="k">거래</div><div class="n">{{ "{:,}".format(ind.c1) }}<small>건</small></div></div>
-          <div class="sep"></div>
-          <div><div class="k">회전율</div><div class="n">{{ "%.2f"|format(ind.r1) }}<small>%</small></div></div>
-        </div>
-      </div>
-      <div class="big m3">
-        <div><div class="t">최근 3개월</div><div class="p">{{ ind.period_3m }} · {{ ind.count }}개 단지</div></div>
-        <div class="nums">
-          <div><div class="k">거래</div><div class="n">{{ "{:,}".format(ind.c3) }}<small>건</small></div></div>
-          <div class="sep"></div>
-          <div><div class="k">회전율</div><div class="n">{{ "%.2f"|format(ind.r3) }}<small>%</small></div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="top2">
-      {% for key, cls, title, rk, ck in [('top5_1y','y1','최근 1년 회전율 Top5','r1','c1'), ('top5_3m','m3','최근 3개월 회전율 Top5','r3','c3')] %}
+    <div class="top1">
       <div class="topbox {{ cls }}">
-        <h3>{{ title }}</h3>
+        <h3>{{ label }} 회전율 Top5</h3>
         {% for a in ind[key] %}
         <div class="trow">
           <span class="rk">{{ loop.index }}</span>
@@ -389,9 +395,8 @@
         </div>
         {% endfor %}
       </div>
-      {% endfor %}
     </div>
-    <div class="more">단지별 상세 내역은 4페이지(지표단지 상세)에서 확인하세요</div>
+    <div class="more">단지별 상세 내역은 5페이지(지표단지 상세)에서 확인하세요</div>
   </div>
 
   <div class="foot">
@@ -399,9 +404,10 @@
     <span>{{ date_label }} 자동 생성</span>
   </div>
 </div>
+{% endfor %}
 
-<!-- 4페이지: 지표단지 상세 -->
-<div class="report page p2" id="page4" hidden>
+<!-- 5페이지: 지표단지 상세 -->
+<div class="report page p2" id="page5" hidden>
   <div class="head">
     <h1>부산 지표단지 거래량 상세 <small>({{ date_label }} 기준)</small></h1>
     <div class="src">세대수 대비 거래량 (거래 회전율)<br>국토교통부 실거래 · 계약 해제 건 제외</div>
@@ -461,9 +467,9 @@ function showPage(n) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.page == n));
   try { localStorage.setItem('busanPage', n); } catch (e) {}
 }
-try { const saved = +localStorage.getItem('busanPage'); if (saved >= 2 && saved <= 4) showPage(saved); } catch (e) {}
+try { const saved = +localStorage.getItem('busanPage'); if (saved >= 2 && saved <= 5) showPage(saved); } catch (e) {}
 
-const PAGE_FILE = { 1: '1_top_price', 2: '2_new_high', 3: '3_indicator', 4: '4_indicator_detail' };
+const PAGE_FILE = { 1: '1_top_price', 2: '2_new_high', 3: '3_indicator_1y', 4: '4_indicator_3m', 5: '5_indicator_detail' };
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
 let lastBlob = null, lastName = '', lastUrl = null;
 
