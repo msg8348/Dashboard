@@ -2,79 +2,243 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>부산 아파트 실거래 대시보드</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>부산 아파트 매매 ({{ date_label }})</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
+  :root {
+    --ink: #17202c; --ink-2: #4a5566; --muted: #8a94a3; --line: #e6eaef;
+    --blue: #2754d6; --blue-bg: #ebf1ff;
+    --red: #e0472c; --red-bg: #fff1ec;
+    --teal: #0f6b5c; --teal-2: #5fb3a1; --teal-bg: #e5f4f0;
+    --amber: #e08a14; --amber-bg: #fdf3e2;
+    --panel: #f7f9fb;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Malgun Gothic', sans-serif; background: #f4f6f9; padding: 24px; display: flex; flex-direction: column; align-items: center; }
-  .btn-wrapper { width: 750px; display: flex; justify-content: flex-end; margin-bottom: 12px; }
-  .download-btn { background-color: #3182ce; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
-  .download-btn:hover { background-color: #2b6cb0; }
-  .container { background: #ffffff; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 750px; }
-  .header-title { font-size: 24px; font-weight: bold; color: #111; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
-  .summary-grid { display: flex; gap: 12px; margin-bottom: 24px; }
-  .card { flex: 1; padding: 16px; border-radius: 12px; text-align: center; }
-  .card-blue { background-color: #ebf8ff; color: #2b6cb0; }
-  .card-red { background-color: #fff5f5; color: #c53030; }
-  .card-green { background-color: #f0fff4; color: #276749; }
-  .card-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-  .card-value { font-size: 24px; font-weight: 800; }
-  .section-grid { display: flex; gap: 16px; margin-bottom: 24px; }
-  .half-box { flex: 1; background: #f7fafc; border-radius: 12px; padding: 18px; border: 1px solid #edf2f7; }
-  .section-title { font-size: 16px; font-weight: bold; margin-bottom: 14px; color: #2d3748; }
-  .list-item { display: flex; justify-content: space-between; font-size: 13px; padding: 7px 0; border-bottom: 1px dashed #cbd5e0; }
-  .rank-badge { font-weight: bold; margin-right: 6px; color: #4a5568; }
-  .indicator-box { background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #edf2f7; }
-  .district-title { font-weight: bold; color: #2b6cb0; margin-top: 14px; font-size: 14px; }
-  .apt-item { font-size: 13px; margin-left: 12px; color: #4a5568; margin-top: 4px; }
-  .footer-text { margin-top: 20px; font-size: 12px; color: #a0aec0; text-align: center; }
+  body {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    background: #eef1f4; color: var(--ink); padding: 24px 16px 48px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .toolbar { width: 1080px; margin: 0 auto 14px; display: flex; justify-content: flex-end; gap: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; background: var(--ink); color: #fff;
+    border: 0; padding: 11px 18px; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .btn:hover { background: #2c3949; }
+  .btn:disabled { opacity: .6; cursor: progress; }
+  .scroller { overflow-x: auto; }
+
+  /* ===== 리포트 (이미지로 저장되는 영역) ===== */
+  .report {
+    width: 1080px; margin: 0 auto; background: #fff; border-radius: 28px;
+    padding: 44px 40px 32px; border: 1px solid #dfe5ea;
+  }
+  .head { display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 20px; border-bottom: 2px solid var(--line); margin-bottom: 24px; }
+  .head h1 { font-size: 38px; font-weight: 800; }
+  .head h1 small { font-size: 22px; font-weight: 700; color: var(--ink-2); margin-left: 6px; }
+  .head .src { font-size: 13px; color: var(--muted); text-align: right; line-height: 1.5; }
+  .notice { background: var(--amber-bg); color: #9a5b00; font-size: 13px; font-weight: 600; padding: 10px 14px; border-radius: 10px; margin-bottom: 18px; }
+
+  /* 1단: KPI */
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+  .kpi { border-radius: 20px; padding: 22px 26px; display: flex; justify-content: space-between; align-items: center; }
+  .kpi .label { font-size: 17px; font-weight: 700; }
+  .kpi .sub { font-size: 13px; font-weight: 500; margin-top: 6px; opacity: .8; }
+  .kpi .value { font-size: 48px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .kpi .value span { font-size: 26px; margin-left: 2px; }
+  .kpi.blue { background: var(--blue-bg); color: var(--blue); }
+  .kpi.red { background: var(--red-bg); color: var(--red); }
+
+  /* 2단: Top10 / 신고가 */
+  .row2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; margin-bottom: 22px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 22px 24px; }
+  .panel.red { background: #fffaf8; border-color: #f7ddd4; }
+  .panel-title { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .panel-title h2 { font-size: 22px; font-weight: 800; }
+  .panel-title .hint { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .item:last-child { border-bottom: 0; }
+  .rank { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: #dfe7fb; color: var(--blue); }
+  .rank.top { background: var(--blue); color: #fff; }
+  .panel.red .rank { background: var(--red); color: #fff; }
+  .item .body { flex: 1; min-width: 0; }
+  .item .name { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .meta { font-size: 12px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .right { text-align: right; flex: none; }
+  .item .price { font-size: 18px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
+  .panel.red .item .price { color: var(--red); }
+  .item .diff { font-size: 11.5px; color: var(--muted); margin-top: 3px; font-weight: 600; }
+  .item .diff.up { color: var(--red); }
+  .empty { display: grid; place-items: center; min-height: 180px; color: var(--muted); font-size: 15px; font-weight: 600; text-align: center; line-height: 1.6; }
+
+  /* 3단: 지표단지 */
+  .ind { border-radius: 22px; background: var(--teal-bg); border: 1px solid #cfe7e0; overflow: hidden; }
+  .ind-head { background: var(--teal); color: #fff; padding: 22px 26px 20px; }
+  .ind-head .eyebrow { font-size: 13px; opacity: .8; font-weight: 600; }
+  .ind-head h2 { font-size: 26px; font-weight: 800; margin-top: 4px; }
+  .ind-head .row { display: flex; justify-content: space-between; align-items: flex-end; }
+  .legend { display: flex; gap: 16px; font-size: 13px; font-weight: 600; }
+  .legend i { display: inline-block; width: 22px; height: 8px; border-radius: 4px; margin-right: 6px; vertical-align: middle; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 18px 22px 4px; }
+  .stat { background: #fff; border-radius: 14px; padding: 14px 16px; }
+  .stat .k { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .stat .v { font-size: 22px; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .stat .v small { font-size: 13px; font-weight: 600; color: var(--ink-2); margin-left: 4px; }
+  .stat .v.t1 { color: var(--teal); }
+  .stat .v.t3 { color: var(--amber); }
+  .stat .v.nm { font-size: 16px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .tbl { padding: 14px 22px 20px; }
+  .tbl-head, .tr { display: grid; grid-template-columns: 74px 1fr 250px 250px 64px; align-items: center; column-gap: 14px; }
+  .tbl-head { font-size: 12px; color: var(--muted); font-weight: 700; padding: 0 16px 8px; }
+  .tbl-head .r { text-align: right; }
+  .dgroup { background: #fff; border-radius: 14px; padding: 4px 16px; margin-bottom: 8px; }
+  .dgroup:last-child { margin-bottom: 0; }
+  .tr { padding: 9px 0; border-top: 1px solid #edf1f3; }
+  .tr:first-child { border-top: 0; }
+  .tr .dist { font-size: 14px; font-weight: 800; color: var(--teal); }
+  .apt-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .apt-name small { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 5px; }
+  .cell { display: grid; grid-template-columns: 1fr 104px; align-items: center; gap: 8px; }
+  .track { height: 10px; background: #eef2f4; border-radius: 5px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 5px; }
+  .fill.y1 { background: var(--teal); }
+  .fill.m3 { background: var(--amber); }
+  .val { font-size: 13px; font-weight: 600; color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .val b { font-weight: 800; }
+  .val b.y1 { color: var(--teal); }
+  .val b.m3 { color: var(--amber); }
+  .trend { justify-self: end; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 6px; white-space: nowrap; }
+  .trend.up { background: var(--red-bg); color: var(--red); }
+  .trend.down { background: #eaf0f8; color: #4b6a99; }
+
+  .foot { display: flex; justify-content: space-between; margin-top: 18px; font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
-<div class="btn-wrapper">
-  <button class="download-btn" onclick="downloadReport()">🖼️ 리포트 이미지 저장</button>
+<div class="toolbar">
+  <button class="btn" id="save-btn" onclick="downloadReport()">⬇ 이미지 저장</button>
 </div>
-<div class="container" id="report-container">
-  <div class="header-title">부산 아파트 매매 ({{ date_label }} 기준)</div>
-  <div class="summary-grid">
-    <div class="card card-blue"><div class="card-title">{{ date_label }} 실거래</div><div class="card-value">{{ today_cnt }}건</div></div>
-    <div class="card card-red"><div class="card-title">신고가</div><div class="card-value">{{ high_cnt }}건</div></div>
-    <div class="card card-green"><div class="card-title">최근 3개월 월평균</div><div class="card-value">{{ avg_3m }}건</div></div>
+
+<div class="scroller">
+<div class="report" id="report">
+  <div class="head">
+    <h1>부산 아파트 매매 <small>({{ date_label }} 기준)</small></h1>
+    <div class="src">국토교통부 실거래가 공개시스템<br>계약 해제 건 제외</div>
   </div>
-  <div class="section-grid">
-    <div class="half-box">
-      <div class="section-title">🏆 최고 거래가 Top10</div>
-      {% for item in top10_list %}
-      <div class="list-item"><span><span class="rank-badge">{{ loop.index }}</span>{{ item.apt_name }}</span><b>{{ item.price }}</b></div>
+
+  {% if notice %}<div class="notice">⚠ {{ notice }}</div>{% endif %}
+
+  <!-- 1단: 오늘 실거래 / 신고가 -->
+  <div class="kpis">
+    <div class="kpi blue">
+      <div><div class="label">{{ today_title }}</div><div class="sub">{{ today_note }}</div></div>
+      <div class="value">{{ "{:,}".format(today_cnt) }}<span>건</span></div>
+    </div>
+    <div class="kpi red">
+      <div><div class="label">신고가</div><div class="sub">동일 단지·평형 기존 최고가 경신{% if today_cnt %} · 비중 {{ high_ratio }}%{% endif %}</div></div>
+      <div class="value">{{ "{:,}".format(high_cnt) }}<span>건</span></div>
+    </div>
+  </div>
+
+  <!-- 2단: 최고가 Top10 / 신고가 -->
+  <div class="row2">
+    <div class="panel">
+      <div class="panel-title"><h2>최고 거래가 Top10</h2><span class="hint">금액 순 · 기존 최고가 대비</span></div>
+      {% for r in top10 %}
+      <div class="item">
+        <div class="rank {% if loop.index <= 3 %}top{% endif %}">{{ loop.index }}</div>
+        <div class="body"><div class="name">{{ r.apt_name }}</div><div class="meta">{{ r.meta }}</div></div>
+        <div class="right"><div class="price">{{ r.price }}</div><div class="diff {% if r.up %}up{% endif %}">{% if r.diff == '첫 거래' %}비교 거래 없음{% else %}최고가 대비 {{ r.diff }}{% endif %}</div></div>
+      </div>
+      {% else %}
+      <div class="empty">집계된 실거래가 없습니다</div>
       {% endfor %}
     </div>
-    <div class="half-box">
-      <div class="section-title">🔥 신고가 Top5</div>
-      {% for item in high5_list %}
-      <div class="list-item"><span><span class="rank-badge">{{ loop.index }}</span>{{ item.apt_name }}</span><b style="color: #c53030;">{{ item.price }}</b></div>
+    <div class="panel red">
+      <div class="panel-title"><h2>신고가{% if high5 %} Top{{ high5|length }}{% endif %}</h2><span class="hint">{% if high_cnt > 5 %}전체 {{ high_cnt }}건 중 상위 5건{% else %}금액 순{% endif %}</span></div>
+      {% for r in high5 %}
+      <div class="item">
+        <div class="rank">{{ loop.index }}</div>
+        <div class="body"><div class="name">{{ r.apt_name }}</div><div class="meta">{{ r.meta }}</div></div>
+        <div class="right"><div class="price">{{ r.price }}</div><div class="diff up">최고가 대비 {{ r.diff }}</div></div>
+      </div>
+      {% else %}
+      <div class="empty">오늘은 신고가 거래가<br>없습니다</div>
       {% endfor %}
     </div>
   </div>
-  <div class="indicator-box">
-    <div class="section-title">📊 부산 주요 구별 지표단지 거래 회전율 (최근 3개월)</div>
-    {% for district, apts in indicator_data.items() %}
-    <div class="district-title">• {{ district }}</div>
-    {% for apt in apts %}
-    <div class="apt-item">- {{ apt.name }} ({{ apt.households }}세대): {{ apt.deals }}건 ({{ apt.turnover }}%)</div>
-    {% endfor %}
-    {% endfor %}
+
+  <!-- 3단: 지표단지 거래 회전율 -->
+  {% set ind = indicator %}
+  <div class="ind">
+    <div class="ind-head">
+      <div class="row">
+        <div>
+          <div class="eyebrow">세대수 대비 거래량 (거래 회전율)</div>
+          <h2>부산 지표단지 거래량</h2>
+        </div>
+        <div class="legend">
+          <span><i style="background:#0f6b5c;box-shadow:0 0 0 1.5px #fff"></i>최근 1년 ({{ ind.period_1y }})</span>
+          <span><i style="background:#f6b350"></i>최근 3개월 ({{ ind.period_3m }})</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">지표단지 {{ ind.count }}곳 · 총 세대</div><div class="v">{{ "{:,}".format(ind.households) }}<small>세대</small></div></div>
+      <div class="stat"><div class="k">최근 1년 거래 · 회전율</div><div class="v t1">{{ "{:,}".format(ind.c1) }}건<small>{{ "%.2f"|format(ind.r1) }}%</small></div></div>
+      <div class="stat"><div class="k">최근 3개월 거래 · 회전율</div><div class="v t3">{{ "{:,}".format(ind.c3) }}건<small>{{ "%.2f"|format(ind.r3) }}%</small></div></div>
+      <div class="stat"><div class="k">1년 회전율 1위</div><div class="v nm">{% if ind.best and ind.best.c1 %}{{ ind.best.name }}<br><small style="margin:0">{{ "%.2f"|format(ind.best.r1) }}% · {{ ind.best.c1 }}건</small>{% else %}-{% endif %}</div></div>
+    </div>
+
+    <div class="tbl">
+      <div class="tbl-head"><span>구·군</span><span>단지 (세대수)</span><span class="r">최근 1년 거래 · 회전율</span><span class="r">최근 3개월 거래 · 회전율</span><span class="r">추세</span></div>
+      {% for g in ind.groups %}
+      <div class="dgroup">
+        {% for a in g['items'] %}
+        <div class="tr">
+          <span class="dist">{% if loop.first %}{{ g.district }}{% endif %}</span>
+          <div class="apt-name">{{ a.name }}<small>{{ "{:,}".format(a.households) }}세대</small></div>
+          <div class="cell"><div class="track"><div class="fill y1" style="width:{{ a.w1 }}%"></div></div><span class="val"><b class="y1">{{ a.c1 }}건</b> · {{ "%.2f"|format(a.r1) }}%</span></div>
+          <div class="cell"><div class="track"><div class="fill m3" style="width:{{ a.w3 }}%"></div></div><span class="val"><b class="m3">{{ a.c3 }}건</b> · {{ "%.2f"|format(a.r3) }}%</span></div>
+          {% if a.trend == 'up' %}<span class="trend up">▲ 증가</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소</span>{% else %}<span class="trend" style="color:var(--muted)">-</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
   </div>
-  <div class="footer-text">⚠️ 본 리포트는 실거래가 신고 기준 데이터로 자동 생성되었습니다.</div>
+
+  <div class="foot">
+    <span>회전율 = 기간 내 거래 건수 ÷ 세대수 · ▲▼ 최근 3개월 연환산이 1년 대비 ±15% 이상</span>
+    <span>{{ date_label }} 자동 생성</span>
+  </div>
 </div>
+</div>
+
 <script>
-function downloadReport() {
-  const container = document.getElementById('report-container');
-  html2canvas(container, { scale: 2 }).then(canvas => {
+async function downloadReport() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = '저장 중…';
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const el = document.getElementById('report');
+    const canvas = await html2canvas(el, {
+      scale: 2, backgroundColor: '#ffffff', useCORS: true,
+      windowWidth: 1200, scrollX: 0, scrollY: -window.scrollY
+    });
     const link = document.createElement('a');
-    link.download = 'busan_real_estate_report.png';
+    link.download = 'busan_apt_{{ date_label|replace(".", "") }}.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
-  });
+  } catch (e) {
+    alert('이미지 저장에 실패했습니다: ' + e);
+  } finally {
+    btn.disabled = false; btn.textContent = '⬇ 이미지 저장';
+  }
 }
 </script>
 </body>
