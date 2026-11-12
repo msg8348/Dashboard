@@ -2,7 +2,9 @@ name: DASHBOARD
 
 on:
   schedule:
-    - cron: '0 19 * * *' # UTC 19:00 = KST 매일 새벽 4시
+    # GitHub 예약 실행은 정각에 몰려 지연·누락될 수 있어 정각을 피하고, 누락 대비로 한 번 더 실행
+    - cron: '17 19 * * *' # KST 04:17
+    - cron: '47 20 * * *' # KST 05:47 (앞 실행이 누락됐을 때 대비, 중복 실행해도 결과 동일)
   workflow_dispatch:
 
 permissions:

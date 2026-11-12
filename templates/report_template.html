@@ -59,9 +59,13 @@
   .q{border-radius:18px;padding:16px 18px 8px;border:1px solid var(--line)}
   .q h3{font-size:17px;font-weight:800;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline}
   .q h3 small{font-size:12px;color:var(--muted);font-weight:600}
+  .q .nm{font-weight:700}
   .q .r{display:grid;grid-template-columns:24px 1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid rgba(0,0,0,.06);font-size:14.5px}
   .q .r:first-of-type{border-top:0}
-  .q .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .q .nm,.row .nm{display:flex;align-items:center;min-width:0;white-space:nowrap}
+  .nt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .nm .ty,.nm .ptag,.nm .stk,.nm .pyg{flex:none}
+  .pyg{font-size:12px;font-weight:700;color:var(--ink-2);margin-left:5px}
   .q .sub{color:var(--muted);font-size:12.5px;white-space:nowrap}
   .q .pr{font-weight:800;white-space:nowrap;text-align:right}
   .q.s{background:#f6f9ff}.q.s .pr{color:var(--blue)}
@@ -95,7 +99,7 @@
   .list{display:grid;grid-template-columns:1fr}
   .list.wide{grid-template-columns:1fr 1fr;grid-template-rows:repeat(8,auto);grid-auto-flow:column;column-gap:28px}
   .row{display:grid;grid-template-columns:26px 1fr 52px auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #eceff3;font-size:16px}
-  .row .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .row .nm{font-weight:700}
   .row .fl{color:var(--muted);font-size:13.5px;text-align:right;white-space:nowrap}
   .row .pr{font-weight:800;color:var(--blue);text-align:right;white-space:nowrap;min-width:96px}
   .row .pr.j{color:var(--teal)}
@@ -217,12 +221,12 @@
   </div>
   <div class="quad"><div class="colA">
     <div class="q s"><h3>매매 Top10 <small>금액순 · 분양권 포함</small></h3>
-      {% for r in sale.top10 %}<div class="r">{{ rk(loop.index0, 'cs') }}<span class="nm">{{ tyb(r.type) }}{{ r.name }}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>
+      {% for r in sale.top10 %}<div class="r">{{ rk(loop.index0, 'cs') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
   </div><div class="colB">
     <div class="q j"><h3>전월세 Top5</h3>
-      {% for r in rent.top5 %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}{{ r.name }}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
+      {% for r in rent.top5 %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
     <div class="qx"><div class="hd"><div><small>최근 3개월 · 세대수 대비 거래 회전율</small><b>지표단지 거래량 Top5</b></div></div>
@@ -249,7 +253,7 @@
   {% macro section(k, rows, wide, kind) %}
   <div class="sec"><h2><span class="chip" style="background:{{ colcolor[k] }}">{{ k }}</span><span class="n">{{ '금액순' if kind == 'sale' else '보증금순' }} · {{ rows|length }}건</span></h2>
     <div class="list {% if wide %}wide{% endif %}">
-    {% for r in rows %}<div class="row">{{ rk(loop.index0, colcls[k]) }}<span class="nm">{{ r.name }}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="fl">{{ r.floor }}</span>
+    {% for r in rows %}<div class="row">{{ rk(loop.index0, colcls[k]) }}<span class="nm"><span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="fl">{{ r.floor }}</span>
       {% if kind == 'sale' %}<span class="pr">{{ r.price }}</span>{% else %}<span class="pr {{ 'w' if r.monthly else 'j' }}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span>{% endif %}</div>
     {% else %}<div class="empty">해당 거래가 없습니다</div>{% endfor %}
     </div></div>
@@ -308,27 +312,38 @@ function showPage(n) {
   prerender();
 }
 
-const PAGE_NAME = { 1: '1_요약', 2: '2_매매', 3: '3_전월세', 4: '4_지표단지' };
-const PAGE_FILE = { 1: '1_summary', 2: '2_sale', 3: '3_rent', 4: '4_indicator' };
 const DATE = '{{ date_full }}';
-const fileName = n => `부산아파트_${DATE}_${PAGE_NAME[n]}.png`;   // 공유창에 보이는 이름
-const saveName = n => `busan_apt_${DATE}_${PAGE_FILE[n]}.png`;     // 다운로드 파일명 (영문)
+// 페이지별 저장 이미지 (지표단지는 2장: 1년·3개월 / 상세)
+const SHOTS = {
+  1: [{ ko: '1_요약', en: '1_summary' }],
+  2: [{ ko: '2_매매', en: '2_sale' }],
+  3: [{ ko: '3_전월세', en: '3_rent' }],
+  4: [{ ko: '4_지표단지_1년3개월', en: '4_indicator_summary', hide: '.tbl' },
+      { ko: '4_지표단지_상세', en: '4_indicator_detail', hide: '.ind-two' }],
+};
+const CAPTURE_WIDTH = 1200;   // 저장 이미지는 화면 크기와 관계없이 PC(가로형) 배치로 만듦
 
-// 페이지별 이미지 캐시: 탭을 열면 미리 만들어 두어 공유 버튼을 누르면 바로 공유창이 뜨도록 함
-let cache = {}, cacheWidth = 0;
+let cache = {};
+function renderOne(n, shot) {
+  return (async () => {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const el = document.getElementById('page' + n);
+    const canvas = await html2canvas(el, {
+      scale: 2, backgroundColor: null, useCORS: true,
+      windowWidth: CAPTURE_WIDTH, scrollX: 0, scrollY: -window.scrollY,
+      onclone: doc => {
+        const page = doc.getElementById('page' + n);
+        page.hidden = false;
+        if (shot.hide) page.querySelectorAll(shot.hide).forEach(e => { e.style.display = 'none'; });
+      }
+    });
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    return { blob, ko: `부산아파트_${DATE}_${shot.ko}.png`, en: `busan_apt_${DATE}_${shot.en}.png` };
+  })();
+}
 function render(n) {
-  const w = document.documentElement.clientWidth;
-  if (w !== cacheWidth) { cache = {}; cacheWidth = w; }
   if (!cache[n]) {
-    cache[n] = (async () => {
-      if (document.fonts && document.fonts.ready) await document.fonts.ready;
-      const el = document.getElementById('page' + n);   // 둥근 리포트 카드 영역만 캡처
-      const canvas = await html2canvas(el, {
-        scale: Math.max(2, 1080 / el.offsetWidth), backgroundColor: null, useCORS: true,
-        windowWidth: w, scrollX: 0, scrollY: -window.scrollY
-      });
-      return await new Promise(res => canvas.toBlob(res, 'image/png'));
-    })();
+    cache[n] = Promise.all(SHOTS[n].map(sh => renderOne(n, sh)));
     cache[n].catch(() => { delete cache[n]; });
   }
   return cache[n];
@@ -336,7 +351,6 @@ function render(n) {
 let prerenderTimer;
 function prerender() { clearTimeout(prerenderTimer); prerenderTimer = setTimeout(() => render(currentPage).catch(() => {}), 400); }
 window.addEventListener('load', prerender);
-window.addEventListener('resize', prerender);
 try { const saved = +localStorage.getItem('busanPage2'); if (saved >= 2 && saved <= 4) showPage(saved); } catch (e) {}
 
 function busy(id, on, text) {
@@ -348,22 +362,22 @@ function busy(id, on, text) {
 async function shareReport(fromSheet) {
   const n = currentPage;
   busy('share-btn', true, '이미지 준비 중…');
-  let blob;
-  try { blob = await render(n); }
+  let shots;
+  try { shots = await render(n); }
   catch (e) { alert('이미지를 만들지 못했습니다: ' + e); return; }
   finally { busy('share-btn', false); }
-  const file = new File([blob], fileName(n), { type: 'image/png' });
-  if (!(navigator.canShare && navigator.canShare({ files: [file] }))) {
+  const files = shots.map(s => new File([s.blob], s.ko, { type: 'image/png' }));
+  if (!(navigator.canShare && navigator.canShare({ files }))) {
     alert('이 브라우저는 이미지 공유를 지원하지 않아 저장으로 대신합니다.');
-    return download(blob, saveName(n));
+    return shots.forEach(s => download(s.blob, s.en));
   }
   try {
-    await navigator.share({ files: [file] });
+    await navigator.share({ files });
     if (fromSheet) closeSheet();
   } catch (e) {
     if (e.name === 'AbortError') return;
     if (e.name === 'NotAllowedError' && !fromSheet) {
-      document.getElementById('save-img').src = URL.createObjectURL(blob);
+      document.getElementById('save-img').src = URL.createObjectURL(shots[0].blob);
       document.getElementById('save-sheet').hidden = false;
       return;
     }
@@ -374,7 +388,10 @@ async function shareReport(fromSheet) {
 async function saveReport() {
   const n = currentPage;
   busy('save-btn', true, '이미지 준비 중…');
-  try { download(await render(n), saveName(n)); }
+  try {
+    const shots = await render(n);
+    for (const s of shots) { download(s.blob, s.en); await new Promise(r => setTimeout(r, 400)); }
+  }
   catch (e) { alert('이미지 저장에 실패했습니다: ' + e); }
   finally { busy('save-btn', false); }
 }

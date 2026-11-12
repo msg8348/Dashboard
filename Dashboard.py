@@ -182,6 +182,11 @@ def high_key(t):
     return f"{t['d']}|{normalize(t['n'])}|{round(t['a'])}"
 
 
+def pyeong(a):
+    """전용면적 → 평형(공급면적 기준 추정). 실거래 자료에는 공급면적이 없어 전용률 75%로 환산 (84㎡≈34평, 59㎡≈24평)."""
+    return round(a / 0.75 / 3.3058) if a else None
+
+
 def floor_label(f):
     f = str(f or "").strip()
     return f"{f}층" if f.lstrip("-").isdigit() else (f or "-")
@@ -392,12 +397,12 @@ def build_trades(dbs, today):
     highs_r = mark_highs(new_rent, rent, dbs["rent"].get("highs3", {}), eligible=is_jeonse)
 
     def srow(t):
-        return {"name": t["n"], "floor": floor_label(t["f"]), "price": fmt_short(t["p"]), "p": t["p"],
+        return {"name": t["n"], "py": pyeong(t["a"]), "floor": floor_label(t["f"]), "price": fmt_short(t["p"]), "p": t["p"],
                 "type": area_type(t["a"]), "pre": t["src"] == "pre", "up": t["up"]}
 
     def rrow(t):
         mon = t.get("m") or 0
-        return {"name": t["n"], "floor": floor_label(t["f"]), "type": area_type(t["a"]), "up": t["up"],
+        return {"name": t["n"], "py": pyeong(t["a"]), "floor": floor_label(t["f"]), "type": area_type(t["a"]), "up": t["up"],
                 "monthly": bool(mon), "conv": t["p"] + mon * 10000 // RENT_PER_EOK,
                 "price": f"{fmt_short(t['p']) if t['p'] else '0'}/{mon:,}" if mon else fmt_short(t["p"])}
 
