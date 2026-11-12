@@ -91,7 +91,7 @@
   .stat .v.nm { font-size: 16px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .tbl { padding: 14px 22px 20px; }
-  .tbl-head, .tr { display: grid; grid-template-columns: 74px 1fr 250px 250px 64px; align-items: center; column-gap: 14px; }
+  .tbl-head, .tr { display: grid; grid-template-columns: 70px 1fr 230px 230px 112px; align-items: center; column-gap: 14px; }
   .tbl-head { font-size: 12px; color: var(--muted); font-weight: 700; padding: 0 16px 8px; }
   .tbl-head .r { text-align: right; }
   .dgroup { background: #fff; border-radius: 14px; padding: 4px 16px; margin-bottom: 8px; }
@@ -113,6 +113,17 @@
   .trend { justify-self: end; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 6px; white-space: nowrap; }
   .trend.up { background: var(--red-bg); color: var(--red); }
   .trend.down { background: #eaf0f8; color: #4b6a99; }
+  .trend.strong { background: var(--red); color: #fff; }
+  .trend.weak { background: #4b6a99; color: #fff; }
+  .sticker { display: inline-block; vertical-align: 2px; margin-left: 6px; font-size: 11px; font-weight: 800; color: #fff; background: var(--red); padding: 2px 7px; border-radius: 999px; }
+  .panel-title .hint .sticker { margin-left: 2px; vertical-align: 0; font-size: 10px; padding: 1px 6px; }
+  .kpi.gray { background: #f2f4f7; color: var(--ink-2); }
+  .item.hi { gap: 16px; }
+  .prevcol { text-align: right; flex: none; }
+  .prevcol .k { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+  .prevcol .v { font-size: 15px; color: var(--ink-2); font-weight: 700; margin-top: 2px; text-decoration: line-through; text-decoration-color: #c9cfd8; }
+  .arrow { color: var(--red); font-weight: 800; font-size: 18px; flex: none; }
+  .report > .panel { margin-bottom: 4px; }
 
   .foot { display: flex; justify-content: space-between; margin-top: 18px; font-size: 12px; color: var(--muted); }
 
@@ -163,6 +174,13 @@
     .tabs { flex: 1 1 auto; }
     .tabs { width: 100%; }
     .tab { flex: 1; padding: 9px 4px; font-size: 12.5px; white-space: nowrap; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; }
+    .item.hi { flex-wrap: wrap; gap: 8px 10px; }
+    .item.hi .body { flex: 1 1 calc(100% - 40px); }
+    .item.hi .prevcol { margin-left: 36px; text-align: left; }
+    .item.hi .arrow { font-size: 15px; }
+    .item.hi .right { margin-left: auto; }
+    .tr .trend { font-size: 10.5px; }
     .btn { flex: 1 1 100%; justify-content: center; padding: 11px; }
     .scroller { overflow: visible; }
     .report { width: 100%; padding: 22px 14px 18px; border-radius: 18px; }
@@ -235,9 +253,10 @@
 <body>
 <div class="toolbar">
   <div class="tabs">
-    <button class="tab on" data-page="1" onclick="showPage(1)">1 · 실거래</button>
-    <button class="tab" data-page="2" onclick="showPage(2)">2 · 지표단지</button>
-    <button class="tab" data-page="3" onclick="showPage(3)">3 · 지표단지 상세</button>
+    <button class="tab on" data-page="1" onclick="showPage(1)">1 · 최고거래가</button>
+    <button class="tab" data-page="2" onclick="showPage(2)">2 · 신고가</button>
+    <button class="tab" data-page="3" onclick="showPage(3)">3 · 지표단지</button>
+    <button class="tab" data-page="4" onclick="showPage(4)">4 · 지표단지 상세</button>
   </div>
   <button class="btn" id="save-btn" onclick="downloadReport()">⬇ 이 페이지 이미지 저장</button>
 </div>
@@ -263,43 +282,67 @@
     </div>
   </div>
 
-  <!-- 2단: 최고가 Top10 / 신고가 -->
-  <div class="row2">
-    <div class="panel">
-      <div class="panel-title"><h2>최고 거래가 Top10</h2><span class="hint">금액 순 · 기존 최고가 대비</span></div>
-      {% for r in top10 %}
-      <div class="item">
-        <div class="rank {% if loop.index <= 3 %}top{% endif %}">{{ loop.index }}</div>
-        <div class="body"><div class="name">{{ r.apt_name }}</div><div class="meta">{{ r.meta }}</div></div>
-        <div class="right"><div class="price">{{ r.price }}</div><div class="diff {% if r.up %}up{% endif %}">{% if r.diff == '첫 거래' %}비교 거래 없음{% else %}최고가 대비 {{ r.diff }}{% endif %}</div></div>
-      </div>
-      {% else %}
-      <div class="empty">집계된 실거래가 없습니다</div>
-      {% endfor %}
+  <div class="panel">
+    <div class="panel-title"><h2>최고 거래가 Top10</h2><span class="hint">금액 순 · 기존 최고가 대비 · <b class="sticker">신고가</b> 표시</span></div>
+    {% for r in top10 %}
+    <div class="item">
+      <div class="rank {% if loop.index <= 3 %}top{% endif %}">{{ loop.index }}</div>
+      <div class="body"><div class="name">{{ r.apt_name }}{% if r.up %} <span class="sticker">신고가</span>{% endif %}</div><div class="meta">{{ r.meta }}</div></div>
+      <div class="right"><div class="price">{{ r.price }}</div><div class="diff {% if r.up %}up{% endif %}">{% if r.diff == '첫 거래' %}비교 거래 없음{% else %}최고가 대비 {{ r.diff }}{% endif %}</div></div>
     </div>
-    <div class="panel red">
-      <div class="panel-title"><h2>신고가{% if high5 %} Top{{ high5|length }}{% endif %}</h2><span class="hint">{% if high_cnt > 5 %}전체 {{ high_cnt }}건 중 상위 5건{% else %}금액 순{% endif %}</span></div>
-      {% for r in high5 %}
-      <div class="item">
-        <div class="rank">{{ loop.index }}</div>
-        <div class="body"><div class="name">{{ r.apt_name }}</div><div class="meta">{{ r.meta }}</div></div>
-        <div class="right"><div class="price">{{ r.price }}</div><div class="diff up">최고가 대비 {{ r.diff }}</div></div>
-      </div>
-      {% else %}
-      <div class="empty">오늘은 신고가 거래가<br>없습니다</div>
-      {% endfor %}
-    </div>
+    {% else %}
+    <div class="empty">집계된 실거래가 없습니다</div>
+    {% endfor %}
   </div>
 
   <div class="foot">
-    <span>신고가 = 동일 단지·전용면적 기존 최고가 경신</span>
+    <span>최고가 대비 = 동일 단지·전용면적의 기존 최고 거래가와 비교</span>
     <span>{{ date_label }} 자동 생성</span>
   </div>
 </div>
 
-<!-- 2페이지: 지표단지 거래량 요약 -->
-{% set ind = indicator %}
+<!-- 2페이지: 신고가 -->
 <div class="report page" id="page2" hidden>
+  <div class="head">
+    <h1>부산 아파트 신고가 <small>({{ date_label }} 기준)</small></h1>
+    <div class="src">국토교통부 실거래가 공개시스템<br>계약 해제 건 제외</div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi red">
+      <div><div class="label">신고가</div><div class="sub">동일 단지·전용면적 기존 최고가 경신</div></div>
+      <div class="value">{{ "{:,}".format(high_cnt) }}<span>건</span></div>
+    </div>
+    <div class="kpi gray">
+      <div><div class="label">{{ today_title }} 중 비중</div><div class="sub">전체 {{ "{:,}".format(today_cnt) }}건 중 신고가</div></div>
+      <div class="value">{{ high_ratio }}<span>%</span></div>
+    </div>
+  </div>
+
+  <div class="panel red">
+    <div class="panel-title"><h2>신고가{% if high5 %} Top{{ high5|length }}{% endif %}</h2><span class="hint">{% if high_cnt > 5 %}전체 {{ high_cnt }}건 중 금액 상위 5건{% else %}금액 순{% endif %}</span></div>
+    {% for r in high5 %}
+    <div class="item hi">
+      <div class="rank">{{ loop.index }}</div>
+      <div class="body"><div class="name">{{ r.apt_name }}</div><div class="meta">{{ r.meta }}</div></div>
+      <div class="prevcol"><div class="k">기존 최고가</div><div class="v">{{ r.prev }}</div></div>
+      <div class="arrow">→</div>
+      <div class="right"><div class="price">{{ r.price }}</div><div class="diff up">{{ r.diff }} 상승</div></div>
+    </div>
+    {% else %}
+    <div class="empty">오늘은 신고가 거래가 없습니다</div>
+    {% endfor %}
+  </div>
+
+  <div class="foot">
+    <span>신고가 = 동일 단지·전용면적 기존 최고가 경신 (최근 13개월 및 누적 기록 기준)</span>
+    <span>{{ date_label }} 자동 생성</span>
+  </div>
+</div>
+
+<!-- 3페이지: 지표단지 거래량 요약 -->
+{% set ind = indicator %}
+<div class="report page" id="page3" hidden>
   <div class="head">
     <h1>부산 지표단지 거래량 <small>({{ date_label }} 기준)</small></h1>
     <div class="src">국토교통부 실거래가 공개시스템<br>계약 해제 건 제외</div>
@@ -348,7 +391,7 @@
       </div>
       {% endfor %}
     </div>
-    <div class="more">단지별 상세 내역은 3페이지(지표단지 상세)에서 확인하세요</div>
+    <div class="more">단지별 상세 내역은 4페이지(지표단지 상세)에서 확인하세요</div>
   </div>
 
   <div class="foot">
@@ -357,8 +400,8 @@
   </div>
 </div>
 
-<!-- 3페이지: 지표단지 상세 -->
-<div class="report page p2" id="page3" hidden>
+<!-- 4페이지: 지표단지 상세 -->
+<div class="report page p2" id="page4" hidden>
   <div class="head">
     <h1>부산 지표단지 거래량 상세 <small>({{ date_label }} 기준)</small></h1>
     <div class="src">세대수 대비 거래량 (거래 회전율)<br>국토교통부 실거래 · 계약 해제 건 제외</div>
@@ -386,7 +429,7 @@
           <div class="apt-name">{{ a.name }}<small>{{ "{:,}".format(a.households) }}세대</small></div>
           <div class="cell y1c"><span class="ml">1년</span><div class="track"><div class="fill y1" style="width:{{ a.w1 }}%"></div></div><span class="val"><b class="y1">{{ a.c1 }}건</b> · {{ "%.2f"|format(a.r1) }}%</span></div>
           <div class="cell m3c"><span class="ml">3개월</span><div class="track"><div class="fill m3" style="width:{{ a.w3 }}%"></div></div><span class="val"><b class="m3">{{ a.c3 }}건</b> · {{ "%.2f"|format(a.r3) }}%</span></div>
-          {% if a.trend == 'up' %}<span class="trend up">▲ 증가</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소</span>{% else %}<span class="trend none" style="color:var(--muted)">-</span>{% endif %}
+          {% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none" style="color:var(--muted)">보합</span>{% endif %}
         </div>
         {% endfor %}
       </div>
@@ -395,7 +438,7 @@
   </div>
 
   <div class="foot">
-    <span>회전율 = 기간 내 거래 건수 ÷ 세대수 · ▲▼ 최근 3개월 연환산이 1년 대비 ±15% 이상</span>
+    <span>회전율 = 기간 내 거래 건수 ÷ 세대수 · 추세 = 최근 3개월 거래×4 를 1년 거래와 비교 (+10%↑ 강세 · +5%↑ 증가 · −5%↓ 감소 · −10%↓ 약세)</span>
     <span>{{ date_label }} 자동 생성</span>
   </div>
 </div>
@@ -418,9 +461,9 @@ function showPage(n) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.page == n));
   try { localStorage.setItem('busanPage', n); } catch (e) {}
 }
-try { const saved = +localStorage.getItem('busanPage'); if (saved === 2 || saved === 3) showPage(saved); } catch (e) {}
+try { const saved = +localStorage.getItem('busanPage'); if (saved >= 2 && saved <= 4) showPage(saved); } catch (e) {}
 
-const PAGE_FILE = { 1: '1_trades', 2: '2_indicator', 3: '3_indicator_detail' };
+const PAGE_FILE = { 1: '1_top_price', 2: '2_new_high', 3: '3_indicator', 4: '4_indicator_detail' };
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
 let lastBlob = null, lastName = '', lastUrl = null;
 
