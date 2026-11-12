@@ -350,6 +350,7 @@ def build_report(trades, prior_high, today, bootstrap):
             "price": fmt_price(t["p"]),
             "p": t["p"],
             "diff": fmt_diff(t["p"] - prev) if prev else "첫 거래",
+            "prev": fmt_price(prev) if prev else "",
             "up": prev and t["p"] > prev,
         }
         rows.append(row)
@@ -394,10 +395,12 @@ def build_report(trades, prior_high, today, bootstrap):
     for i in all_items:
         i["w1"] = round(i["r1"] / max_r1 * 100, 1)
         i["w3"] = round(i["r3"] / max_r3 * 100, 1)
-        # 3개월 거래를 연환산했을 때 1년 대비 증감 (±15% 이상만 표시)
-        annual = i["c3"] * 4
-        i["trend"] = "up" if i["c1"] and annual >= i["c1"] * 1.15 else (
-            "down" if i["c1"] and annual <= i["c1"] * 0.85 else "")
+        # 3개월 거래를 연환산(×4)했을 때 1년 대비 증감률
+        #   +10% 이상 강세 / +5% 이상 증가 / -5% 이하 감소 / -10% 이하 약세
+        change = (i["c3"] * 4 / i["c1"] - 1) * 100 if i["c1"] else 0
+        i["change"] = round(change)
+        i["trend"] = ("strong" if change >= 10 else "up" if change >= 5 else
+                      "weak" if change <= -10 else "down" if change <= -5 else "")
 
     best = max(all_items, key=lambda i: i["r1"]) if all_items else None
     hot = max(all_items, key=lambda i: i["r3"]) if all_items else None
