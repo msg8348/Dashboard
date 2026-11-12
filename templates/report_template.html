@@ -266,10 +266,10 @@
   <div class="head"><h1>부산 아파트 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ d.title }}</small></h1></div>
   <div class="cards c2">
     {% if kind == 'sale' %}
-    <div class="cd b"><div class="l">{{ '전일 계약' if d.fallback else '신규 실거래' }}</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">84타입 {{ d.type_cnt['84타입'] }} · 59타입 {{ d.type_cnt['59타입'] }} · 기타 {{ d.type_cnt['기타'] }}{% if d.pre_cnt %} · 분양권 {{ d.pre_cnt }} 포함{% endif %}</div></div></div>
+    <div class="cd b"><div class="l">{{ '최근 계약' if d.fallback else '신규 실거래' }}</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">84타입 {{ d.type_cnt['84타입'] }} · 59타입 {{ d.type_cnt['59타입'] }} · 기타 {{ d.type_cnt['기타'] }}{% if d.pre_cnt %} · 분양권 {{ d.pre_cnt }} 포함{% endif %}</div></div></div>
     <div class="cd r"><div class="l">신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div><div class="h mu">동일 단지·타입 최고가 경신</div></div></div>
     {% else %}
-    <div class="cd t"><div class="l">{{ '전일 계약' if d.fallback else '신규 전월세' }}</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">전세 {{ d.jeonse }} · 월세 {{ d.wolse }}</div></div></div>
+    <div class="cd t"><div class="l">{{ '최근 계약' if d.fallback else '신규 전월세' }}</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">전세 {{ d.jeonse }} · 월세 {{ d.wolse }}</div></div></div>
     <div class="cd r"><div class="l">전세 신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div><div class="h mu">동일 단지·타입 최고 전세 보증금 경신</div></div></div>
     {% endif %}
   </div>
