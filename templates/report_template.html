@@ -292,7 +292,6 @@
 <div class="report page" id="page1">
   <div class="head">
     <h1>부산 아파트 매매 <small>({{ date_label }} 기준)</small></h1>
-    <div class="src">국토교통부 실거래가 공개시스템<br>계약 해제 건 제외</div>
   </div>
 
   {% if notice %}<div class="notice">⚠ {{ notice }}</div>{% endif %}
@@ -322,17 +321,12 @@
     {% endfor %}
   </div>
 
-  <div class="foot">
-    <span>최고가 대비 = 동일 단지·전용면적의 기존 최고 거래가와 비교</span>
-    <span class="date">{{ date_label }}</span>
-  </div>
 </div>
 
 <!-- 2페이지: 신고가 -->
 <div class="report page" id="page2" hidden>
   <div class="head">
     <h1>부산 아파트 신고가 <small>({{ date_label }} 기준)</small></h1>
-    <div class="src">국토교통부 실거래가 공개시스템<br>계약 해제 건 제외</div>
   </div>
 
   <div class="kpis">
@@ -361,10 +355,6 @@
     {% endfor %}
   </div>
 
-  <div class="foot">
-    <span>신고가 = 동일 단지·전용면적 기존 최고가 경신 (최근 13개월 및 누적 기록 기준)</span>
-    <span class="date">{{ date_label }}</span>
-  </div>
 </div>
 
 {% set ind = indicator %}
@@ -375,7 +365,6 @@
 <div class="report page" id="page{{ pg }}" hidden>
   <div class="head">
     <h1>부산 지표단지 거래량 <small>{{ label }} · {{ date_label }} 기준</small></h1>
-    <div class="src">국토교통부 실거래가 공개시스템<br>계약 해제 건 제외</div>
   </div>
   <div class="ind {{ cls }}">
     <div class="ind-head">
@@ -410,10 +399,6 @@
     <div class="more">단지별 상세 내역은 “지표단지 상세”에서 확인하세요</div>
   </div>
 
-  <div class="foot">
-    <span>회전율 = 기간 내 거래 건수 ÷ 세대수</span>
-    <span class="date">{{ date_label }}</span>
-  </div>
 </div>
 {% endfor %}
 
@@ -421,7 +406,6 @@
 <div class="report page p2" id="page5" hidden>
   <div class="head">
     <h1>부산 지표단지 거래량 상세 <small>({{ date_label }} 기준)</small></h1>
-    <div class="src">세대수 대비 거래량 (거래 회전율)<br>국토교통부 실거래 · 계약 해제 건 제외</div>
   </div>
   <div class="ind">
     <div class="ind-head">
@@ -454,10 +438,6 @@
     </div>
   </div>
 
-  <div class="foot">
-    <span>회전율 = 기간 내 거래 건수 ÷ 세대수 · 추세 = 최근 3개월 거래×4 를 1년 거래와 비교 (+10%↑ 강세 · +5%↑ 증가 · −5%↓ 감소 · −10%↓ 약세)</span>
-    <span class="date">{{ date_label }}</span>
-  </div>
 </div>
 </div>
 
