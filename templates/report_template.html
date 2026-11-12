@@ -76,28 +76,15 @@
   .qx .hd b{font-size:18px;font-weight:800}
   .qx .lg{display:flex;gap:12px;font-size:11.5px;font-weight:700;white-space:nowrap}
   .qx .lg i{display:inline-block;width:12px;height:8px;border-radius:2px;margin-right:4px}
-  .bfgrid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(var(--rows),auto);grid-auto-flow:column}
-  .bfgrid.one{grid-template-columns:1fr;grid-template-rows:none;grid-auto-flow:row}
-  .bf{display:grid;grid-template-columns:26px 128px 1fr 2px 1fr;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid #eef0f6}
-  .bfgrid .bf{border-right:1px solid #eef0f6}
-  .bfgrid.one .bf{border-right:0;padding:16px 16px}
-  .bf.short{grid-template-columns:26px 70px 1fr 2px 1fr}
-  .bf .rkc{width:26px;height:26px}
-  .bf .who{min-width:0}
-  .bf .who b{display:block;font-size:14.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .bf .who span{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;display:block;overflow:hidden;text-overflow:ellipsis}
-  .bf .side{display:flex;align-items:center;gap:6px;height:24px;min-width:0}
-  .bf .side.l{justify-content:flex-end}
-  .bf .side .bw{flex:1;min-width:0;display:flex}
-  .bf .side.l .bw{justify-content:flex-end}
-  .bf .side i{display:block;height:14px;min-width:3px;flex:none}
-  .bf .side.l i{border-radius:7px 0 0 7px}.bf .side.r i{border-radius:0 7px 7px 0}
-  .bf .axis{height:30px;background:#c9cfdc;border-radius:1px}
-  .bf .val{font-size:13px;font-weight:800;white-space:nowrap;line-height:1.05;text-align:center}
-  .bf .val em{display:block;font-style:normal;font-size:10.5px;color:var(--muted);font-weight:600}
-  .i-g{background:#1f9d8b}.i-m{background:#f0a35e}.i-b{background:#5b7fd6}.i-v{background:#8f89ad}
-  .c-g{color:#137a6c}.c-m{color:#c46a1c}.c-b{color:#3559b8}.c-v{color:#5e5880}
-  .foot2{font-size:12px;color:var(--muted);text-align:center;padding:8px 0 12px;border-top:1px solid #eef0f6}
+  .tb{display:grid;grid-template-columns:26px 150px 1fr 70px;gap:12px;align-items:center;padding:14px 18px;border-top:1px solid #eef0f6}
+  .tb:first-of-type{border-top:0}
+  .tb .rkc{width:26px;height:26px}
+  .tb .who{min-width:0}
+  .tb .who b{display:block;font-size:14.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb .who span{display:block;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tbar{height:12px;background:#e8ebf3;border-radius:6px;overflow:hidden}
+  .tbar i{display:block;height:100%;background:#1f9d8b;border-radius:6px}
+  .tv{text-align:right;line-height:1.15}.tv b{display:block;font-size:15px;font-weight:800;color:#137a6c}.tv em{font-style:normal;font-size:11px;color:var(--muted);font-weight:600}
 
   /* 매매·전월세 리스트 */
   .sec{background:#f7f9fb;border:1px solid var(--line);border-radius:18px;padding:16px 22px 10px;margin-bottom:14px;min-width:0}
@@ -181,14 +168,8 @@
     .cd .h{font-size:10px}
     .quad{grid-template-columns:1fr;gap:10px}.colA,.colB{gap:10px}
     .q{padding:12px 12px 4px}.q .r{font-size:13.5px;gap:6px}
-    .qx .hd{flex-direction:column;align-items:flex-start;gap:6px}
-    .bfgrid{grid-template-columns:1fr;grid-template-rows:none;grid-auto-flow:row}
-    .bfgrid .bf{border-right:0}
-    .bf,.bfgrid.one .bf{grid-template-columns:22px 96px 1fr 2px 1fr;gap:5px;padding:10px}
-    .bf.short{grid-template-columns:22px 58px 1fr 2px 1fr}
-    .bf .who b{font-size:12.5px;white-space:normal;word-break:keep-all}
-    .bf .who span{font-size:10px}
-    .bf .val{font-size:11.5px}
+    .tb{grid-template-columns:22px 1fr 1fr 58px;gap:8px;padding:11px 12px}
+    .tb .who b{font-size:13px;white-space:normal;word-break:keep-all}
     .two,.ind-two{grid-template-columns:1fr;gap:0}
     .ind-two{gap:10px}
     .sec{padding:12px 12px 6px}
@@ -215,14 +196,13 @@
 {% macro rk(i, c) %}<span class="rkc {{ c }} {% if i >= 3 %}lt{% endif %}">{{ i + 1 }}</span>{% endmacro %}
 {% macro tyb(t) %}<span class="ty {{ 'ty84' if t == '84타입' else 'ty59' if t == '59타입' else 'tyx' }}">{{ t[:2] if t != '기타' else '기타' }}</span>{% endmacro %}
 {% macro notices_box() %}{% if notices %}<div class="notice">{% for n in notices %}⚠ {{ n }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}{% endmacro %}
-{% macro dlt(v) %}{% if v is none %}{% elif v > 0 %}<span class="up2">▲{{ "{:,}".format(v) }}</span>{% elif v < 0 %}<span class="dn2">▼{{ "{:,}".format(-v) }}</span>{% else %}<span class="mu">-</span>{% endif %}{% endmacro %}
 {% set ind = indicator %}
 {% set colcls = {'84타입': 'cs', '59타입': 'cj', '기타': 'cx'} %}
 {% set colcolor = {'84타입': 'var(--blue)', '59타입': 'var(--teal)', '기타': '#6b7686'} %}
 
 <div class="wrap">
 <div class="tabs">
-  {% for t in ['요약','매매','전월세','지표단지','사라진 매물','매물현황'] %}
+  {% for t in ['요약','매매','전월세','지표단지'] %}
   <button class="tab {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }})">{{ t }}</button>
   {% endfor %}
 </div>
@@ -231,31 +211,24 @@
 <div class="report page" id="page1">
   <div class="head"><h1>부산 아파트 실거래 요약 <small>{{ date_label }}</small></h1></div>
   {{ notices_box() }}
-  <div class="cards">
-    <div class="cd b"><div class="l">매매</div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
+  <div class="cards c2">
+    <div class="cd b"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
     <div class="cd t"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">전세 신고가 {{ rent.high_cnt }}건</div></div></div>
-    <div class="cd v2"><div class="l">사라진 매물</div><div><div class="v">{% if naver and not naver.first_run %}{{ "{:,}".format(naver.gone_cnt) }}<span>건</span>{% else %}-{% endif %}</div><div class="h mu">{% if naver and not naver.first_run %}84·59타입 · 전일 대비{% else %}집계 준비 중{% endif %}</div></div></div>
   </div>
   <div class="quad"><div class="colA">
     <div class="q s"><h3>매매 Top10 <small>금액순 · 분양권 포함</small></h3>
       {% for r in sale.top10 %}<div class="r">{{ rk(loop.index0, 'cs') }}<span class="nm">{{ tyb(r.type) }}{{ r.name }}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
-    <div class="q g"><h3>사라진 매물 Top5 <small>마지막 호가순</small></h3>
-      {% if naver and not naver.first_run %}{% for r in naver.gone_top5 %}<div class="r">{{ rk(loop.index0, 'cg') }}<span class="nm">{{ tyb(r.type) }}{{ r.name }}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>
-      {% else %}<div class="empty">사라진 매물이 없습니다</div>{% endfor %}
-      {% else %}<div class="empty">네이버 매물 집계 준비 중입니다</div>{% endif %}
-    </div>
   </div><div class="colB">
     <div class="q j"><h3>전월세 Top5</h3>
       {% for r in rent.top5 %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}{{ r.name }}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
-    <div class="qx"><div class="hd"><div><small>최근 3개월 · 세대수 대비</small><b>지표단지 거래 · 매물 Top5</b></div>
-      <div class="lg"><span><i class="i-g"></i>거래 회전율</span><span><i class="i-m"></i>매물 비율</span></div></div>
-      <div class="bfgrid one">{% for a in ind.top5_3m %}<div class="bf">{{ rk(loop.index0, 'cn') }}<div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span></div>
-        <div class="side l"><span class="val c-g">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-g" style="width:{{ a.bl }}%"></i></span></div><div class="axis"></div>
-        <div class="side r">{% if a.lr is not none %}<span class="bw"><i class="i-m" style="width:{{ a.br }}%"></i></span><span class="val c-m">{{ "%.2f"|format(a.lr) }}%<em>{{ a.listing }}건</em></span>{% else %}<span class="val" style="color:var(--muted)">-</span>{% endif %}</div></div>{% endfor %}</div>
+    <div class="qx"><div class="hd"><div><small>최근 3개월 · 세대수 대비 거래 회전율</small><b>지표단지 거래량 Top5</b></div></div>
+      {% set mx = (ind.top5_3m[0].r3 if ind.top5_3m else 1) or 1 %}
+      {% for a in ind.top5_3m %}<div class="tb">{{ rk(loop.index0, 'cn') }}<div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span></div>
+        <div class="tbar"><i style="width:{{ (a.r3 / mx * 100)|round(1) }}%"></i></div><div class="tv"><b>{{ "%.2f"|format(a.r3) }}%</b><em>{{ a.c3 }}건</em></div></div>{% endfor %}
     </div>
   </div></div>
 </div>
@@ -266,10 +239,10 @@
   <div class="head"><h1>부산 아파트 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ d.title }}</small></h1></div>
   <div class="cards c2">
     {% if kind == 'sale' %}
-    <div class="cd b"><div class="l">{{ '최근 계약' if d.fallback else '신규 실거래' }}</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">84타입 {{ d.type_cnt['84타입'] }} · 59타입 {{ d.type_cnt['59타입'] }} · 기타 {{ d.type_cnt['기타'] }}{% if d.pre_cnt %} · 분양권 {{ d.pre_cnt }} 포함{% endif %}</div></div></div>
+    <div class="cd b"><div class="l">신규 실거래</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">84타입 {{ d.type_cnt['84타입'] }} · 59타입 {{ d.type_cnt['59타입'] }} · 기타 {{ d.type_cnt['기타'] }}{% if d.pre_cnt %} · 분양권 {{ d.pre_cnt }} 포함{% endif %}</div></div></div>
     <div class="cd r"><div class="l">신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div><div class="h mu">동일 단지·타입 최고가 경신</div></div></div>
     {% else %}
-    <div class="cd t"><div class="l">{{ '최근 계약' if d.fallback else '신규 전월세' }}</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">전세 {{ d.jeonse }} · 월세 {{ d.wolse }}</div></div></div>
+    <div class="cd t"><div class="l">신규 전월세</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">전세 {{ d.jeonse }} · 월세 {{ d.wolse }}</div></div></div>
     <div class="cd r"><div class="l">전세 신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div><div class="h mu">동일 단지·타입 최고 전세 보증금 경신</div></div></div>
     {% endif %}
   </div>
@@ -308,64 +281,6 @@
       </div>{% endfor %}</div>{% endfor %}
   </div>
 </div>
-
-<!-- ============ 5. 사라진 매물 ============ -->
-<div class="report page" id="page5" hidden>
-  <div class="head"><h1>사라진 매물 <small>{% if naver %}{{ naver.prev_date }} → {{ naver.date }} · 네이버부동산 매매{% else %}네이버부동산 매매{% endif %}</small></h1></div>
-  {% if naver and not naver.first_run %}
-  <div class="cards">
-    <div class="cd v2"><div class="l">사라진 매물 <span>84타입 {{ naver.gone_type['84타입'] }} · 59타입 {{ naver.gone_type['59타입'] }}</span></div><div><div class="v">{{ "{:,}".format(naver.gone_cnt) }}<span>건</span></div><div class="h mu">분양권 {{ naver.gone_pre }}건 포함</div></div></div>
-    <div class="cd g"><div class="l">가격 바꿔 재등록</div><div><div class="v">{{ "{:,}".format(naver.relisted) }}<span>건</span></div><div class="h mu">사라진 매물에서 제외</div></div></div>
-    <div class="cd b"><div class="l">신규 등록</div><div><div class="v">{{ "{:,}".format(naver.new) }}<span>건</span></div><div class="h mu">전일 대비 새 매물</div></div></div>
-  </div>
-  <div class="two">
-    {% for k in ['84타입', '59타입'] %}
-    <div class="sec"><h2><span class="chip" style="background:{{ colcolor[k] }}">{{ k }}</span><span class="n">마지막 호가순 · {{ naver.gone_lists[k]|length }}건</span></h2><div class="list">
-      {% for r in naver.gone_lists[k] %}<div class="row">{{ rk(loop.index0, 'cg') }}<span class="nm">{{ r.name }}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}</span><span class="fl">{{ r.floor }}</span><span class="pr v">{{ r.price }}</span></div>
-      {% else %}<div class="empty">사라진 매물이 없습니다</div>{% endfor %}</div></div>
-    {% endfor %}
-  </div>
-  {% if naver.gone_by_gu %}
-  <div class="qx"><div class="hd"><div><small>84·59타입 · 전일 대비 · 사라진 매물 많은 순</small><b>구별 사라진 매물 · 신규 등록</b></div>
-    <div class="lg"><span><i class="i-v"></i>사라진 매물</span><span><i class="i-b"></i>신규 등록</span></div></div>
-    <div class="bfgrid" style="--rows:{{ ((naver.gone_by_gu|length) / 2)|round(0, 'ceil')|int }}">{% for g in naver.gone_by_gu %}<div class="bf short">{{ rk(loop.index0, 'cn') }}<div class="who"><b>{{ g.name }}</b></div>
-      <div class="side l"><span class="val c-v">{{ g.gone }}건</span><span class="bw"><i class="i-v" style="width:{{ g.bl }}%"></i></span></div><div class="axis"></div>
-      <div class="side r"><span class="bw"><i class="i-b" style="width:{{ g.br }}%"></i></span><span class="val c-b">{{ g.new }}건</span></div></div>{% endfor %}</div>
-  </div>
-  {% endif %}
-  {% elif naver %}
-  <div class="empty">첫 수집일({{ naver.date }})이라 비교할 전날 매물이 없습니다. 내일부터 사라진 매물이 집계됩니다.</div>
-  {% else %}
-  <div class="empty">네이버 매물 집계 준비 중입니다.</div>
-  {% endif %}
-</div>
-
-<!-- ============ 6. 매물현황 ============ -->
-<div class="report page" id="page6" hidden>
-  <div class="head"><h1>부산 아파트 매물현황 <small>{% if naver %}{{ naver.date }} · {% endif %}네이버부동산 · 분양권 포함</small></h1></div>
-  {% if naver %}
-  <div class="cards">
-    {% for cls, label, i in [('b','매매 매물',0),('t','전세 매물',1),('a','월세 매물',2)] %}
-    <div class="cd {{ cls }}"><div class="l">{{ label }}</div><div><div class="v">{{ "{:,}".format(naver.tot[i]) }}<span>건</span></div><div class="h mu">{% if naver.dtot %}전일 대비 {{ dlt(naver.dtot[i]) }}{% else %}&nbsp;{% endif %}</div></div></div>
-    {% endfor %}
-  </div>
-  <div class="qx" style="margin-bottom:14px"><div class="hd"><div><small>{{ naver.gus|length }}개 구·군 · 아파트 세대수 대비 · 매매 매물 비율 순</small><b>구별 매물 비율</b></div>
-    <div class="lg"><span><i class="i-b"></i>매매 매물</span><span><i class="i-g"></i>전월세 매물</span></div></div>
-    <div class="bfgrid" style="--rows:{{ ((naver.gus|length) / 2)|round(0, 'ceil')|int }}">{% for g in naver.gus %}<div class="bf">{{ rk(loop.index0, 'cn') }}<div class="who"><b>{{ g.name }}</b><span>아파트 {{ "{:,}".format(g.hh) }}세대</span></div>
-      <div class="side l"><span class="val c-b">{{ "%.2f"|format(g.rd) }}%<em>{{ "{:,}".format(g.deal) }}건 {{ dlt(g.dd) }}</em></span><span class="bw"><i class="i-b" style="width:{{ g.bl }}%"></i></span></div><div class="axis"></div>
-      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ g.br }}%"></i></span><span class="val c-g">{{ "%.2f"|format(g.rj) }}%<em>{{ "{:,}".format(g.jw) }}건 {{ dlt(g.dj) }}</em></span></div></div>{% endfor %}</div>
-    <div class="foot2">세대수: 네이버부동산 단지 정보의 아파트 세대수 합계</div>
-  </div>
-  <div class="qx"><div class="hd"><div><small>{{ ind.count }}개 지표단지 · 세대수 대비 · 3개월 거래 회전율 순</small><b>지표단지 거래 · 매물</b></div>
-    <div class="lg"><span><i class="i-g"></i>거래 회전율 (3개월)</span><span><i class="i-m"></i>매매 매물 비율</span></div></div>
-    <div class="bfgrid" style="--rows:{{ ((ind.by_r3|length) / 2)|round(0, 'ceil')|int }}">{% for a in ind.by_r3 %}<div class="bf">{{ rk(loop.index0, 'cn') }}<div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span></div>
-      <div class="side l"><span class="val c-g">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-g" style="width:{{ a.bl }}%"></i></span></div><div class="axis"></div>
-      <div class="side r">{% if a.lr is not none %}<span class="bw"><i class="i-m" style="width:{{ a.br }}%"></i></span><span class="val c-m">{{ "%.2f"|format(a.lr) }}%<em>{{ a.listing }}건</em></span>{% else %}<span class="val" style="color:var(--muted)">-</span>{% endif %}</div></div>{% endfor %}</div>
-  </div>
-  {% else %}
-  <div class="empty">네이버 매물 집계 준비 중입니다.</div>
-  {% endif %}
-</div>
 </div>
 
 <div class="actions">
@@ -393,8 +308,8 @@ function showPage(n) {
   prerender();
 }
 
-const PAGE_NAME = { 1: '1_요약', 2: '2_매매', 3: '3_전월세', 4: '4_지표단지', 5: '5_사라진매물', 6: '6_매물현황' };
-const PAGE_FILE = { 1: '1_summary', 2: '2_sale', 3: '3_rent', 4: '4_indicator', 5: '5_gone', 6: '6_listings' };
+const PAGE_NAME = { 1: '1_요약', 2: '2_매매', 3: '3_전월세', 4: '4_지표단지' };
+const PAGE_FILE = { 1: '1_summary', 2: '2_sale', 3: '3_rent', 4: '4_indicator' };
 const DATE = '{{ date_full }}';
 const fileName = n => `부산아파트_${DATE}_${PAGE_NAME[n]}.png`;   // 공유창에 보이는 이름
 const saveName = n => `busan_apt_${DATE}_${PAGE_FILE[n]}.png`;     // 다운로드 파일명 (영문)
@@ -422,7 +337,7 @@ let prerenderTimer;
 function prerender() { clearTimeout(prerenderTimer); prerenderTimer = setTimeout(() => render(currentPage).catch(() => {}), 400); }
 window.addEventListener('load', prerender);
 window.addEventListener('resize', prerender);
-try { const saved = +localStorage.getItem('busanPage2'); if (saved >= 2 && saved <= 6) showPage(saved); } catch (e) {}
+try { const saved = +localStorage.getItem('busanPage2'); if (saved >= 2 && saved <= 4) showPage(saved); } catch (e) {}
 
 function busy(id, on, text) {
   const b = document.getElementById(id);

@@ -2,7 +2,7 @@ name: DASHBOARD
 
 on:
   schedule:
-    - cron: '0 22 * * *' # UTC 22:00 = KST 매일 아침 7시
+    - cron: '0 19 * * *' # UTC 19:00 = KST 매일 새벽 4시
   workflow_dispatch:
 
 permissions:
