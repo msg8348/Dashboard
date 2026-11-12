@@ -6,8 +6,7 @@
 2. 매일 최근 3개월을 다시 받아 DB 를 갱신합니다. 어제까지 DB 에 없던 거래 = "오늘 새로 공개된 실거래".
 3. 매매(분양권 포함)는 같은 단지·같은 전용면적의 기존 최고가, 전세는 기존 최고 보증금을 넘으면 신고가.
 4. 지표단지 세대수 대비 거래량(회전율)을 최근 1년 / 3개월로 계산합니다.
-5. 네이버 매물 수집 결과(data/naver/state.json, naver.py 가 생성)로 사라진 매물·매물현황을 만듭니다.
-6. templates/report_template.html 로 index.html 을 만듭니다.
+5. templates/report_template.html 로 index.html 을 만듭니다.
 
 사용법
 ------
@@ -40,12 +39,10 @@ SOURCES = {
     "pre": (f"{API}/RTMSDataSvcSilvTrade/getRTMSDataSvcSilvTrade", "data/presale_db.json", "분양권 전매"),
     "rent": (f"{API}/RTMSDataSvcAptRent/getRTMSDataSvcAptRent", "data/rent_db.json", "아파트 전월세"),
 }
-NAVER_STATE = "data/naver/state.json"
 WINDOW_MONTHS = 13   # DB 에 보관할 개월 수 (1년 회전율 계산용)
 REFRESH_MONTHS = 3   # 매일 다시 받아올 최근 개월 수
 LIST_LEN = 15        # 타입별 리스트 최대 건수
 RENT_PER_EOK = 40    # 월세 40만원 = 보증금 1억원으로 환산
-FALLBACK_DAYS = 7    # 비교 기준(전날 수집분)이 없는 첫날에는 최근 7일 계약분으로 대체
 KST = timezone(timedelta(hours=9))
 
 BUSAN_LAWD_CD = {
@@ -353,21 +350,17 @@ def update_db(src, db, today, rebuild=False):
 # 5. 리포트 데이터 계산
 # ==========================================
 def todays(trades, today):
-    """오늘 새로 공개된 거래. 아직 비교 기준(전날 수집분)이 없으면 전일 계약분으로 대체."""
+    """오늘 새로 공개된 거래 = 어제까지 수집한 목록에 없다가 오늘 처음 들어온 거래."""
     today_s = today.strftime("%Y%m%d")
-    if any(t.get("seen") for t in trades):
-        return [t for t in trades if t.get("seen") == today_s], False
-    week = (today - timedelta(days=FALLBACK_DAYS)).strftime("%Y%m%d")
-    return [t for t in trades if week <= t["dt"] < today_s], True
+    return [t for t in trades if t.get("seen") == today_s]
 
 
-def mark_highs(new, history, fallback, prior, today, value=lambda t: t["p"], eligible=lambda t: True):
+def mark_highs(new, history, prior, value=lambda t: t["p"], eligible=lambda t: True):
     """new 각 거래에 'up'(신고가 여부)을 붙이고, 갱신된 최고가 맵을 돌려줌."""
-    yday = (today - timedelta(days=FALLBACK_DAYS)).strftime("%Y%m%d")
     new_ids = {id(t) for t in new}
     base = dict(prior)
     for t in history:
-        if id(t) in new_ids or (fallback and t["dt"] >= yday) or not eligible(t):
+        if id(t) in new_ids or not eligible(t):
             continue
         k = high_key(t)
         base[k] = max(base.get(k, 0), value(t))
@@ -388,15 +381,15 @@ def build_trades(dbs, today):
     pre = [dict(t, src="pre") for t in dbs["pre"]["trades"]]
     rent = [dict(t, src="rent") for t in dbs["rent"]["trades"]]
 
-    new_sale, fb1 = todays(sale, today)
-    new_pre, fb2 = todays(pre, today)
-    new_rent, fb3 = todays(rent, today)
+    new_sale = todays(sale, today)
+    new_pre = todays(pre, today)
+    new_rent = todays(rent, today)
 
     # 매매 + 분양권 (신고가도 함께 비교)
     new_s = new_sale + new_pre
-    highs_s = mark_highs(new_s, sale + pre, fb1 or fb2, dbs["sale"].get("highs3", {}), today)
+    highs_s = mark_highs(new_s, sale + pre, dbs["sale"].get("highs3", {}))
     is_jeonse = lambda t: not t.get("m")
-    highs_r = mark_highs(new_rent, rent, fb3, dbs["rent"].get("highs3", {}), today, eligible=is_jeonse)
+    highs_r = mark_highs(new_rent, rent, dbs["rent"].get("highs3", {}), eligible=is_jeonse)
 
     def srow(t):
         return {"name": t["n"], "floor": floor_label(t["f"]), "price": fmt_short(t["p"]), "p": t["p"],
@@ -414,20 +407,17 @@ def build_trades(dbs, today):
     def by_type(rows):
         return {k: [r for r in rows if r["type"] == k][:LIST_LEN] for k in TYPES}
 
-    def label(fb, n_new):
-        if fb:
-            return f"최근 {FALLBACK_DAYS}일 계약 ({(today - timedelta(days=FALLBACK_DAYS)).strftime('%m.%d')}~)"
-        return f"{today.strftime('%y.%m.%d')} 신규 실거래"
+    title = f"{today.strftime('%y.%m.%d')} 신규 실거래"
 
     type_cnt = Counter(r["type"] for r in srows)
     rent_type_cnt = Counter(r["type"] for r in rrows)
     sale_ctx = {
-        "title": label(fb1, len(new_sale)), "fallback": fb1, "cnt": len(srows),
+        "title": title, "cnt": len(srows),
         "pre_cnt": sum(1 for r in srows if r["pre"]), "high_cnt": sum(1 for r in srows if r["up"]),
         "type_cnt": type_cnt, "lists": by_type(srows), "top10": srows[:10],
     }
     rent_ctx = {
-        "title": label(fb3, len(new_rent)), "fallback": fb3, "cnt": len(rrows),
+        "title": title, "cnt": len(rrows),
         "jeonse": sum(1 for r in rrows if not r["monthly"]), "wolse": sum(1 for r in rrows if r["monthly"]),
         "high_cnt": sum(1 for r in rrows if r["up"]), "type_cnt": rent_type_cnt,
         "lists": by_type(rrows), "top5": rrows[:5],
@@ -439,7 +429,7 @@ def match_complex(name_keys, district, names):
     return [n for n in names if any(k in normalize(n) for k in name_keys)]
 
 
-def build_indicator(sale_trades, today, naver):
+def build_indicator(sale_trades, today):
     today_s = today.strftime("%Y%m%d")
     d_1y = (today - timedelta(days=365)).strftime("%Y%m%d")
     d_3m = months_ago(today, 3).strftime("%Y%m%d")
@@ -456,15 +446,8 @@ def build_indicator(sale_trades, today, naver):
             c1 = sum(1 for t in matched if d_1y < t["dt"] <= today_s)
             c3 = sum(1 for t in matched if d_3m < t["dt"] <= today_s)
             hh = apt["households"]
-            listing = None
-            if naver:
-                nkws = [normalize(k) for k in apt.get("naver_keywords", apt.get("keywords", [apt["name"]]))]
-                cs = [c for c in naver["complexes"] if c["gu"] == district and c["type"] == "APT"
-                      and any(k in normalize(c["name"]) for k in nkws)]
-                listing = sum(c["deal"] for c in cs) if cs else None
             it = {"name": apt["name"], "households": hh, "district": district,
-                  "c1": c1, "r1": c1 / hh * 100, "c3": c3, "r3": c3 / hh * 100,
-                  "listing": listing, "lr": (listing / hh * 100) if listing is not None else None}
+                  "c1": c1, "r1": c1 / hh * 100, "c3": c3, "r3": c3 / hh * 100}
             change = (c3 * 4 / c1 - 1) * 100 if c1 else 0
             it["change"] = round(change)
             it["trend"] = ("strong" if change >= 10 else "up" if change >= 5 else
@@ -475,12 +458,9 @@ def build_indicator(sale_trades, today, naver):
 
     max_r1 = max([i["r1"] for i in items] + [0.01])
     max_r3 = max([i["r3"] for i in items] + [0.01])
-    max_bf = max([i["r3"] for i in items] + [i["lr"] or 0 for i in items] + [0.01])
     for i in items:
         i["w1"] = round(i["r1"] / max_r1 * 100, 1)
         i["w3"] = round(i["r3"] / max_r3 * 100, 1)
-        i["bl"] = round(i["r3"] / max_bf * 100, 1)                 # 나비형: 거래 회전율(3개월)
-        i["br"] = round((i["lr"] or 0) / max_bf * 100, 1)          # 나비형: 매매 매물 비율
     hh = sum(i["households"] for i in items)
     c1 = sum(i["c1"] for i in items)
     c3 = sum(i["c3"] for i in items)
@@ -488,74 +468,8 @@ def build_indicator(sale_trades, today, naver):
     return {
         "groups": groups, "count": len(items), "households": hh,
         "c1": c1, "r1": c1 / hh * 100 if hh else 0, "c3": c3, "r3": c3 / hh * 100 if hh else 0,
-        "top5_1y": sorted(items, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5], "by_r3": by_r3,
+        "top5_1y": sorted(items, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5],
         "period_1y": f"{ymd_label(d_1y)}~", "period_3m": f"{ymd_label(d_3m)}~",
-        "has_listing": bool(naver),
-    }
-
-
-def load_naver(today):
-    if not os.path.exists(NAVER_STATE):
-        return None
-    try:
-        with open(NAVER_STATE, encoding="utf-8") as f:
-            st = json.load(f)
-    except Exception:
-        return None
-    age = (today.date() - datetime.strptime(st["date"], "%Y%m%d").date()).days
-    complexes = st.get("complexes", [])
-    prev_counts = st.get("prev", {}).get("counts", {})
-    cgu = {c["no"]: c["gu"] for c in complexes}
-
-    gu = defaultdict(lambda: {"deal": 0, "jw": 0, "hh": 0, "pdeal": 0, "pjw": 0})
-    tot = [0, 0, 0]
-    ptot = [0, 0, 0]
-    for c in complexes:
-        g = gu[c["gu"]]
-        g["deal"] += c["deal"]
-        g["jw"] += c["lease"] + c["rent"]
-        if c["type"] == "APT":
-            g["hh"] += c["hh"]
-        tot = [tot[0] + c["deal"], tot[1] + c["lease"], tot[2] + c["rent"]]
-    for no, (d, l, r) in prev_counts.items():
-        if no in cgu:
-            gu[cgu[no]]["pdeal"] += d
-            gu[cgu[no]]["pjw"] += l + r
-        ptot = [ptot[0] + d, ptot[1] + l, ptot[2] + r]
-    has_prev = bool(prev_counts)
-    gus = []
-    for name, g in gu.items():
-        if not g["hh"]:
-            continue
-        gus.append({"name": name, "hh": g["hh"], "deal": g["deal"], "jw": g["jw"],
-                    "rd": g["deal"] / g["hh"] * 100, "rj": g["jw"] / g["hh"] * 100,
-                    "dd": g["deal"] - g["pdeal"] if has_prev else None,
-                    "dj": g["jw"] - g["pjw"] if has_prev else None})
-    gus.sort(key=lambda g: -g["rd"])
-    mx = max([max(g["rd"], g["rj"]) for g in gus] + [0.01])
-    for g in gus:
-        g["bl"], g["br"] = round(g["rd"] / mx * 100, 1), round(g["rj"] / mx * 100, 1)
-
-    gone = st.get("gone", [])
-    gone_rows = [{"name": u["name"], "floor": floor_label(u["floor"]), "price": fmt_short(u["price"]),
-                  "p": u["price"], "pre": u.get("pre"), "gu": u["gu"], "type": u["type"] + "타입"} for u in gone]
-    gone_lists = {k: [r for r in gone_rows if r["type"] == k][:LIST_LEN] for k in ["84타입", "59타입"]}
-    gone_by_gu = Counter(r["gu"] for r in gone_rows)
-    new_by_gu = st.get("new_by_gu", {})
-    gb = [{"name": g, "gone": gone_by_gu.get(g, 0), "new": new_by_gu.get(g, 0)}
-          for g in set(gone_by_gu) | set(new_by_gu)]
-    gb.sort(key=lambda x: (-x["gone"], -x["new"]))
-    gmx = max([max(x["gone"], x["new"]) for x in gb] + [1])
-    for x in gb:
-        x["bl"], x["br"] = round(x["gone"] / gmx * 100, 1), round(x["new"] / gmx * 100, 1)
-
-    return {
-        "date": ymd_label(st["date"]), "prev_date": ymd_label(st.get("prev_date", "")), "stale": age > 2,
-        "first_run": st.get("first_run", False), "complexes": complexes,
-        "tot": tot, "dtot": [a - b for a, b in zip(tot, ptot)] if has_prev else None,
-        "gus": gus, "gone_cnt": len(gone_rows), "gone_type": Counter(r["type"] for r in gone_rows),
-        "gone_pre": sum(1 for r in gone_rows if r["pre"]), "gone_lists": gone_lists, "gone_top5": gone_rows[:5],
-        "relisted": st.get("relisted", 0), "new": st.get("new", 0), "gone_by_gu": gb[:10],
     }
 
 
@@ -570,12 +484,12 @@ def render(context, out_path):
     print(f"✅ {out_path} 생성 완료")
 
 
-def build_context(dbs, naver, today):
+def build_context(dbs, today):
     sale_ctx, rent_ctx, highs_s, highs_r = build_trades(dbs, today)
-    indicator = build_indicator(dbs["sale"]["trades"], today, naver)
+    indicator = build_indicator(dbs["sale"]["trades"], today)
     return {
         "date_label": today.strftime("%y.%m.%d"), "date_full": today.strftime("%Y%m%d"),
-        "sale": sale_ctx, "rent": rent_ctx, "indicator": indicator, "naver": naver, "notices": [],
+        "sale": sale_ctx, "rent": rent_ctx, "indicator": indicator, "notices": [],
     }, highs_s, highs_r
 
 
@@ -628,39 +542,10 @@ def demo_dbs(today):
     return dbs
 
 
-def demo_naver(today):
-    rnd = random.Random(11)
-    complexes = []
-    for d, apts in INDICATOR_COMPLEXES.items():
-        for a in apts:
-            complexes.append({"no": str(len(complexes)), "name": a["name"], "gu": d, "dong": "", "type": "APT",
-                              "hh": a["households"], "deal": int(a["households"] * rnd.uniform(0.018, 0.045)),
-                              "lease": int(a["households"] * 0.02), "rent": int(a["households"] * 0.008)})
-    for d in BUSAN_LAWD_CD:
-        hh = rnd.randint(20000, 110000)
-        complexes.append({"no": f"g{d}", "name": f"{d} 기타", "gu": d, "dong": "", "type": "APT", "hh": hh,
-                          "deal": int(hh * rnd.uniform(0.015, 0.045)), "lease": int(hh * 0.02), "rent": int(hh * 0.01)})
-    prev = {c["no"]: [c["deal"] + rnd.randint(-20, 20), c["lease"] + rnd.randint(-10, 10), c["rent"] + rnd.randint(-5, 5)]
-            for c in complexes}
-    gone = []
-    for i in range(184):
-        c = rnd.choice(complexes[:21])
-        t = rnd.choice(["84", "59"])
-        gone.append({"name": c["name"], "gu": c["gu"], "type": t, "floor": str(rnd.randint(2, 35)),
-                     "price": int((85 if t == "84" else 60) * 1100 * rnd.uniform(0.6, 1.4)), "pre": i % 20 == 0})
-    gone.sort(key=lambda u: -u["price"])
-    os.makedirs("/tmp/demo_naver", exist_ok=True)
-    st = {"date": today.strftime("%Y%m%d"), "prev_date": (today - timedelta(days=1)).strftime("%Y%m%d"),
-          "complexes": complexes, "counts": {}, "prev": {"counts": prev}, "gone": gone, "relisted": 23,
-          "new": 206, "new_by_gu": {d: rnd.randint(5, 50) for d in BUSAN_LAWD_CD}, "first_run": False}
-    return st
-
-
 # ==========================================
 # 8. 메인
 # ==========================================
 def main():
-    global NAVER_STATE
     ap = argparse.ArgumentParser()
     ap.add_argument("--rebuild", action="store_true", help="국토부 DB 전체 재수집")
     ap.add_argument("--demo", action="store_true", help="예시 데이터로 렌더링")
@@ -669,11 +554,7 @@ def main():
     now = datetime.now(KST)
 
     if args.demo:
-        path = "/tmp/demo_naver_state.json"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(demo_naver(now), f, ensure_ascii=False)
-        NAVER_STATE = path
-        ctx, _, _ = build_context(demo_dbs(now), load_naver(now), now)
+        ctx, _, _ = build_context(demo_dbs(now), now)
         ctx["notices"].append("예시 데이터로 생성된 미리보기입니다.")
         render(ctx, args.out or "demo.html")
         return
@@ -690,18 +571,12 @@ def main():
     else:
         print("⚠️ MOLIT_API_KEY 가 없어 기존 DB 로만 리포트를 만듭니다.")
 
-    naver = load_naver(now)
-    ctx, highs_s, highs_r = build_context(dbs, naver, now)
+    ctx, highs_s, highs_r = build_context(dbs, now)
     for src, errs in errors.items():
         if errs and not dbs[src]["trades"]:
             ctx["notices"].append(f"{SOURCES[src][2]} 실거래를 받지 못했습니다: {errs[0][:80]}")
         elif errs:
             ctx["notices"].append(f"{SOURCES[src][2]} 일부 수집 실패 {len(errs)}건 — 이전 데이터로 대체")
-    if naver is None:
-        ctx["notices"].append("네이버 매물 데이터가 아직 없습니다 (사라진 매물·매물현황 준비 중).")
-    elif naver["stale"]:
-        ctx["notices"].append(f"네이버 매물 데이터가 오래되었습니다 ({naver['date']} 기준).")
-
     if MOLIT_API_KEY:
         dbs["sale"]["highs3"] = highs_s
         dbs["rent"]["highs3"] = highs_r
