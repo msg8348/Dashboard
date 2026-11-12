@@ -190,7 +190,6 @@
     .item.hi .arrow { font-size: 15px; }
     .item.hi .right { margin-left: auto; }
     .tr .trend { font-size: 10.5px; }
-    .btn { flex: 1 1 100%; justify-content: center; padding: 11px; }
     .scroller { overflow: visible; }
     .report { width: 100%; padding: 22px 14px 18px; border-radius: 18px; }
     .head { flex-direction: column; align-items: flex-start; gap: 6px; padding-bottom: 14px; margin-bottom: 16px; }
@@ -254,7 +253,19 @@
     .foot { flex-direction: column; gap: 4px; font-size: 11px; }
   }
 
-  /* 모바일 저장 미리보기 */
+  /* 공유 · 저장 버튼 */
+  .actions { width: 1080px; margin: 22px auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .actions .btn { justify-content: center; padding: 18px; font-size: 18px; border-radius: 14px; }
+  .btn.light { background: #fff; color: var(--ink-2); box-shadow: inset 0 0 0 2px #d5dbe2; }
+  .btn.light:hover { background: #f6f8fa; }
+  .actions-note { text-align: center; color: var(--muted); font-size: 15px; margin-top: 18px; }
+  @media (max-width: 820px) {
+    .actions { width: 100%; gap: 10px; margin-top: 16px; }
+    .actions .btn { padding: 16px 8px; font-size: 16px; }
+    .actions-note { font-size: 13px; margin-top: 14px; }
+  }
+
+  /* 공유 대체 화면 */
   .save-sheet { position: fixed; inset: 0; background: rgba(15,20,28,.72); z-index: 50; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px; }
   .save-sheet[hidden] { display: none; }
   .save-sheet .msg { color: #fff; font-size: 14px; font-weight: 600; text-align: center; line-height: 1.5; }
@@ -274,7 +285,6 @@
     <button class="tab" data-page="4" onclick="showPage(4)">4 · 지표 3개월</button>
     <button class="tab" data-page="5" onclick="showPage(5)">5 · 지표 상세</button>
   </div>
-  <button class="btn" id="save-btn" onclick="downloadReport()">⬇ 이 페이지 이미지 저장</button>
 </div>
 
 <div class="scroller">
@@ -450,11 +460,18 @@
 </div>
 </div>
 
+<div class="actions">
+  <button class="btn" id="share-btn" onclick="shareReport()">이미지 공유</button>
+  <button class="btn light" id="save-btn" onclick="saveReport()">이미지 저장</button>
+</div>
+<div class="actions-note">부산 · 20{{ date_label|replace(".", "-") }}</div>
+
+<!-- 공유가 막힌 경우(브라우저 제한)에만 쓰는 대체 화면 -->
 <div class="save-sheet" id="save-sheet" hidden>
-  <div class="msg">이미지를 <b>길게 눌러</b> '사진 앱에 저장'을 선택하거나<br>아래 <b>공유 · 저장</b> 버튼을 눌러주세요</div>
+  <div class="msg">이미지를 <b>길게 눌러</b> 저장하거나<br>아래 <b>공유하기</b>를 다시 눌러주세요</div>
   <div class="imgwrap"><img id="save-img" alt="리포트 이미지"></div>
   <div class="acts">
-    <button class="btn" id="share-btn" onclick="shareImage()">공유 · 저장</button>
+    <button class="btn" onclick="shareReport(true)">공유하기</button>
     <button class="btn light" onclick="closeSheet()">닫기</button>
   </div>
 </div>
@@ -466,54 +483,87 @@ function showPage(n) {
   document.querySelectorAll('.page').forEach(el => { el.hidden = el.id !== 'page' + n; });
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.page == n));
   try { localStorage.setItem('busanPage', n); } catch (e) {}
+  prerender();
 }
+
+const PAGE_NAME = { 1: '1_최고거래가', 2: '2_신고가', 3: '3_지표단지_1년', 4: '4_지표단지_3개월', 5: '5_지표단지_상세' };
+const DATE = '20{{ date_label|replace(".", "") }}';
+const PAGE_FILE = { 1: '1_top_price', 2: '2_new_high', 3: '3_indicator_1y', 4: '4_indicator_3m', 5: '5_indicator_detail' };
+const fileName = n => `부산아파트_${DATE}_${PAGE_NAME[n]}.png`;      // 공유창에 보이는 이름
+const saveName = n => `busan_apt_${DATE}_${PAGE_FILE[n]}.png`;       // 다운로드 파일명 (브라우저 호환을 위해 영문)
+
+// 페이지별 이미지 캐시: 탭을 열면 미리 만들어 두어, 공유 버튼을 누르는 즉시 공유창이 뜨도록 함
+let cache = {}, cacheWidth = 0;
+function render(n) {
+  const w = document.documentElement.clientWidth;
+  if (w !== cacheWidth) { cache = {}; cacheWidth = w; }
+  if (!cache[n]) {
+    cache[n] = (async () => {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const el = document.getElementById('page' + n);   // 둥근 네모 박스(리포트 카드) 영역만 캡처
+      const canvas = await html2canvas(el, {
+        scale: Math.max(2, 1080 / el.offsetWidth), backgroundColor: null, useCORS: true,
+        windowWidth: w, scrollX: 0, scrollY: -window.scrollY
+      });
+      return await new Promise(res => canvas.toBlob(res, 'image/png'));
+    })();
+    cache[n].catch(() => { delete cache[n]; });
+  }
+  return cache[n];
+}
+let prerenderTimer;
+function prerender() { clearTimeout(prerenderTimer); prerenderTimer = setTimeout(() => render(currentPage).catch(() => {}), 400); }
+window.addEventListener('load', prerender);
+window.addEventListener('resize', prerender);
 try { const saved = +localStorage.getItem('busanPage'); if (saved >= 2 && saved <= 5) showPage(saved); } catch (e) {}
 
-const PAGE_FILE = { 1: '1_top_price', 2: '2_new_high', 3: '3_indicator_1y', 4: '4_indicator_3m', 5: '5_indicator_detail' };
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
-let lastBlob = null, lastName = '', lastUrl = null;
+function busy(id, on, text) {
+  const b = document.getElementById(id);
+  if (on) { b.dataset.label = b.textContent; b.textContent = text; b.disabled = true; }
+  else { b.textContent = b.dataset.label || b.textContent; b.disabled = false; }
+}
 
-async function downloadReport() {
-  const btn = document.getElementById('save-btn');
-  const label = btn.textContent;
-  btn.disabled = true; btn.textContent = '이미지 만드는 중…';
+async function shareReport(fromSheet) {
+  const n = currentPage;
+  busy('share-btn', true, '이미지 준비 중…');
+  let blob;
+  try { blob = await render(n); }
+  catch (e) { alert('이미지를 만들지 못했습니다: ' + e); return; }
+  finally { busy('share-btn', false); }
+  const file = new File([blob], fileName(n), { type: 'image/png' });
+  if (!(navigator.canShare && navigator.canShare({ files: [file] }))) {
+    alert('이 브라우저는 이미지 공유를 지원하지 않아 저장으로 대신합니다.');
+    return download(blob, saveName(n));
+  }
   try {
-    if (document.fonts && document.fonts.ready) await document.fonts.ready;
-    const el = document.getElementById('page' + currentPage);
-    const canvas = await html2canvas(el, {
-      // 보이는 화면 그대로 캡처 (모바일은 세로형 배치), 가로 해상도는 최소 1080px 이상
-      scale: Math.max(2, 1080 / el.offsetWidth), backgroundColor: '#ffffff', useCORS: true,
-      windowWidth: document.documentElement.clientWidth, scrollX: 0, scrollY: -window.scrollY
-    });
-    lastBlob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-    lastName = 'busan_apt_{{ date_label|replace(".", "") }}_' + PAGE_FILE[currentPage] + '.png';
-    if (lastUrl) URL.revokeObjectURL(lastUrl);
-    lastUrl = URL.createObjectURL(lastBlob);
-
-    if (isMobile) {
-      // 모바일(특히 iPhone)은 자동 다운로드가 막히므로 미리보기를 띄워 저장/공유하게 함
-      document.getElementById('save-img').src = lastUrl;
-      document.getElementById('share-btn').hidden = !(navigator.canShare && navigator.canShare({ files: [new File([lastBlob], lastName, { type: 'image/png' })] }));
-      document.getElementById('save-sheet').hidden = false;
-    } else {
-      const a = document.createElement('a');
-      a.href = lastUrl; a.download = lastName;
-      document.body.appendChild(a); a.click(); a.remove();
-    }
+    await navigator.share({ files: [file] });
+    if (fromSheet) closeSheet();
   } catch (e) {
-    alert('이미지 저장에 실패했습니다: ' + e);
-  } finally {
-    btn.disabled = false; btn.textContent = label;
+    if (e.name === 'AbortError') return;          // 사용자가 공유창을 닫음
+    if (e.name === 'NotAllowedError' && !fromSheet) {
+      // 이미지 생성이 길어져 브라우저가 공유를 막은 경우: 미리보기에서 한 번 더 누르면 공유됨
+      document.getElementById('save-img').src = URL.createObjectURL(blob);
+      document.getElementById('save-sheet').hidden = false;
+      return;
+    }
+    alert('공유에 실패했습니다: ' + e.message);
   }
 }
 
-async function shareImage() {
-  if (!lastBlob) return;
-  try {
-    await navigator.share({ files: [new File([lastBlob], lastName, { type: 'image/png' })], title: lastName });
-  } catch (e) {
-    if (e && e.name !== 'AbortError') alert('공유에 실패했습니다. 이미지를 길게 눌러 저장해 주세요.');
-  }
+async function saveReport() {
+  const n = currentPage;
+  busy('save-btn', true, '이미지 준비 중…');
+  try { download(await render(n), saveName(n)); }
+  catch (e) { alert('이미지 저장에 실패했습니다: ' + e); }
+  finally { busy('save-btn', false); }
+}
+
+function download(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 function closeSheet() { document.getElementById('save-sheet').hidden = true; }
