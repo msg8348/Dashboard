@@ -70,7 +70,11 @@ INDICATOR_COMPLEXES = {
         {"name": "사직롯데캐슬더클래식", "households": 1064},
     ],
     "연제구": [
-        {"name": "레이카운티", "households": 4470},
+        {"name": "레이카운티 1단지", "households": 1360},
+        {"name": "레이카운티 2단지", "households": 1183},
+        {"name": "레이카운티 3단지", "households": 1124},
+        {"name": "레이카운티 4단지", "households": 481},
+        {"name": "레이카운티 5단지", "households": 322},
         {"name": "연산롯데캐슬골드포레", "households": 1450},
     ],
     "부산진구": [
