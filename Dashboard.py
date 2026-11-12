@@ -55,7 +55,7 @@ INDICATOR_COMPLEXES = {
     "수영구": [
         {"name": "삼익비치", "households": 3060},
         {"name": "남천자이", "households": 913},
-        {"name": "남천더샵프레스티지", "households": 975},
+        {"name": "남천더샵프레스티지", "households": 975, "keywords": ["더샵남천프레스티지"]},
     ],
     "해운대구": [
         {"name": "해운대자이2차1단지", "households": 813},
@@ -80,13 +80,13 @@ INDICATOR_COMPLEXES = {
         {"name": "래미안장전", "households": 1938},
     ],
     "강서구": [
-        {"name": "명지더샵퍼스트월드3단지", "households": 1530},
+        {"name": "명지더샵퍼스트월드3단지", "households": 1530, "keywords": ["더샵명지퍼스트월드3단지"]},
     ],
     "북구": [
         {"name": "화명롯데캐슬카이저", "households": 5239},
     ],
     "사상구": [
-        {"name": "사상중흥S-클래스그랜드센트럴", "households": 1508},
+        {"name": "사상중흥S-클래스그랜드센트럴", "households": 1508, "keywords": ["사상중흥에스클래스그랜드센트럴"]},
     ],
     "사하구": [
         {"name": "힐스테이트사하역", "households": 1314},
@@ -98,7 +98,7 @@ INDICATOR_COMPLEXES = {
         {"name": "대신푸르지오2차", "households": 815},
     ],
     "영도구": [
-        {"name": "봉래에일린의뜰", "households": 1216},
+        {"name": "봉래에일린의뜰", "households": 1216, "keywords": ["영도센트럴에일린의뜰"]},
     ],
     "기장군": [
         {"name": "일광자이푸르지오", "households": 1547},
