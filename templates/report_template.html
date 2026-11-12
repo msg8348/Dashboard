@@ -153,6 +153,72 @@
   .tab.on { background: var(--ink); color: #fff; }
   .page[hidden] { display: none; }
   .report.p2 .ind { margin-top: 0; }
+
+  .ml { display: none; }
+
+  /* ===== 모바일 (이미지 저장은 항상 1080px 데스크톱 레이아웃으로 렌더링됨) ===== */
+  @media (max-width: 820px) {
+    body { padding: 12px 10px 32px; }
+    .toolbar { width: 100%; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .tabs { flex: 1 1 auto; }
+    .tab { flex: 1; padding: 9px 8px; font-size: 13px; }
+    .btn { flex: 1 1 100%; justify-content: center; padding: 11px; }
+    .scroller { overflow: visible; }
+    .report { width: 100%; padding: 22px 14px 18px; border-radius: 18px; }
+    .head { flex-direction: column; align-items: flex-start; gap: 6px; padding-bottom: 14px; margin-bottom: 16px; }
+    .head h1 { font-size: 26px; }
+    .head h1 small { display: block; font-size: 15px; margin: 4px 0 0; }
+    .head .src { text-align: left; font-size: 11.5px; }
+
+    .kpis { gap: 10px; margin-bottom: 14px; }
+    .kpi { flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px; border-radius: 16px; }
+    .kpi .label { font-size: 14px; }
+    .kpi .sub { font-size: 11px; }
+    .kpi .value { font-size: 34px; align-self: flex-end; }
+    .kpi .value span { font-size: 18px; }
+
+    .row2 { grid-template-columns: 1fr; gap: 14px; margin-bottom: 14px; }
+    .panel { padding: 16px; border-radius: 16px; }
+    .panel-title h2 { font-size: 19px; }
+    .item { gap: 10px; align-items: flex-start; }
+    .item .name { font-size: 15px; white-space: normal; }
+    .item .meta { white-space: normal; font-size: 11.5px; }
+    .item .price { font-size: 16px; }
+    .item .diff { font-size: 11px; }
+    .empty { min-height: 90px; }
+
+    .ind { border-radius: 18px; }
+    .ind-head { padding: 18px 16px; }
+    .ind-head h2 { font-size: 21px; }
+    .ind-head .row { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .legend { flex-wrap: wrap; gap: 6px 14px; font-size: 12px; }
+    .big2, .top2 { grid-template-columns: 1fr; gap: 10px; padding-left: 12px; padding-right: 12px; }
+    .big { padding: 14px 16px; flex-wrap: wrap; gap: 10px; }
+    .big .nums .n { font-size: 28px; }
+    .big .nums .n small { font-size: 15px; }
+    .topbox { padding: 14px 14px 6px; }
+    .trow { grid-template-columns: 22px 1fr 48px 62px; gap: 8px; }
+    .trow .nm { font-size: 14px; }
+    .trow .pct { font-size: 15.5px; }
+    .more { padding: 4px 12px 16px; }
+
+    .tbl { padding: 12px 10px 14px; }
+    .tbl-head { display: none; }
+    .dgroup { padding: 4px 12px; }
+    .tr { grid-template-columns: 1fr auto; grid-template-areas: "dist dist" "name trend" "c1 c1" "c3 c3"; row-gap: 6px; padding: 11px 0; }
+    .tr .dist { grid-area: dist; font-size: 13px; }
+    .tr .dist:empty { display: none; }
+    .tr .apt-name { grid-area: name; white-space: normal; font-size: 14.5px; }
+    .tr .trend { grid-area: trend; }
+    .tr .trend.none { display: none; }
+    .tr .y1c { grid-area: c1; }
+    .tr .m3c { grid-area: m3; grid-area: c3; }
+    .cell { grid-template-columns: 34px 1fr 98px; }
+    .ml { display: block; font-size: 11px; color: var(--muted); font-weight: 600; }
+    .val { font-size: 12.5px; }
+
+    .foot { flex-direction: column; gap: 4px; font-size: 11px; }
+  }
 </style>
 </head>
 <body>
@@ -295,9 +361,9 @@
         <div class="tr">
           <span class="dist">{% if loop.first %}{{ g.district }}{% endif %}</span>
           <div class="apt-name">{{ a.name }}<small>{{ "{:,}".format(a.households) }}세대</small></div>
-          <div class="cell"><div class="track"><div class="fill y1" style="width:{{ a.w1 }}%"></div></div><span class="val"><b class="y1">{{ a.c1 }}건</b> · {{ "%.2f"|format(a.r1) }}%</span></div>
-          <div class="cell"><div class="track"><div class="fill m3" style="width:{{ a.w3 }}%"></div></div><span class="val"><b class="m3">{{ a.c3 }}건</b> · {{ "%.2f"|format(a.r3) }}%</span></div>
-          {% if a.trend == 'up' %}<span class="trend up">▲ 증가</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소</span>{% else %}<span class="trend" style="color:var(--muted)">-</span>{% endif %}
+          <div class="cell y1c"><span class="ml">1년</span><div class="track"><div class="fill y1" style="width:{{ a.w1 }}%"></div></div><span class="val"><b class="y1">{{ a.c1 }}건</b> · {{ "%.2f"|format(a.r1) }}%</span></div>
+          <div class="cell m3c"><span class="ml">3개월</span><div class="track"><div class="fill m3" style="width:{{ a.w3 }}%"></div></div><span class="val"><b class="m3">{{ a.c3 }}건</b> · {{ "%.2f"|format(a.r3) }}%</span></div>
+          {% if a.trend == 'up' %}<span class="trend up">▲ 증가</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소</span>{% else %}<span class="trend none" style="color:var(--muted)">-</span>{% endif %}
         </div>
         {% endfor %}
       </div>
