@@ -45,6 +45,7 @@ WINDOW_MONTHS = 13   # DB 에 보관할 개월 수 (1년 회전율 계산용)
 REFRESH_MONTHS = 3   # 매일 다시 받아올 최근 개월 수
 LIST_LEN = 15        # 타입별 리스트 최대 건수
 RENT_PER_EOK = 40    # 월세 40만원 = 보증금 1억원으로 환산
+FALLBACK_DAYS = 7    # 비교 기준(전날 수집분)이 없는 첫날에는 최근 7일 계약분으로 대체
 KST = timezone(timedelta(hours=9))
 
 BUSAN_LAWD_CD = {
@@ -279,7 +280,8 @@ def fetch_month(src, district, lawd_cd, deal_ym):
 
     seen = Counter()   # 거래 고유 ID (동일 조건 거래가 여러 건이면 #순번)
     for t in trades:
-        base = f"{t['d']}|{t['s'] or t['n']}|{t['a']}|{t['f']}|{t['dt']}|{t['p']}|{t.get('m', '')}|{t['dong']}"
+        rent_part = f"|{t['m']}" if src == "rent" else ""   # 매매 ID 형식은 예전과 동일하게 유지
+        base = f"{t['d']}|{t['s'] or t['n']}|{t['a']}|{t['f']}|{t['dt']}|{t['p']}{rent_part}|{t['dong']}"
         seen[base] += 1
         t["id"] = f"{base}#{seen[base]}"
     return trades
@@ -353,15 +355,15 @@ def update_db(src, db, today, rebuild=False):
 def todays(trades, today):
     """오늘 새로 공개된 거래. 아직 비교 기준(전날 수집분)이 없으면 전일 계약분으로 대체."""
     today_s = today.strftime("%Y%m%d")
-    yday = (today - timedelta(days=1)).strftime("%Y%m%d")
     if any(t.get("seen") for t in trades):
         return [t for t in trades if t.get("seen") == today_s], False
-    return [t for t in trades if t["dt"] == yday], True
+    week = (today - timedelta(days=FALLBACK_DAYS)).strftime("%Y%m%d")
+    return [t for t in trades if week <= t["dt"] < today_s], True
 
 
 def mark_highs(new, history, fallback, prior, today, value=lambda t: t["p"], eligible=lambda t: True):
     """new 각 거래에 'up'(신고가 여부)을 붙이고, 갱신된 최고가 맵을 돌려줌."""
-    yday = (today - timedelta(days=1)).strftime("%Y%m%d")
+    yday = (today - timedelta(days=FALLBACK_DAYS)).strftime("%Y%m%d")
     new_ids = {id(t) for t in new}
     base = dict(prior)
     for t in history:
@@ -413,8 +415,9 @@ def build_trades(dbs, today):
         return {k: [r for r in rows if r["type"] == k][:LIST_LEN] for k in TYPES}
 
     def label(fb, n_new):
-        d = today if not fb else today - timedelta(days=1)
-        return f"{d.strftime('%y.%m.%d')} {'계약 실거래' if fb else '신규 실거래'}"
+        if fb:
+            return f"최근 {FALLBACK_DAYS}일 계약 ({(today - timedelta(days=FALLBACK_DAYS)).strftime('%m.%d')}~)"
+        return f"{today.strftime('%y.%m.%d')} 신규 실거래"
 
     type_cnt = Counter(r["type"] for r in srows)
     rent_type_cnt = Counter(r["type"] for r in rrows)
