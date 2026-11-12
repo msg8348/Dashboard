@@ -379,7 +379,7 @@ def build_report(trades, prior_high, today, bootstrap):
             c3 = sum(1 for t in matched if d_3m < t["dt"] <= today_s)
             hh = apt["households"]
             items.append({
-                "name": apt["name"], "households": hh,
+                "name": apt["name"], "households": hh, "district": district,
                 "c1": c1, "r1": c1 / hh * 100,
                 "c3": c3, "r3": c3 / hh * 100,
             })
@@ -408,6 +408,8 @@ def build_report(trades, prior_high, today, bootstrap):
         "c1": total_1y, "r1": total_1y / total_hh * 100 if total_hh else 0,
         "c3": total_3m, "r3": total_3m / total_hh * 100 if total_hh else 0,
         "best": best, "hot": hot,
+        "top5_1y": sorted(all_items, key=lambda i: i["r1"], reverse=True)[:5],
+        "top5_3m": sorted(all_items, key=lambda i: i["r3"], reverse=True)[:5],
         "period_1y": f"{d_1y[2:4]}.{d_1y[4:6]}.{d_1y[6:]}~",
         "period_3m": f"{d_3m[2:4]}.{d_3m[4:6]}.{d_3m[6:]}~",
     }
