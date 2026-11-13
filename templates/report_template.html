@@ -210,7 +210,7 @@
   .bf.total .val{font-size:15px}
   .tot-chip{font-size:10px;font-weight:800;color:#fff;background:var(--navy);border-radius:6px;padding:3px 0;text-align:center;width:30px}
   .bf.short{grid-template-columns:26px 74px 1fr 2px 1fr}
-  .foot2{font-size:12px;color:var(--muted);text-align:center;padding:8px 0 12px;border-top:1px solid #eef0f6}
+  .foot2{font-size:11px;color:var(--muted);text-align:center;padding:8px 10px 12px;border-top:1px solid #eef0f6;white-space:nowrap;overflow:hidden}
   .tbl{background:#f7f9fb;border:1px solid var(--line);border-radius:18px;padding:12px 16px 14px}
   .tbl h2{font-size:18px;font-weight:800;margin:4px 2px 10px}
   .tbl-head,.tr{display:grid;grid-template-columns:70px 1fr 230px 230px 112px;align-items:center;column-gap:14px}
@@ -385,7 +385,6 @@
 {% if has_ind %}
 <div class="report page" id="page4" hidden>
   <div class="head"><h1>{{ RG }} 지표단지 거래량 <small>{{ date_label }}</small></h1></div>
-  {% if ind_rule %}<div class="rule">지표단지: {{ ind_rule }}</div>{% endif %}
   <div class="ind-two">
     {% for cls, label, period, cnt, rate, key, rkey, ckey, rc in [('m3','최근 3개월',ind.period_3m,ind.c3,ind.r3,'top5_3m','r3','c3','ca'),('y1','최근 1년',ind.period_1y,ind.c1,ind.r1,'top5_1y','r1','c1','cj')] %}
     <div class="icard {{ cls }}"><h3>{{ label }}</h3><div class="p">{{ period }} · {{ ind.count }}개 단지 · {{ "{:,}".format(ind.households) }}세대</div>
@@ -470,6 +469,7 @@ function showPage(n) {
   document.querySelectorAll('.page').forEach(el => { el.hidden = el.id !== 'page' + n; });
   document.querySelectorAll('[data-page]').forEach(t => t.classList.toggle('on', t.dataset.page == n));
   movePill();
+  fitFoot();
   try { localStorage.setItem('busanPage2', n); } catch (e) {}
   prerender();
 }
@@ -482,6 +482,15 @@ function movePill() {   // 하단 메뉴: 선택 표시가 미끄러지듯 이�
 }
 window.addEventListener('resize', movePill);
 window.addEventListener('load', movePill);
+// 하단 안내 문구는 한 줄에 맞춰 글자 크기를 줄임
+function fitFoot() {
+  document.querySelectorAll('.page:not([hidden]) .foot2').forEach(el => {
+    let f = 11; el.style.fontSize = f + 'px';
+    while (el.scrollWidth > el.clientWidth && f > 6.5) { f -= .25; el.style.fontSize = f + 'px'; }
+  });
+}
+window.addEventListener('load', fitFoot);
+window.addEventListener('resize', fitFoot);
 function openMenu() {
   document.getElementById('mdim').hidden = false;
   const d = document.getElementById('drawer'); d.classList.add('open'); d.setAttribute('aria-hidden', 'false');
