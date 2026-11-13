@@ -487,10 +487,20 @@ def build_indicator(sale_trades, today, gu_hh=None):
     m3 = max([g[k3] for g in gus] + [0.0001])
     for g in gus:
         g["w1"], g["w3"] = round(g[k1] / m1 * 100, 1), round(g[k3] / m3 * 100, 1)
+    # 부산 전체 (구별 합계)
+    t1, t3 = sum(g["c1"] for g in gus), sum(g["c3"] for g in gus)
+    thh = sum(g["hh"] or 0 for g in gus) if gu_rate else None
+    gu_total = {"c1": t1, "c3": t3, "hh": thh,
+                "r1": t1 / thh * 100 if thh else None, "r3": t3 / thh * 100 if thh else None}
+    gu_total["w1"] = min(100, round(gu_total[k1] / m1 * 100, 1))
+    gu_total["w3"] = min(100, round(gu_total[k3] / m3 * 100, 1))
+    # 요약 지표단지 Top5 눈금(지표단지 최고 회전율 기준)에 맞춘 막대 길이
+    gu_total["iw1"] = min(100, round((gu_total["r1"] or 0) / max_r1 * 100, 1))
+    gu_total["iw3"] = min(100, round((gu_total["r3"] or 0) / max_r3 * 100, 1))
     return {
         "groups": groups, "count": len(items), "households": hh,
         "c1": c1, "r1": c1 / hh * 100 if hh else 0, "c3": c3, "r3": c3 / hh * 100 if hh else 0,
-        "top5_1y": sorted(items, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5], "by_r3": by_r3, "gus": gus, "gu_rate": gu_rate,
+        "top5_1y": sorted(items, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5], "by_r3": by_r3, "gus": gus, "gu_rate": gu_rate, "gu_total": gu_total,
         "period_1y": f"{ymd_label(d_1y)}~", "period_3m": f"{ymd_label(d_3m)}~",
     }
 
