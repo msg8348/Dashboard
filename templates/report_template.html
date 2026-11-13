@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>부산 아파트 실거래 ({{ date_label }})</title>
+<title>{{ region|default("부산") }} 아파트 실거래 ({{ date_label }})</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
@@ -16,6 +16,11 @@
   .tabs{display:flex;gap:4px;background:#fff;border:1px solid #dfe5ea;border-radius:12px;padding:4px;margin-bottom:12px}
   .tab{flex:1;border:0;background:transparent;font:inherit;font-size:15px;font-weight:700;color:var(--ink-2);padding:10px 4px;border-radius:8px;white-space:nowrap;cursor:pointer}
   .tab.on{background:var(--ink);color:#fff}
+  .crumb{display:flex;align-items:center;gap:4px;font-size:14px;font-weight:700;color:var(--ink-2);margin:0 2px 8px}
+  .crumb a{color:var(--ink-2);text-decoration:none}.crumb b{color:var(--ink)}
+  .crumb .home{margin-left:auto;font-size:13px;background:#fff;border:1px solid #dfe5ea;border-radius:999px;padding:5px 12px}
+  .rule{background:#f4f6fa;border-radius:14px;padding:11px 16px;font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:14px}
+  .rtag{font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;background:#fff3cd;color:#8a6100;margin-left:4px;vertical-align:middle}
   .page[hidden]{display:none}
   .report{background:#fff;border-radius:28px;padding:34px 34px 30px;border:1px solid #dfe5ea}
   .head{padding-bottom:16px;border-bottom:2px solid var(--line);margin-bottom:18px}
@@ -242,19 +247,23 @@
 {% macro tyb(t) %}<span class="ty {{ 'ty84' if t == '84타입' else 'ty59' if t == '59타입' else 'tyx' }}">{{ t[:2] if t != '기타' else '기타' }}</span>{% endmacro %}
 {% macro notices_box() %}{% if notices %}<div class="notice">{% for n in notices %}⚠ {{ n }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}{% endmacro %}
 {% set ind = indicator %}
+{% set RG = region|default('부산') %}
+{% set L2W = l2_word|default('구·군') %}
+{% set has_ind = has_ind if has_ind is defined else true %}
 {% set colcls = {'84타입': 'cs', '59타입': 'cj', '기타': 'cx'} %}
 {% set colcolor = {'84타입': 'var(--blue)', '59타입': 'var(--teal)', '기타': '#6b7686'} %}
 
 <div class="wrap">
+{% if crumbs %}<nav class="crumb">{% for c in crumbs %}{% if c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a> › {% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}<a class="home" href="{{ home_href }}">지역 선택</a></nav>{% endif %}
 <div class="tabs">
-  {% for t in ['요약','매매','전월세','지표단지'] %}
+  {% for t in (['요약','매매','전월세','지표단지'] if has_ind else ['요약','매매','전월세']) %}
   <button class="tab {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }})">{{ t }}</button>
   {% endfor %}
 </div>
 
 <!-- ============ 1. 요약 ============ -->
 <div class="report page" id="page1">
-  <div class="head"><h1>부산 아파트 실거래 요약 <small>{{ date_label }}</small></h1></div>
+  <div class="head"><h1>{{ RG }} 아파트 실거래 요약 <small>{{ date_label }}</small></h1></div>
   {{ notices_box() }}
   <div class="cards c2">
     <div class="cd b"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
@@ -266,15 +275,16 @@
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
   </div><div class="colB">
-    <div class="q j"><h3>전세 Top5 <small>보증금순</small></h3>
-      {% for r in rent.jeonse_top5 %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
+    <div class="q j"><h3>전세 Top{{ 5 if has_ind else 10 }} <small>보증금순</small></h3>
+      {% for r in (rent.jeonse_top5 if has_ind else rent.jeonse_top10) %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
+    {% if has_ind %}
     <div class="qx"><div class="hd"><div><small>세대수 대비 거래 회전율 · 최근 3개월 순</small><b>지표단지 거래량 Top5</b></div>
       <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
       {% set t = ind.gu_total %}
       <div class="bf one total"><span class="tot-chip">전체</span>
-        <div class="who"><b>부산 전체</b><span>{% if ind.gu_rate %}아파트 {{ "{:,}".format(t.hh) }}세대{% else %}16개 구·군{% endif %}</span></div>
+        <div class="who"><b>{{ RG }} 전체</b><span>{% if ind.gu_rate %}아파트 {{ "{:,}".format(t.hh) }}세대{% else %}{{ ind.gus|length }}개 {{ L2W }}{% endif %}</span></div>
         {% if ind.gu_rate %}
         <div class="side l"><span class="val c-m">{{ "%.2f"|format(t.r3) }}%<em>{{ "{:,}".format(t.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ t.iw3 }}%"></i></span></div><div class="axis"></div>
         <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.iw1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(t.r1) }}%<em>{{ "{:,}".format(t.c1) }}건</em></span></div>
@@ -287,13 +297,14 @@
         <div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>
         <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}
     </div>
+    {% endif %}
   </div></div>
 </div>
 
 <!-- ============ 2. 매매 / 3. 전월세 ============ -->
 {% for pg, kind, d in [(2, 'sale', sale), (3, 'rent', rent)] %}
 <div class="report page" id="page{{ pg }}" hidden>
-  <div class="head"><h1>부산 아파트 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ d.title }}</small></h1></div>
+  <div class="head"><h1>{{ RG }} 아파트 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ d.title }}</small></h1></div>
   <div class="cards c2">
     {% if kind == 'sale' %}
     <div class="cd b"><div class="l">신규 실거래</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">84타입 {{ d.type_cnt['84타입'] }} · 59타입 {{ d.type_cnt['59타입'] }} · 기타 {{ d.type_cnt['기타'] }}{% if d.pre_cnt %} · 분양권 {{ d.pre_cnt }} 포함{% endif %}</div></div></div>
@@ -317,8 +328,10 @@
 {% endfor %}
 
 <!-- ============ 4. 지표단지 ============ -->
+{% if has_ind %}
 <div class="report page" id="page4" hidden>
-  <div class="head"><h1>부산 지표단지 거래량 <small>{{ date_label }} 기준 · 세대수 대비</small></h1></div>
+  <div class="head"><h1>{{ RG }} 지표단지 거래량 <small>{{ date_label }} 기준 · 세대수 대비</small></h1></div>
+  {% if ind_rule %}<div class="rule">지표단지: {{ ind_rule }}</div>{% endif %}
   <div class="ind-two">
     {% for cls, label, period, cnt, rate, key, rkey, ckey, rc in [('m3','최근 3개월',ind.period_3m,ind.c3,ind.r3,'top5_3m','r3','c3','ca'),('y1','최근 1년',ind.period_1y,ind.c1,ind.r1,'top5_1y','r1','c1','cj')] %}
     <div class="icard {{ cls }}"><h3>{{ label }}</h3><div class="p">{{ period }} · {{ ind.count }}개 단지 · {{ "{:,}".format(ind.households) }}세대</div>
@@ -330,17 +343,19 @@
   <div class="tbl qx"><div class="hd"><div><small>{{ ind.count }}개 지표단지 · 세대수 대비 거래 회전율 · 최근 3개월 순</small><b>지표단지별 상세</b></div>
     <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
     <div class="bfgrid" style="--rows:{{ ((ind.by_r3|length) / 2)|round(0, 'ceil')|int }}">{% for a in ind.by_r3 %}<div class="bf">{{ rk(loop.index0, 'cn') }}
-      <div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span>
+      <div class="who"><b>{{ a.name }}{% if a.rule %}<span class="rtag">{{ a.rule }}</span>{% endif %}</b><span>{{ a.district }} · {% if a.nohh %}세대수 미확인{% else %}{{ "{:,}".format(a.households) }}세대{% endif %}{% if a.avg84 %} · 84 평균 {{ a.avg84 }}{% endif %}</span>
         {% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}</div>
-      <div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>
-      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}</div>
+      {% if a.nohh %}<div class="side l"><span class="val c-m">{{ a.c3 }}건</span></div><div class="axis"></div>
+      <div class="side r"><span class="val c-g">{{ a.c1 }}건</span></div></div>
+      {% else %}<div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>
+      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endif %}{% endfor %}</div>
     <div class="foot2">막대 길이는 기간별 최고 회전율 기준 · 추세 = 3개월 거래×4 와 1년 거래 비교</div>
   </div>
-  <div class="tbl qx gu"><div class="hd"><div><small>{{ ind.gus|length }}개 구·군 · 아파트 매매 · {% if ind.gu_rate %}세대수 대비 거래 회전율{% else %}거래량{% endif %} · 최근 3개월 순</small><b>구별 거래량</b></div>
+  <div class="tbl qx gu"><div class="hd"><div><small>{{ ind.gus|length }}개 {{ L2W }} · 아파트 매매 · {% if ind.gu_rate %}세대수 대비 거래 회전율{% else %}거래량{% endif %} · 최근 3개월 순</small><b>{{ L2W }}별 거래량</b></div>
     <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
     {% set t = ind.gu_total %}
     <div class="bf total"><span class="tot-chip">전체</span>
-      <div class="who"><b>부산 전체</b><span>{{ ind.gus|length }}개 구·군{% if ind.gu_rate %} · 아파트 {{ "{:,}".format(t.hh) }}세대{% endif %}</span></div>
+      <div class="who"><b>{{ RG }} 전체</b><span>{{ ind.gus|length }}개 {{ L2W }}{% if ind.gu_rate %} · 아파트 {{ "{:,}".format(t.hh) }}세대{% endif %}</span></div>
       {% if ind.gu_rate %}
       <div class="side l"><span class="val c-m">{{ "%.2f"|format(t.r3) }}%<em>{{ "{:,}".format(t.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ t.w3 }}%"></i></span></div><div class="axis"></div>
       <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(t.r1) }}%<em>{{ "{:,}".format(t.c1) }}건</em></span></div>
@@ -349,7 +364,7 @@
       <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.w1 }}%"></i></span><span class="val c-g">{{ "{:,}".format(t.c1) }}건</span></div>
       {% endif %}</div>
     <div class="bfgrid" style="--rows:{{ ((ind.gus|length) / 2)|round(0, 'ceil')|int }}">{% for g in ind.gus %}<div class="bf {% if not ind.gu_rate %}short{% endif %}">{{ rk(loop.index0, 'cn') }}
-      <div class="who"><b>{{ g.name }}</b>{% if ind.gu_rate %}<span>아파트 {{ "{:,}".format(g.hh) }}세대</span>{% endif %}</div>
+      <div class="who"><b>{{ g.name }}</b>{% if ind.gu_rate %}<span>{% if g.hh %}아파트 {{ "{:,}".format(g.hh) }}세대{% else %}세대수 미확인{% endif %}</span>{% endif %}</div>
       {% if ind.gu_rate %}
       <div class="side l"><span class="val c-m">{{ "%.2f"|format(g.r3) }}%<em>{{ "{:,}".format(g.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ g.w3 }}%"></i></span></div><div class="axis"></div>
       <div class="side r"><span class="bw"><i class="i-g" style="width:{{ g.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(g.r1) }}%<em>{{ "{:,}".format(g.c1) }}건</em></span></div></div>
@@ -360,13 +375,14 @@
     <div class="foot2">{% if ind.gu_rate %}세대수: 국토교통부 공동주택 기본정보(K-apt) 아파트·주상복합 합계 · 소규모 단지는 미포함{% else %}막대 길이는 기간별 최고 거래량 기준{% endif %}</div>
   </div>
 </div>
+{% endif %}
 </div>
 
 <div class="actions">
   <button class="btn" id="share-btn" onclick="shareReport()">공유하기</button>
   <button class="btn" id="save-btn" onclick="saveReport()">저장하기</button>
 </div>
-<div class="actions-note">부산 · 20{{ date_label|replace(".", "-") }}</div>
+<div class="actions-note">{{ RG }} · 20{{ date_label|replace(".", "-") }}</div>
 
 <div class="save-sheet" id="save-sheet" hidden>
   <div class="msg">이미지를 <b>길게 눌러</b> 저장하거나<br>아래 <b>공유하기</b>를 다시 눌러주세요</div>
@@ -388,6 +404,7 @@ function showPage(n) {
 }
 
 const DATE = '{{ date_full }}';
+const REGION = '{{ RG }}', MAXPAGE = {{ 4 if has_ind else 3 }};
 // 페이지별 저장 이미지 (지표단지는 2장: 1년·3개월 / 상세)
 const SHOTS = {
   1: [{ ko: '1_요약', en: '1_summary' }],
@@ -418,7 +435,7 @@ function renderOne(n, shot) {
       }
     });
     const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-    return { blob, ko: `부산아파트_${DATE}_${shot.ko}.png`, en: `busan_apt_${DATE}_${shot.en}.png` };
+    return { blob, ko: `${REGION}아파트_${DATE}_${shot.ko}.png`, en: `apt_${DATE}_${shot.en}.png` };
   })();
 }
 function render(n) {
@@ -431,7 +448,7 @@ function render(n) {
 let prerenderTimer;
 function prerender() { clearTimeout(prerenderTimer); prerenderTimer = setTimeout(() => render(currentPage).catch(() => {}), 400); }
 window.addEventListener('load', prerender);
-try { const saved = +localStorage.getItem('busanPage2'); if (saved >= 2 && saved <= 4) showPage(saved); } catch (e) {}
+try { const saved = +localStorage.getItem('busanPage2'); if (saved >= 2 && saved <= MAXPAGE) showPage(saved); } catch (e) {}
 
 function busy(id, on, text) {
   const b = document.getElementById(id);
