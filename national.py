@@ -265,6 +265,16 @@ def avg84(sale, today, days=30):
     return f"{eok}억"
 
 
+def redirect(old, new):
+    """예전 주소(/r/26/…)로 들어오면 새 주소로 이동하는 작은 페이지."""
+    path = os.path.join(SITE, old)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    up = "../" * old.count("/")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(f'<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url={up}{new}">'
+                f'<link rel="canonical" href="{up}{new}"><script>location.replace("{up}{new}")</script>')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-fetch", action="store_true")
@@ -309,9 +319,17 @@ def main():
             t["l2"] = l2_name.get(l2_of.get(t.get("c")), t["d"])
         ready = bool(fetched)
         l2_word = "구·군" if sd["metro"] else "시·군"
-        os.makedirs(os.path.join(SITE, "r", key), exist_ok=True)
+        sdir = regions.sido_slug(sd["short"])        # 주소: /busan/ , /busan/haeundae-gu.html
+        l2slug, used = {}, set()
+        for l in sd["l2"]:
+            sl = regions.slug(l["name"]) or l["key"]
+            if sl in used or sl == "index":
+                sl = f"{sl}-{l['key']}"
+            used.add(sl)
+            l2slug[l["key"]] = sl
+        os.makedirs(os.path.join(SITE, sdir), exist_ok=True)
         base = {"date_label": now.strftime("%y.%m.%d"), "date_full": now.strftime("%Y%m%d"), "notices": [],
-                "l2_word": l2_word, "home_href": "../../index.html", "root": "../../"}
+                "l2_word": l2_word, "home_href": "../index.html", "root": "../"}
         if not ready:
             base["notices"].append("이 지역은 실거래 데이터를 수집하고 있습니다. 며칠 안에 채워집니다.")
         # --- 레벨1
@@ -333,8 +351,9 @@ def main():
             rule = f"{l2_word}별 최근 1년 84타입 평균거래가 상위 5위 안에서 거래량 최다 단지 · 84타입 거래가 없으면 거래 최다 단지 · {quarter(now)} 고정"
         ctx = dict(base, sale=sale_ctx, rent=rent_ctx, indicator=ind, has_ind=bool(ind["count"]), level=1,
                    region=sd["short"], region_full=sd["sido"], ind_rule=rule,
-                   crumbs=[("전국", "../../index.html"), (sd["short"], None)])
-        with open(os.path.join(SITE, "r", key, "index.html"), "w", encoding="utf-8") as f:
+                   crumbs=[("전국", "../index.html"), (sd["short"], None)])
+        redirect(f"r/{key}/index.html", f"{sdir}/index.html")   # 예전 주소 → 새 주소
+        with open(os.path.join(SITE, sdir, "index.html"), "w", encoding="utf-8") as f:
             f.write(tpl.render(ctx))
         # --- 레벨2
         chips = []
@@ -343,11 +362,12 @@ def main():
                 s2, r2, _, _ = D.build_trades(subset(sdb, set(l["codes"])), now)
                 c2 = dict(base, sale=s2, rent=r2, indicator=None, has_ind=False, level=2,
                           region=l["name"], region_full=f"{sd['sido']} {l['name']}",
-                          crumbs=[("전국", "../../index.html"), (sd["short"], "index.html"), (l["name"], None)])
-                with open(os.path.join(SITE, "r", key, f"{l['key']}.html"), "w", encoding="utf-8") as f:
+                          crumbs=[("전국", "../index.html"), (sd["short"], "index.html"), (l["name"], None)])
+                redirect(f"r/{key}/{l['key']}.html", f"{sdir}/{l2slug[l['key']]}.html")
+                with open(os.path.join(SITE, sdir, f"{l2slug[l['key']]}.html"), "w", encoding="utf-8") as f:
                     f.write(tpl.render(c2))
-                chips.append({"name": l["name"], "href": f"r/{key}/{l['key']}.html", "cnt": s2["cnt"], "high": s2["high_cnt"]})
-        home.append({"key": key, "short": sd["short"], "sido": sd["sido"], "href": f"r/{key}/index.html",
+                chips.append({"name": l["name"], "href": f"{sdir}/{l2slug[l['key']]}.html", "cnt": s2["cnt"], "high": s2["high_cnt"]})
+        home.append({"key": key, "short": sd["short"], "sido": sd["sido"], "href": f"{sdir}/index.html",
                      "ready": ready, "cnt": sale_ctx["cnt"], "high": sale_ctx["high_cnt"], "rent": rent_ctx["cnt"],
                      "avg84": avg84(sdb["sale"]["trades"], now), "l2_word": l2_word, "chips": chips})
         print(f"🧾 {sd['short']}: 신규 매매 {sale_ctx['cnt']} · 신고가 {sale_ctx['high_cnt']} · 페이지 {1 + len(chips)}개")

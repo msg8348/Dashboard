@@ -225,3 +225,39 @@ def build(codes):
                 return i
         return 99
     return sorted(out, key=order)
+
+
+# ---------------------------------------------------------------- 주소용 영문 이름 (국어의 로마자 표기법 기준, 간이)
+SIDO_SLUG = {"서울": "seoul", "경기": "gyeonggi", "인천": "incheon", "부산": "busan", "대구": "daegu", "광주": "gwangju",
+             "대전": "daejeon", "울산": "ulsan", "세종": "sejong", "강원": "gangwon", "충북": "chungbuk", "충남": "chungnam",
+             "전북": "jeonbuk", "전남": "jeonnam", "경북": "gyeongbuk", "경남": "gyeongnam", "제주": "jeju",
+             "광주전남": "gwangju-jeonnam"}
+_I = ["g", "kk", "n", "d", "tt", "r", "m", "b", "pp", "s", "ss", "", "j", "jj", "ch", "k", "t", "p", "h"]
+_V = ["a", "ae", "ya", "yae", "eo", "e", "yeo", "ye", "o", "wa", "wae", "oe", "yo", "u", "wo", "we", "wi", "yu", "eu", "ui", "i"]
+_F = ["", "k", "k", "k", "n", "n", "n", "t", "l", "k", "m", "l", "l", "l", "p", "l", "m", "p", "p", "t", "t", "ng", "t", "t", "k", "t", "p", "t"]
+
+
+def romanize(s):
+    out = []
+    for ch in s:
+        c = ord(ch) - 0xAC00
+        if 0 <= c < 11172:
+            i, v, f = c // 588, (c % 588) // 28, c % 28
+            out.append((_I[i] if not (i == 5 and not out) else "r") + _V[v] + _F[f])
+        elif ch.isalnum():
+            out.append(ch.lower())
+        else:
+            out.append("-")
+    return re.sub(r"-+", "-", "".join(out)).strip("-")
+
+
+def slug(name):
+    """'해운대구' → 'haeundae-gu', '수원시' → 'suwon-si', '세종시' → 'sejong-si'"""
+    name = name.split()[-1] if " " in name else name
+    if len(name) >= 2 and name[-1] in "구군시":
+        return f"{romanize(name[:-1])}-{romanize(name[-1])}"
+    return romanize(name)
+
+
+def sido_slug(short_name):
+    return SIDO_SLUG.get(short_name) or romanize(short_name)
