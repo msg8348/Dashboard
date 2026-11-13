@@ -31,11 +31,10 @@
   .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}
   .menu-btn .ic{width:22px;height:22px}
   body{padding-bottom:92px}
-  .bnav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(560px,100%);display:flex;background:rgba(255,255,255,.97);border:1px solid #dfe5ea;border-bottom:0;border-radius:20px 20px 0 0;box-shadow:0 -6px 24px rgba(20,30,60,.10);padding:6px 8px calc(6px + env(safe-area-inset-bottom));z-index:20;transition:transform .25s ease}
-  .bnav.hide{transform:translate(-50%,110%)}
-  .bnav .bt{flex:1;border:0;background:transparent;font:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;border-radius:12px;color:#8a94a3;font-size:12px;font-weight:700;cursor:pointer}
-  .bnav .bt .ic{width:23px;height:23px}
-  .bnav .bt.on{color:var(--ink)}.bnav .bt.on .ic{color:#2c3563;stroke-width:2.4}
+  .bnav{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(1080px,calc(100% - 24px));display:flex;gap:4px;background:#fff;border:1px solid #dfe5ea;border-radius:14px;padding:4px;box-shadow:0 6px 24px rgba(20,30,60,.14);z-index:20;transition:transform .25s ease}
+  .bnav.hide{transform:translate(-50%,calc(100% + 30px))}
+  .bnav .bt{flex:1;border:0;background:transparent;font:inherit;font-size:15px;font-weight:700;color:var(--ink-2);padding:11px 4px;border-radius:10px;white-space:nowrap;cursor:pointer}
+  .bnav .bt.on{background:var(--ink);color:#fff}
   .mdim{position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:30}
   .drawer{position:fixed;top:0;right:0;height:100%;width:min(320px,82vw);background:#fff;z-index:31;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(20,30,60,.18);overflow:auto}
   .drawer.open{transform:none}
@@ -188,6 +187,10 @@
   .qx .lg i{display:inline-block;width:12px;height:8px;border-radius:2px;margin-right:4px}
   .tbl.qx{padding:0;background:#fff}
   .bf.one{border-right:0;grid-template-columns:26px 150px 1fr 2px 1fr}
+  .sumind{margin-top:14px}
+  .bf.one.wide{grid-template-columns:26px 320px 1fr 2px 1fr;padding:11px 20px}
+  .bf.wide .who .meta{display:inline}
+  .bf.wide .who .trend{margin:0 0 0 8px;vertical-align:1px}
   .tbl.gu{margin-top:14px}
   .bf.total{background:#eef1f8;border-right:0;border-top:0;border-bottom:2px solid #d5dbea;grid-template-columns:26px 150px 1fr 2px 1fr;padding:14px 16px}
   .bf.total .who b{font-size:16px}
@@ -232,6 +235,11 @@
 
   /* ===== 모바일 (반드시 맨 마지막에 둠) ===== */
   @media (max-width:820px){
+    .bf.one.wide{grid-template-columns:22px 112px 1fr 2px 1fr;padding:10px}
+    .bf.one.wide.total{grid-template-columns:auto 96px 1fr 2px 1fr}
+    .bf.wide .who .meta{display:block}
+    .bf.wide .who .trend{display:inline-block;margin:3px 0 0}
+    .bnav .bt{font-size:14px;padding:10px 2px}
     body{padding:10px 8px 28px}
     .wrap,.actions{width:100%}
     .tab{font-size:11.5px;padding:9px 1px}
@@ -298,36 +306,37 @@
     <div class="cd b"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
     <div class="cd t"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">전세 신고가 {{ rent.high_cnt }}건</div></div></div>
   </div>
+  {% macro trendb(a) %}{% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}{% endmacro %}
   <div class="quad"><div class="colA">
-    <div class="q s"><h3>매매 Top15 <small>금액순 · 분양권 포함</small></h3>
-      {% for r in sale.top15 %}<div class="r">{{ rk(loop.index0, 'cs') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>
+    <div class="q s"><h3>매매 Top10 <small>금액순 · 분양권 포함</small></h3>
+      {% for r in sale.top15[:10] %}<div class="r">{{ rk(loop.index0, 'cs') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
   </div><div class="colB">
-    <div class="q j"><h3>전세 Top{{ 5 if has_ind else 10 }} <small>보증금순</small></h3>
-      {% for r in (rent.jeonse_top5 if has_ind else rent.jeonse_top10) %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
+    <div class="q j"><h3>전세 Top10 <small>보증금순</small></h3>
+      {% for r in rent.jeonse_top10 %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
-    {% if has_ind %}
-    <div class="qx"><div class="hd"><div><small>세대수 대비 거래 회전율 · 최근 3개월 순</small><b>지표단지 거래량 Top5</b></div>
-      <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
-      {% set t = ind.gu_total %}
-      <div class="bf one total"><span class="tot-chip">전체</span>
-        <div class="who"><b>{{ RG }} 전체</b><span>{% if ind.gu_rate %}아파트 {{ "{:,}".format(t.hh) }}세대{% else %}{{ ind.gus|length }}개 {{ L2W }}{% endif %}</span></div>
-        {% if ind.gu_rate %}
-        <div class="side l"><span class="val c-m">{{ "%.2f"|format(t.r3) }}%<em>{{ "{:,}".format(t.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ t.iw3 }}%"></i></span></div><div class="axis"></div>
-        <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.iw1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(t.r1) }}%<em>{{ "{:,}".format(t.c1) }}건</em></span></div>
-        {% else %}
-        <div class="side l"><span class="val c-m">{{ "{:,}".format(t.c3) }}건</span></div><div class="axis"></div>
-        <div class="side r"><span class="val c-g">{{ "{:,}".format(t.c1) }}건</span></div>
-        {% endif %}</div>
-      {% for a in ind.top5_3m %}<div class="bf one">{{ rk(loop.index0, 'cn') }}
-        <div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span></div>
-        <div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>
-        <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}
-    </div>
-    {% endif %}
   </div></div>
+  {% if has_ind %}
+  <div class="qx sumind"><div class="hd"><div><small>세대수 대비 거래 회전율 · 최근 3개월 순 · 추세 = 3개월 거래×4 와 1년 거래 비교</small><b>지표단지 거래량 Top10</b></div>
+    <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
+    {% set t = ind.gu_total %}
+    <div class="bf one wide total"><span class="tot-chip">전체</span>
+      <div class="who"><b>{{ RG }} 전체</b><span>{% if ind.gu_rate %}아파트 {{ "{:,}".format(t.hh) }}세대{% else %}{{ ind.gus|length }}개 {{ L2W }}{% endif %}</span></div>
+      {% if ind.gu_rate %}
+      <div class="side l"><span class="val c-m">{{ "%.2f"|format(t.r3) }}%<em>{{ "{:,}".format(t.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ t.iw3 }}%"></i></span></div><div class="axis"></div>
+      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.iw1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(t.r1) }}%<em>{{ "{:,}".format(t.c1) }}건</em></span></div>
+      {% else %}
+      <div class="side l"><span class="val c-m">{{ "{:,}".format(t.c3) }}건</span></div><div class="axis"></div>
+      <div class="side r"><span class="val c-g">{{ "{:,}".format(t.c1) }}건</span></div>
+      {% endif %}</div>
+    {% for a in ind.by_r3[:10] if not a.nohh %}<div class="bf one wide">{{ rk(loop.index0, 'cn') }}
+      <div class="who"><b>{{ a.name }}</b><span class="meta">{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span>{{ trendb(a) }}</div>
+      <div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>
+      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}
+  </div>
+  {% endif %}
 </div>
 
 <!-- ============ 2. 매매 / 3. 전월세 ============ -->
@@ -408,7 +417,7 @@
 </div>
 
 <nav class="bnav" id="bnav">
-  {% for t, k in PAGES %}<button class="bt {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }})">{{ ic(k) }}<span>{{ t }}</span></button>{% endfor %}
+  {% for t, k in PAGES %}<button class="bt {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }})">{{ t }}</button>{% endfor %}
 </nav>
 <div class="mdim" id="mdim" hidden onclick="closeMenu()"></div>
 <aside class="drawer" id="drawer" aria-hidden="true">
