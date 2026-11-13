@@ -353,7 +353,9 @@ def main():
             rule = f"{l2_word}별 최근 1년 84타입 평균거래가 상위 5위 안에서 거래량 최다 단지 · 84타입 거래가 없으면 거래 최다 단지 · {quarter(now)} 고정"
         ctx = dict(base, sale=sale_ctx, rent=rent_ctx, indicator=ind, has_ind=bool(ind["count"]), level=1,
                    region=sd["short"], region_full=sd["sido"], ind_rule=rule,
-                   crumbs=[("전국", "../index.html"), (sd["short"], None)], page_url=f"{SITE_URL}/{sdir}/")
+                   crumbs=[("전국", "../index.html"), (sd["short"], None)], page_url=f"{SITE_URL}/{sdir}/",
+                   seo_title=f"{sd['short']} 아파트 실거래가·신고가 ({sd['sido']}) | 옆집얼마",
+                   seo_desc=f"{sd['short']} 아파트 실거래가와 신고가를 매일 알려드립니다. {sd['sido']} {l2_word}별 신규 매매·전월세 최고가와 지표단지 거래량 — 옆집얼마")
         urls.append(f"{SITE_URL}/{sdir}/")
         redirect(f"r/{key}/index.html", f"{sdir}/index.html")   # 예전 주소 → 새 주소
         with open(os.path.join(SITE, sdir, "index.html"), "w", encoding="utf-8") as f:
@@ -366,7 +368,9 @@ def main():
                 c2 = dict(base, sale=s2, rent=r2, indicator=None, has_ind=False, level=2,
                           region=l["name"], region_full=f"{sd['sido']} {l['name']}",
                           crumbs=[("전국", "../index.html"), (sd["short"], "index.html"), (l["name"], None)],
-                          page_url=f"{SITE_URL}/{sdir}/{l2slug[l['key']]}.html")
+                          page_url=f"{SITE_URL}/{sdir}/{l2slug[l['key']]}.html",
+                          seo_title=f"{l['name']} 아파트 실거래가·신고가 ({sd['short']} {l['name']}) | 옆집얼마",
+                          seo_desc=f"{sd['short']} {l['name']} 아파트 실거래가와 신고가를 매일 알려드립니다. {l['name']} 신규 매매·전세 최고가 — 옆집얼마")
                 urls.append(f"{SITE_URL}/{sdir}/{l2slug[l['key']]}.html")
                 redirect(f"r/{key}/{l['key']}.html", f"{sdir}/{l2slug[l['key']]}.html")
                 with open(os.path.join(SITE, sdir, f"{l2slug[l['key']]}.html"), "w", encoding="utf-8") as f:
