@@ -18,6 +18,7 @@ import requests
 
 KEY = os.environ.get("KAPT_API_KEY") or os.environ.get("MOLIT_API_KEY", "")
 PATH = "data/households.json"
+SIDO = "부산광역시"
 REFRESH_DAYS = 30
 KST = timezone(timedelta(hours=9))
 API = "https://apis.data.go.kr/1613000"
@@ -175,6 +176,12 @@ def aggregate(st, lawd_codes):
 def ensure(lawd_codes, today=None, force=False):
     """세대수를 이어 받고, 완성된 {구: 세대수} 를 돌려줌. 실패해도 지금까지 받은 값은 보존."""
     today = today or datetime.now(KST)
+    # 1순위: K-apt 단지 기본정보 파일 (data/kapt/kapt_complexes.csv) — API 호출 없이 바로 사용
+    import kapt
+    from_file = kapt.households_by_sigungu(SIDO)
+    if from_file and all(from_file.get(g) for g in lawd_codes):
+        print(f"🏢 세대수: K-apt 파일 사용 ({SIDO} {len(from_file)}개 구·군, {sum(from_file.values()):,}세대)")
+        return {g: from_file[g] for g in lawd_codes}
     st = _load()
     if force:
         st = {"version": 2, "lists": {}, "info": {}, "gu": {}}
