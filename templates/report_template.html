@@ -380,16 +380,16 @@
     <div class="cd r"><div class="l">전세 신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
     {% endif %}
   </div>
-  {% macro section(k, rows, wide, kind) %}
-  <div class="sec"><h2><span class="chip" style="background:{{ colcolor[k] }}">{{ k }}</span><span class="n">{{ '금액순' if kind == 'sale' else '보증금순' }} · {{ rows|length }}건</span></h2>
+  {% macro section(k, rows, wide, kind, total) %}
+  <div class="sec"><h2><span class="chip" style="background:{{ colcolor[k] }}">{{ k }}</span><span class="n">{{ "{:,}".format(total) }}건</span></h2>
     <div class="list {% if wide %}wide{% endif %}">
     {% for r in rows %}<div class="row">{{ rk(loop.index0, colcls[k]) }}<span class="nm"><span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="fl">{{ r.floor }}</span>
       {% if kind == 'sale' %}<span class="pr">{{ r.price }}</span>{% else %}<span class="pr {{ 'w' if r.monthly else 'j' }}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span>{% endif %}</div>
     {% else %}<div class="empty">해당 거래가 없습니다</div>{% endfor %}
     </div></div>
   {% endmacro %}
-  <div class="two">{{ section('84타입', d.lists['84타입'], false, kind) }}{{ section('59타입', d.lists['59타입'], false, kind) }}</div>
-  {{ section('기타', d.lists['기타'], true, kind) }}
+  <div class="two">{{ section('84타입', d.lists['84타입'], false, kind, d.type_cnt['84타입']) }}{{ section('59타입', d.lists['59타입'], false, kind, d.type_cnt['59타입']) }}</div>
+  {{ section('기타', d.lists['기타'], true, kind, d.type_cnt['기타']) }}
 </div>
 {% endfor %}
 
