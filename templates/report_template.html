@@ -25,6 +25,27 @@
   .pshare svg{width:16px;height:16px}
   .cap-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:#4a5566;padding:0 2px 10px}
   .cap-head b{color:#2c3563}.cap-head b em{font-style:normal;color:#4b8770}
+  .topbar{position:relative}
+  .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}
+  .menu-btn .ic{width:22px;height:22px}
+  body{padding-bottom:92px}
+  .bnav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(560px,100%);display:flex;background:rgba(255,255,255,.97);border:1px solid #dfe5ea;border-bottom:0;border-radius:20px 20px 0 0;box-shadow:0 -6px 24px rgba(20,30,60,.10);padding:6px 8px calc(6px + env(safe-area-inset-bottom));z-index:20;transition:transform .25s ease}
+  .bnav.hide{transform:translate(-50%,110%)}
+  .bnav .bt{flex:1;border:0;background:transparent;font:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;border-radius:12px;color:#8a94a3;font-size:12px;font-weight:700;cursor:pointer}
+  .bnav .bt .ic{width:23px;height:23px}
+  .bnav .bt.on{color:var(--ink)}.bnav .bt.on .ic{color:#2c3563;stroke-width:2.4}
+  .mdim{position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:30}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(320px,82vw);background:#fff;z-index:31;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(20,30,60,.18);overflow:auto}
+  .drawer.open{transform:none}
+  .dr-top{display:flex;justify-content:flex-end;padding:14px 14px 6px}
+  .dr-x{width:40px;height:40px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;color:var(--ink)}.dr-x .ic{width:24px;height:24px}
+  .dr-crumb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:0 22px 12px;font-size:14px;font-weight:700;color:var(--ink-2)}
+  .dr-crumb a{color:var(--ink-2);text-decoration:none}.dr-crumb b{color:var(--ink)}.dr-crumb span{color:#b4bcc8}
+  .dr-list{border-top:1px solid var(--line);padding:6px 0}
+  .dr-list.sub{margin-top:auto}
+  .dr-it{display:flex;align-items:center;gap:14px;width:100%;border:0;background:transparent;font:inherit;font-size:17px;font-weight:700;color:var(--ink);padding:15px 24px;text-align:left;text-decoration:none;cursor:pointer}
+  .dr-it .ic{width:22px;height:22px;color:#4a5566}
+  .dr-it.on{background:#1b2230;color:#fff}.dr-it.on .ic{color:#fff}
   .crumb{display:flex;align-items:center;gap:4px;font-size:14px;font-weight:700;color:var(--ink-2);margin:0 2px 8px}
   .crumb a{color:var(--ink-2);text-decoration:none}.crumb b{color:var(--ink)}
   .crumb .home{margin-left:auto;font-size:13px;background:#fff;border:1px solid #dfe5ea;border-radius:999px;padding:5px 12px}
@@ -255,6 +276,7 @@
 {% macro rk(i, c) %}<span class="rkc {{ c }} {% if i >= 3 %}lt{% endif %}">{{ i + 1 }}</span>{% endmacro %}
 {% macro tyb(t) %}<span class="ty {{ 'ty84' if t == '84타입' else 'ty59' if t == '59타입' else 'tyx' }}">{{ t[:2] if t != '기타' else '기타' }}</span>{% endmacro %}
 {% macro notices_box() %}{% if notices %}<div class="notice">{% for n in notices %}⚠ {{ n }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}{% endmacro %}
+{% macro ic(n) %}<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if n == 'menu' %}<path d="M4 6h16M4 12h16M4 18h16"/>{% elif n == 'x' %}<path d="M6 6l12 12M18 6L6 18"/>{% elif n == 'sum' %}<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>{% elif n == 'sale' %}<path d="M4 7h11M4 12h16M4 17h9"/><circle cx="19" cy="7" r="1.6"/>{% elif n == 'rent' %}<path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>{% elif n == 'ind' %}<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>{% elif n == 'map' %}<path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/>{% elif n == 'up' %}<path d="M12 19V5M6 11l6-6 6 6"/>{% endif %}</svg>{% endmacro %}
 {% set ind = indicator %}
 {% set RG = region|default('부산') %}
 {% set L2W = l2_word|default('구·군') %}
@@ -263,13 +285,8 @@
 {% set colcolor = {'84타입': 'var(--blue)', '59타입': 'var(--teal)', '기타': '#6b7686'} %}
 
 <div class="wrap">
-<div class="topbar">{{ brand(home_href|default('./')) }}</div>
-{% if crumbs %}<nav class="crumb">{% for c in crumbs %}{% if c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a> › {% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}<a class="home" href="{{ home_href }}">지역 선택</a></nav>{% endif %}
-<div class="tabs">
-  {% for t in (['요약','매매','전월세','지표단지'] if has_ind else ['요약','매매','전월세']) %}
-  <button class="tab {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }})">{{ t }}</button>
-  {% endfor %}
-</div>
+<div class="topbar">{{ brand(home_href|default('./')) }}<button class="menu-btn" type="button" aria-label="메뉴" onclick="openMenu()">{{ ic('menu') }}</button></div>
+{% set PAGES = [('요약','sum'),('매매','sale'),('전월세','rent'),('지표단지','ind')] if has_ind else [('요약','sum'),('매매','sale'),('전월세','rent')] %}
 
 <!-- ============ 1. 요약 ============ -->
 <div class="report page" id="page1">
@@ -388,6 +405,21 @@
 {% endif %}
 </div>
 
+<nav class="bnav" id="bnav">
+  {% for t, k in PAGES %}<button class="bt {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }})">{{ ic(k) }}<span>{{ t }}</span></button>{% endfor %}
+</nav>
+<div class="mdim" id="mdim" hidden onclick="closeMenu()"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="dr-top"><button class="dr-x" type="button" aria-label="닫기" onclick="closeMenu()">{{ ic('x') }}</button></div>
+  {% if crumbs %}<div class="dr-crumb">{% for c in crumbs %}{% if c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a><span>›</span>{% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}</div>{% endif %}
+  <div class="dr-list">
+    {% for t, k in PAGES %}<button class="dr-it {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }}); closeMenu(); window.scrollTo(0, 0)">{{ ic(k) }}<span>{{ t }}</span></button>{% endfor %}
+  </div>
+  <div class="dr-list sub">
+    <a class="dr-it" href="{{ home_href|default('./') }}">{{ ic('map') }}<span>지역 선택</span></a>
+    {% if crumbs and crumbs|length > 2 %}<a class="dr-it" href="{{ crumbs[1][1] }}">{{ ic('up') }}<span>{{ crumbs[1][0] }} 전체 보기</span></a>{% endif %}
+  </div>
+</aside>
 <div class="actions">
   <button class="btn" id="share-btn" onclick="shareReport()">공유하기</button>
   <button class="btn" id="save-btn" onclick="saveReport()">저장하기</button>
@@ -408,10 +440,31 @@ let currentPage = 1;
 function showPage(n) {
   currentPage = n;
   document.querySelectorAll('.page').forEach(el => { el.hidden = el.id !== 'page' + n; });
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.page == n));
+  document.querySelectorAll('[data-page]').forEach(t => t.classList.toggle('on', t.dataset.page == n));
   try { localStorage.setItem('busanPage2', n); } catch (e) {}
   prerender();
 }
+
+function openMenu() {
+  document.getElementById('mdim').hidden = false;
+  const d = document.getElementById('drawer'); d.classList.add('open'); d.setAttribute('aria-hidden', 'false');
+}
+function closeMenu() {
+  document.getElementById('mdim').hidden = true;
+  const d = document.getElementById('drawer'); d.classList.remove('open'); d.setAttribute('aria-hidden', 'true');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+// 하단 탭: 아래로 스크롤하면 숨기고, 위로 올리면 다시 보임
+(() => {
+  const nav = document.getElementById('bnav');
+  let last = window.scrollY;
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY, nearEnd = y + window.innerHeight >= document.documentElement.scrollHeight - 4;
+    if (y < 60 || y < last - 6 || nearEnd) nav.classList.remove('hide');
+    else if (y > last + 6) nav.classList.add('hide');
+    last = y;
+  }, { passive: true });
+})();
 
 const DATE = '{{ date_full }}';
 const REGION = '{{ RG }}', MAXPAGE = {{ 4 if has_ind else 3 }};
@@ -501,6 +554,7 @@ const PART_SEL = '.page .q, .page .qx, .page .sec, .page .icard';
 const SHARE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>';
 document.querySelectorAll(PART_SEL).forEach((el, i) => {
   el.dataset.part = i;
+  if (el.querySelector('.empty') && !el.querySelector('.r, .row, .bf, .mr')) return;   // 거래 없는 영역은 공유 버튼 없음
   const box = document.createElement('div');
   box.className = 'pshare';
   box.setAttribute('data-html2canvas-ignore', '');

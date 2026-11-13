@@ -8,6 +8,7 @@
 import json
 import os
 import re
+from collections import Counter
 from datetime import datetime
 
 # ---- 내장 표 (API 확인 실패 시 사용) : 코드 → (시도, 시군구) ----
@@ -67,20 +68,44 @@ def _static():
 
 
 def _discover(call):
-    """공동주택 전체 단지 목록에서 (법정동코드 앞5자리 → 시도·시군구 이름) 수집. call(urls, params) 는 households._call."""
+    """공동주택 단지 목록 API 로 (법정동코드 앞5자리 → 시도·시군구 이름) 수집. call(urls, params) 는 households._call.
+
+    전체 목록(getTotalAptList5)은 없는 기능이라, 시도 코드 10~99 를 차례로 확인(getSidoAptList5)한다.
+    행정구역 개편으로 새로 생긴 시도 코드(예: 전남광주통합특별시)도 이렇게 찾는다.
+    이름(as1·as2)이 없으면 K-apt 파일(단지코드 → 시도·시군구)로 채운다."""
     from households import API
-    urls = [f"{API}/AptListService5/getTotalAptList5", f"{API}/AptListService5/getTotalAptList"]
-    out, page = {}, 1
-    while True:
-        url, items, total = call(urls, {"pageNo": page, "numOfRows": 1000})
-        urls = [url]
-        for it in items:
-            code = str(it.get("bjdCode") or "")[:5]
-            if len(code) == 5 and it.get("as1") and it.get("as2"):
-                out.setdefault(code, {"sido": it["as1"], "name": it["as2"]})
-        if not items or page * 1000 >= total:
-            break
-        page += 1
+    import kapt
+    by_kapt = {r["kapt_code"]: r for r in kapt.load()}
+    url = f"{API}/AptListService5/getSidoAptList5"
+    out, names, samples = {}, {}, 0
+    for sd in range(10, 100):
+        page = 1
+        while True:
+            try:
+                _, items, total = call([url], {"sidoCode": str(sd), "pageNo": page, "numOfRows": 1000})
+            except Exception as e:
+                if "결과코드" in str(e) or "HTTP 4" in str(e):
+                    break          # 없는 시도 코드
+                raise
+            if samples < 1 and items:
+                print(f"🗺️ 단지 목록 예시 항목: {dict(list(items[0].items())[:8])}")
+                samples += 1
+            for it in items:
+                code = str(it.get("bjdCode") or "")[:5]
+                if len(code) != 5:
+                    continue
+                sido, sgg = it.get("as1"), it.get("as2")
+                k = by_kapt.get(it.get("kaptCode"))
+                if (not sido or not sgg) and k:
+                    sido, sgg = k["sido"], k["sigungu"] or k["sido"]
+                if sido and sgg:
+                    names.setdefault(code, Counter())[(sido, sgg)] += 1
+            if not items or page * 1000 >= total:
+                break
+            page += 1
+    for code, c in names.items():
+        sido, sgg = c.most_common(1)[0][0]
+        out[code] = {"sido": sido, "name": sgg if sgg != sido else "세종시"}
     return out
 
 
