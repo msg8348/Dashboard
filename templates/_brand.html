@@ -1,0 +1,21 @@
+{# 옆집얼마 로고 (클릭 → 전국 홈) #}
+{% macro brand(href) %}
+<a class="brand" href="{{ href }}" aria-label="옆집얼마 홈">
+  <svg class="brand-ic" viewBox="0 0 60 44" aria-hidden="true">
+    <path d="M3 19 L17 5 L31 19 V41 H3 Z" fill="#2c3563" stroke="#2c3563" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="9" y="22" width="7" height="7" rx="1.5" fill="#fff"/>
+    <path d="M25 26 L40 12 L55 26 V41 H25 Z" fill="#5f9a86" stroke="#5f9a86" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="36" y="27" width="8" height="8" rx="1.5" fill="#d7a77a"/>
+  </svg>
+  <span class="brand-tx"><b><i>옆집</i><em>얼마</em></b><small>우리동네 아파트 실거래가 알리미</small></span>
+</a>
+{% endmacro %}
+{% macro brand_css() %}
+  .brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+  .brand-ic{width:50px;height:37px;flex:none}
+  .brand-tx{display:flex;flex-direction:column;line-height:1.05}
+  .brand-tx b{font-size:25px;font-weight:900;letter-spacing:-.5px}
+  .brand-tx b i{font-style:normal;color:#2c3563}.brand-tx b em{font-style:normal;color:#4b8770}
+  .brand-tx small{font-size:11.5px;color:#5b6472;font-weight:600;margin-top:4px;letter-spacing:-.2px}
+  @media(max-width:820px){.brand-ic{width:42px;height:31px}.brand-tx b{font-size:21px}.brand-tx small{font-size:10.5px}}
+{% endmacro %}
