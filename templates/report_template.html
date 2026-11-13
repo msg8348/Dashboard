@@ -292,6 +292,7 @@
 {% macro tyb(t) %}<span class="ty {{ 'ty84' if t == '84타입' else 'ty59' if t == '59타입' else 'tyx' }}">{{ t[:2] if t != '기타' else '기타' }}</span>{% endmacro %}
 {% macro notices_box() %}{% if notices %}<div class="notice">{% for n in notices %}⚠ {{ n }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}{% endmacro %}
 {% macro ic(n) %}<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if n == 'menu' %}<path d="M4 6h16M4 12h16M4 18h16"/>{% elif n == 'x' %}<path d="M6 6l12 12M18 6L6 18"/>{% elif n == 'sum' %}<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>{% elif n == 'sale' %}<path d="M4 7h11M4 12h16M4 17h9"/><circle cx="19" cy="7" r="1.6"/>{% elif n == 'rent' %}<path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>{% elif n == 'ind' %}<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>{% elif n == 'map' %}<path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/>{% elif n == 'up' %}<path d="M12 19V5M6 11l6-6 6 6"/>{% endif %}</svg>{% endmacro %}
+{% macro trendb(a) %}{% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}{% endmacro %}
 {% set ind = indicator %}
 {% set RG = region|default('부산') %}
 {% set L2W = l2_word|default('구·군') %}
@@ -311,7 +312,6 @@
     <div class="cd b"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
     <div class="cd t"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">전세 신고가 {{ rent.high_cnt }}건</div></div></div>
   </div>
-  {% macro trendb(a) %}{% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}{% endmacro %}
   <div class="quad"><div class="colA">
     <div class="q s"><h3>매매 Top15 <small>금액순 · 분양권 포함</small></h3>
       {% for r in sale.top15 %}<div class="r">{{ rk(loop.index0, 'cs') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>
@@ -328,7 +328,7 @@
     <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
     {% set t = ind.gu_total %}
     <div class="bf one wide total"><span class="tot-chip">전체</span>
-      <div class="who"><b>{{ RG }} 전체</b><span>{% if ind.gu_rate %}아파트 {{ "{:,}".format(t.hh) }}세대{% else %}{{ ind.gus|length }}개 {{ L2W }}{% endif %}</span></div>
+      <div class="who"><b>{{ RG }} 전체</b><span>{% if ind.gu_rate %}아파트 {{ "{:,}".format(t.hh) }}세대{% else %}{{ ind.gus|length }}개 {{ L2W }}{% endif %}</span>{{ trendb(t) }}</div>
       {% if ind.gu_rate %}
       <div class="side l"><span class="val c-m">{{ "%.2f"|format(t.r3) }}%<em>{{ "{:,}".format(t.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ t.iw3 }}%"></i></span></div><div class="axis"></div>
       <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.iw1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(t.r1) }}%<em>{{ "{:,}".format(t.c1) }}건</em></span></div>
@@ -399,7 +399,7 @@
     <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
     {% set t = ind.gu_total %}
     <div class="bf total"><span class="tot-chip">전체</span>
-      <div class="who"><b>{{ RG }} 전체</b><span>{{ ind.gus|length }}개 {{ L2W }}{% if ind.gu_rate %} · 아파트 {{ "{:,}".format(t.hh) }}세대{% endif %}</span></div>
+      <div class="who"><b>{{ RG }} 전체</b><span>{{ ind.gus|length }}개 {{ L2W }}{% if ind.gu_rate %} · 아파트 {{ "{:,}".format(t.hh) }}세대{% endif %}</span>{{ trendb(t) }}</div>
       {% if ind.gu_rate %}
       <div class="side l"><span class="val c-m">{{ "%.2f"|format(t.r3) }}%<em>{{ "{:,}".format(t.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ t.w3 }}%"></i></span></div><div class="axis"></div>
       <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(t.r1) }}%<em>{{ "{:,}".format(t.c1) }}건</em></span></div>
@@ -408,7 +408,7 @@
       <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.w1 }}%"></i></span><span class="val c-g">{{ "{:,}".format(t.c1) }}건</span></div>
       {% endif %}</div>
     <div class="bfgrid" style="--rows:{{ ((ind.gus|length) / 2)|round(0, 'ceil')|int }}">{% for g in ind.gus %}<div class="bf {% if not ind.gu_rate %}short{% endif %}">{{ rk(loop.index0, 'cn') }}
-      <div class="who"><b>{{ g.name }}</b>{% if ind.gu_rate %}<span>{% if g.hh %}아파트 {{ "{:,}".format(g.hh) }}세대{% else %}세대수 미확인{% endif %}</span>{% endif %}</div>
+      <div class="who"><b>{{ g.name }}</b>{% if ind.gu_rate %}<span>{% if g.hh %}아파트 {{ "{:,}".format(g.hh) }}세대{% else %}세대수 미확인{% endif %}</span>{% endif %}{{ trendb(g) }}</div>
       {% if ind.gu_rate %}
       <div class="side l"><span class="val c-m">{{ "%.2f"|format(g.r3) }}%<em>{{ "{:,}".format(g.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ g.w3 }}%"></i></span></div><div class="axis"></div>
       <div class="side r"><span class="bw"><i class="i-g" style="width:{{ g.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(g.r1) }}%<em>{{ "{:,}".format(g.c1) }}건</em></span></div></div>

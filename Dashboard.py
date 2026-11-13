@@ -445,6 +445,15 @@ def match_complex(name_keys, district, names):
     return [n for n in names if any(k in normalize(n) for k in name_keys)]
 
 
+def add_trend(it):
+    """추세: 최근 3개월 거래×4 를 1년 거래와 비교 (+10% 강세, +5% 증가, -5% 감소, -10% 약세)."""
+    change = (it["c3"] * 4 / it["c1"] - 1) * 100 if it["c1"] else 0
+    it["change"] = round(change)
+    it["trend"] = ("strong" if change >= 10 else "up" if change >= 5 else
+                   "weak" if change <= -10 else "down" if change <= -5 else "")
+    return it
+
+
 def build_indicator(sale_trades, today, gu_hh=None, complexes=None, key="d", gu_names=None):
     complexes = INDICATOR_COMPLEXES if complexes is None else complexes
     gu_names = list(BUSAN_LAWD_CD) if gu_names is None else gu_names
@@ -473,10 +482,7 @@ def build_indicator(sale_trades, today, gu_hh=None, complexes=None, key="d", gu_
             it = {"name": apt["name"], "households": hh, "district": district, "avg84": apt.get("avg84"),
                   "rule": apt.get("rule", ""), "c1": c1, "r1": c1 / hh * 100 if hh else 0,
                   "c3": c3, "r3": c3 / hh * 100 if hh else 0, "nohh": not hh}
-            change = (c3 * 4 / c1 - 1) * 100 if c1 else 0
-            it["change"] = round(change)
-            it["trend"] = ("strong" if change >= 10 else "up" if change >= 5 else
-                           "weak" if change <= -10 else "down" if change <= -5 else "")
+            add_trend(it)
             gi.append(it)
             items.append(it)
         groups.append({"district": district, "items": gi})
@@ -515,6 +521,9 @@ def build_indicator(sale_trades, today, gu_hh=None, complexes=None, key="d", gu_
         t1, t3 = sum(g["c1"] for g in gus if g["hh"]), sum(g["c3"] for g in gus if g["hh"])
     gu_total = {"c1": t1, "c3": t3, "hh": thh,
                 "r1": t1 / thh * 100 if thh else None, "r3": t3 / thh * 100 if thh else None}
+    add_trend(gu_total)
+    for g in gus:
+        add_trend(g)
     gu_total["w1"] = min(100, round(gu_total[k1] / m1 * 100, 1))
     gu_total["w3"] = min(100, round(gu_total[k3] / m3 * 100, 1))
     # 요약 지표단지 Top5 눈금(지표단지 최고 회전율 기준)에 맞춘 막대 길이
