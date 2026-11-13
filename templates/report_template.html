@@ -374,11 +374,11 @@
   <div class="head"><h1>{{ RG }} 아파트 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ date_label }}</small></h1></div>
   <div class="cards c2">
     {% if kind == 'sale' %}
-    <div class="cd b"><div class="l">신규 실거래</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
-    <div class="cd r"><div class="l">신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
+    <div class="cd b"><div class="l">신규 매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
+    <div class="cd r"><div class="l">신고가 <span>분양권 포함</span></div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
     {% else %}
-    <div class="cd t"><div class="l">신규 전월세</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
-    <div class="cd r"><div class="l">전세 신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
+    <div class="cd t"><div class="l">신규 전월세 <span>전세 {{ d.jeonse }} · 월세 {{ d.wolse }}</span></div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
+    <div class="cd r"><div class="l">전세 신고가 <span>전세 {{ d.jeonse }}건 중</span></div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
     {% endif %}
   </div>
   {% macro section(k, rows, wide, kind, total, high) %}
