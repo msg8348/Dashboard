@@ -36,7 +36,7 @@
   .cap-brand{display:flex;width:max-content;margin:0 0 14px}
   .cap-brand .brand-ic{width:44px;height:33px}.cap-brand .brand-tx b{font-size:22px}.cap-brand .brand-tx small{font-size:11px}
   .cap-mini .brand-ic{width:38px;height:28px}.cap-mini{gap:8px}.cap-mini .brand-tx b{font-size:19px}.cap-mini .brand-tx small{font-size:9.5px;margin-top:3px}
-  .cap-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:#4a5566;padding:0 2px 10px}
+  .cap-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:#4a5566;padding:0 2px 18px}
   .cap-head b{color:#2c3563}.cap-head b em{font-style:normal;color:#4b8770}
   .topbar{position:relative}
   .topbar{position:sticky;top:0;z-index:15;margin-top:-20px;padding-top:calc(20px - 8px);padding-bottom:8px;background:rgba(238,241,244,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 0 0 100vmax rgba(238,241,244,.94);clip-path:inset(0 -100vmax)}
@@ -698,7 +698,7 @@ async function sharePart(el, btn) {
           // 오른쪽 위 '지역 · 날짜'는 목록의 금액 글자와 같은 크기 (색은 그대로)
           const pr = c.querySelector('.pr, .val, .row b, .mr b');
           if (pr) head.lastElementChild.style.fontSize = doc.defaultView.getComputedStyle(pr).fontSize;
-          if (c.classList.contains('qx')) head.style.padding = '12px 18px';
+          if (c.classList.contains('qx')) head.style.padding = '12px 18px 18px';
           if (c.classList.contains('ind-two')) {
             Object.assign(c.style, { display: 'grid', gridTemplateColumns: '1fr', width: '640px', padding: '18px', background: '#fff', borderRadius: '22px' });
             head.style.gridColumn = '1 / -1';
