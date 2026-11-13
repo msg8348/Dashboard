@@ -258,7 +258,11 @@ def subset(dbs, codes):
 def avg84(sale, today, days=30):
     d0 = (today - timedelta(days=days)).strftime("%Y%m%d")
     p = [t["p"] for t in sale if t["dt"] > d0 and 78 <= t["a"] <= 88]
-    return D.fmt_short(round(sum(p) / len(p))) if p else "-"
+    if not p:
+        return "-"
+    from decimal import Decimal, ROUND_HALF_UP   # 만원 → 억, 소수 둘째 자리에서 반올림 (예: 12.79억 → 12.8억)
+    eok = (Decimal(sum(p)) / len(p) / 10000).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+    return f"{eok}억"
 
 
 def main():
