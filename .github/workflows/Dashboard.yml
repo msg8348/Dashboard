@@ -6,6 +6,11 @@ on:
     - cron: '17 19 * * *' # KST 04:17
     - cron: '47 20 * * *' # KST 05:47 (앞 실행이 누락됐을 때 대비, 중복 실행해도 결과 동일)
   workflow_dispatch:
+    inputs:
+      fetch:
+        description: '국토부 실거래 수집 (끄면 저장된 데이터로 화면만 빠르게 배포)'
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -52,7 +57,7 @@ jobs:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           STORE_DIR: store
         run: |
-          python national.py --minutes 70
+          python national.py --minutes 70 ${{ inputs.fetch == false && '--no-fetch' || '' }}
 
       - name: 실거래 저장소 저장 (data 브랜치, 매번 한 커밋으로 교체)
         if: always()
