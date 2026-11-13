@@ -24,6 +24,8 @@
   .pshare button{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:14px;font-weight:700;color:var(--ink);background:#fff;border:1.5px solid #c9d0da;border-radius:12px;padding:7px 14px;cursor:pointer}
   .pshare button:disabled{opacity:.55}
   .pshare svg{width:16px;height:16px}
+  .cap-brand{display:flex;width:max-content;margin:0 0 14px}
+  .cap-brand .brand-ic{width:44px;height:33px}.cap-brand .brand-tx b{font-size:22px}.cap-brand .brand-tx small{font-size:11px}
   .cap-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:#4a5566;padding:0 2px 10px}
   .cap-head b{color:#2c3563}.cap-head b em{font-style:normal;color:#4b8770}
   .topbar{position:relative}
@@ -505,6 +507,8 @@ function renderOne(n, shot) {
       onclone: doc => {
         const page = doc.getElementById('page' + n);
         page.hidden = false;
+        const br = doc.querySelector('.topbar .brand');   // 저장 이미지 좌측 상단 로고
+        if (br) { const c = br.cloneNode(true); c.classList.add('cap-brand'); page.insertBefore(c, page.firstChild); }
         if (shot.hide) page.querySelectorAll(shot.hide).forEach(e => { e.style.display = 'none'; });
         if (shot.stack) {   // 1년·3개월 세로 배치 (폭을 줄여 세로형 이미지로)
           page.style.width = '640px';
