@@ -336,12 +336,12 @@
     <div class="cd t"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">전세 신고가 {{ rent.high_cnt }}건</div></div></div>
   </div>
   <div class="quad"><div class="colA">
-    <div class="q s"><h3>매매 Top15 <small>금액순 · 분양권 포함</small></h3>
+    <div class="q s"><h3>매매 최고가 <small>금액순 · 분양권 포함</small></h3>
       {% for r in sale.top15 %}<div class="r">{{ rk(loop.index0, 'cs') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
   </div><div class="colB">
-    <div class="q j"><h3>전세 Top15 <small>보증금순</small></h3>
+    <div class="q j"><h3>전세 최고가 <small>보증금순</small></h3>
       {% for r in rent.jeonse_top15 %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
