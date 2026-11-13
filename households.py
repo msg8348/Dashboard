@@ -80,76 +80,116 @@ def _call(urls, params):
     raise RuntimeError(" | ".join(errs))
 
 
-def collect(lawd_codes):
+MAX_CALLS = 700        # 한 번 실행에 쓰는 최대 호출 수 (개발계정 하루 호출 한도 고려, 나머지는 다음 날 이어서)
+CNT_KEYS = ("kaptdaCnt", "hoCnt", "kaptHoCnt", "hhldCnt")
+
+
+def _age(d, today):
+    return (today.date() - datetime.strptime(d, "%Y%m%d").date()).days if d else 9999
+
+
+def _load():
+    if os.path.exists(PATH):
+        try:
+            with open(PATH, encoding="utf-8") as f:
+                st = json.load(f)
+            if st.get("version") == 2:
+                return st
+        except Exception:
+            pass
+    return {"version": 2, "lists": {}, "info": {}, "gu": {}}
+
+
+def _save(st):
+    os.makedirs(os.path.dirname(PATH), exist_ok=True)
+    with open(PATH, "w", encoding="utf-8") as f:
+        json.dump(st, f, ensure_ascii=False, separators=(",", ":"))
+
+
+def update(st, lawd_codes, today):
+    """단지 목록·기본정보를 조금씩 채움. 한 번에 MAX_CALLS 까지만 호출하고, 다 못 받으면 다음 실행에서 이어 받음."""
+    today_s = today.strftime("%Y%m%d")
     list_urls, info_urls = list(LIST_URLS), list(INFO_URLS)
-    out, calls, fails = {}, 0, 0
+    calls, logged = 0, False
     for gu, code in lawd_codes.items():
-        complexes, page = [], 1
-        while True:
-            url, items, total = _call(list_urls, {"sigunguCode": code, "pageNo": page, "numOfRows": 1000})
-            list_urls = [url]   # 처음 성공한 주소만 계속 사용
-            calls += 1
-            complexes += items
-            if not items or page * 1000 >= total:
-                break
-            page += 1
-        if complexes and gu == next(iter(lawd_codes)):
-            print(f"ℹ️ 단지 목록 항목 필드: {complexes[0]}")
-        hh, n, kinds = 0, 0, {}
-        for c in complexes:
-            kcode = c.get("kaptCode")
-            if not kcode:
+        lst = st["lists"].get(gu)
+        if not lst or _age(lst["date"], today) >= REFRESH_DAYS:
+            if calls >= MAX_CALLS:
+                return calls
+            codes, page = [], 1
+            while True:
+                url, items, total = _call(list_urls, {"sigunguCode": code, "pageNo": page, "numOfRows": 1000})
+                list_urls = [url]
+                calls += 1
+                codes += [c["kaptCode"] for c in items if c.get("kaptCode")]
+                if not items or page * 1000 >= total:
+                    break
+                page += 1
+            if not codes:
+                print(f"⚠️ {gu} 단지 목록이 비어 있음 (호출 한도 초과 가능) — 다음 실행에서 다시 시도")
+                return calls
+            st["lists"][gu] = {"date": today_s, "codes": codes}
+            print(f"📋 {gu} 단지 목록 {len(codes)}개")
+        for kcode in st["lists"][gu]["codes"]:
+            inf = st["info"].get(kcode)
+            if inf and _age(inf["date"], today) < REFRESH_DAYS:
                 continue
-            try:
-                url, items, _ = _call(info_urls, {"kaptCode": kcode})
-                info_urls = [url]
-            except RuntimeError as e:
-                fails += 1
-                if fails <= 3:
-                    print(f"⚠️ 기본정보 실패 {kcode}: {e}")
-                if fails >= 3 and n == 0:
-                    raise
-                continue
+            if calls >= MAX_CALLS:
+                return calls
+            url, items, _ = _call(info_urls, {"kaptCode": kcode})
+            info_urls = [url]
             calls += 1
-            it = items[0] if items else {}
-            kind = it.get("codeAptNm", "")
-            kinds[kind] = kinds.get(kind, 0) + 1
-            if kind and "아파트" not in kind and "주상복합" not in kind:
-                continue   # 연립·다세대 등 제외
-            cnt = it.get("kaptdaCnt") or it.get("hoCnt") or 0
-            try:
-                cnt = int(str(cnt).replace(",", ""))
-            except ValueError:
-                cnt = 0
-            if cnt:
-                hh += cnt
-                n += 1
+            if not items:
+                print(f"⚠️ 기본정보 응답이 비어 있음 ({kcode}) — 호출 한도 초과 가능, 다음 실행에서 이어 받음")
+                return calls
+            it = items[0]
+            if not logged:
+                print(f"ℹ️ 기본정보 항목 필드: {it}")
+                logged = True
+            cnt = 0
+            for k in CNT_KEYS:
+                v = str(it.get(k) or "").replace(",", "")
+                if v.isdigit() and int(v) > 0:
+                    cnt = int(v)
+                    break
+            st["info"][kcode] = {"gu": gu, "kind": it.get("codeAptNm", ""), "cnt": cnt, "date": today_s}
             time.sleep(0.05)
-        out[gu] = {"households": hh, "complexes": n}
-        print(f"🏢 {gu}: 단지 {n}개 · {hh:,}세대 (목록 {len(complexes)}개, 분류 {kinds})")
-    print(f"✅ 세대수 수집 완료 (요청 {calls}회, 실패 {fails}회)")
+    return calls
+
+
+def aggregate(st, lawd_codes):
+    """목록의 모든 단지 정보가 모인 구만 합산."""
+    out = {}
+    for gu in lawd_codes:
+        lst = st["lists"].get(gu)
+        if not lst:
+            continue
+        infos = [st["info"].get(c) for c in lst["codes"]]
+        if any(i is None for i in infos):
+            continue
+        apts = [i for i in infos if not i["kind"] or "아파트" in i["kind"] or "주상복합" in i["kind"]]
+        out[gu] = {"households": sum(i["cnt"] for i in apts), "complexes": sum(1 for i in apts if i["cnt"])}
     return out
 
 
 def ensure(lawd_codes, today=None, force=False):
-    """필요하면 세대수를 새로 받고, 저장된 {구: 세대수} 를 돌려줌. 실패해도 기존 값 유지."""
+    """세대수를 이어 받고, 완성된 {구: 세대수} 를 돌려줌. 실패해도 지금까지 받은 값은 보존."""
     today = today or datetime.now(KST)
-    old = {}
-    if os.path.exists(PATH):
-        with open(PATH, encoding="utf-8") as f:
-            old = json.load(f)
-    fresh = old.get("date") and (today.date() - datetime.strptime(old["date"], "%Y%m%d").date()).days < REFRESH_DAYS
-    if KEY and (force or not fresh):
+    st = _load()
+    if force:
+        st = {"version": 2, "lists": {}, "info": {}, "gu": {}}
+    if KEY:
         try:
-            data = collect(lawd_codes)
-            if sum(v["households"] for v in data.values()) > 0:
-                old = {"date": today.strftime("%Y%m%d"), "source": "국토교통부 공동주택 기본정보(K-apt)", "gu": data}
-                os.makedirs(os.path.dirname(PATH), exist_ok=True)
-                with open(PATH, "w", encoding="utf-8") as f:
-                    json.dump(old, f, ensure_ascii=False, indent=1)
+            calls = update(st, lawd_codes, today)
+            print(f"🏢 세대수 수집: 이번 호출 {calls}회 · 단지 정보 {len(st['info'])}개 보유")
         except Exception as e:
-            print(f"⚠️ 세대수 수집 실패 — 기존 값 사용: {e}")
-    return {gu: v["households"] for gu, v in old.get("gu", {}).items() if v.get("households")}
+            print(f"⚠️ 세대수 수집 중단 — 받은 데까지 저장: {str(e)[:300]}")
+        st["gu"] = aggregate(st, lawd_codes)
+        st["source"] = "국토교통부 공동주택 기본정보(K-apt)"
+        _save(st)
+        done = len(st["gu"])
+        print(f"🏢 세대수 완성 구 {done}/{len(lawd_codes)}: " + ", ".join(f"{g} {v['households']:,}" for g, v in st["gu"].items()))
+    return {gu: v["households"] for gu, v in st.get("gu", {}).items() if v.get("households")}
 
 
 if __name__ == "__main__":
