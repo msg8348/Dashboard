@@ -152,6 +152,10 @@
   .tbl.qx{padding:0;background:#fff}
   .bf.one{border-right:0;grid-template-columns:26px 150px 1fr 2px 1fr}
   .tbl.gu{margin-top:14px}
+  .bf.total{background:#eef1f8;border-right:0;border-top:0;border-bottom:2px solid #d5dbea;grid-template-columns:26px 150px 1fr 2px 1fr;padding:14px 16px}
+  .bf.total .who b{font-size:16px}
+  .bf.total .val{font-size:15px}
+  .tot-chip{font-size:10px;font-weight:800;color:#fff;background:var(--navy);border-radius:6px;padding:3px 0;text-align:center;width:30px}
   .bf.short{grid-template-columns:26px 74px 1fr 2px 1fr}
   .foot2{font-size:12px;color:var(--muted);text-align:center;padding:8px 0 12px;border-top:1px solid #eef0f6}
   .tbl{background:#f7f9fb;border:1px solid var(--line);border-radius:18px;padding:12px 16px 14px}
@@ -324,6 +328,16 @@
   </div>
   <div class="tbl qx gu"><div class="hd"><div><small>{{ ind.gus|length }}개 구·군 · 아파트 매매 · {% if ind.gu_rate %}세대수 대비 거래 회전율{% else %}거래량{% endif %} · 최근 3개월 순</small><b>구별 거래량</b></div>
     <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
+    {% set t = ind.gu_total %}
+    <div class="bf total"><span class="tot-chip">전체</span>
+      <div class="who"><b>부산 전체</b><span>{{ ind.gus|length }}개 구·군{% if ind.gu_rate %} · 아파트 {{ "{:,}".format(t.hh) }}세대{% endif %}</span></div>
+      {% if ind.gu_rate %}
+      <div class="side l"><span class="val c-m">{{ "%.2f"|format(t.r3) }}%<em>{{ "{:,}".format(t.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ t.w3 }}%"></i></span></div><div class="axis"></div>
+      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(t.r1) }}%<em>{{ "{:,}".format(t.c1) }}건</em></span></div>
+      {% else %}
+      <div class="side l"><span class="val c-m">{{ "{:,}".format(t.c3) }}건</span><span class="bw"><i class="i-m" style="width:{{ t.w3 }}%"></i></span></div><div class="axis"></div>
+      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.w1 }}%"></i></span><span class="val c-g">{{ "{:,}".format(t.c1) }}건</span></div>
+      {% endif %}</div>
     <div class="bfgrid" style="--rows:{{ ((ind.gus|length) / 2)|round(0, 'ceil')|int }}">{% for g in ind.gus %}<div class="bf {% if not ind.gu_rate %}short{% endif %}">{{ rk(loop.index0, 'cn') }}
       <div class="who"><b>{{ g.name }}</b>{% if ind.gu_rate %}<span>아파트 {{ "{:,}".format(g.hh) }}세대</span>{% endif %}</div>
       {% if ind.gu_rate %}
