@@ -76,7 +76,7 @@ INDICATOR_COMPLEXES = {
     ],
     "연제구": [
         {"name": "레이카운티", "households": 4470},
-        {"name": "연산롯데캐슬골드포레", "households": 1450},
+        {"name": "연산롯데캐슬골드포레", "households": 1230},
     ],
     "부산진구": [
         {"name": "삼한골든뷰센트럴파크", "households": 1272},
@@ -91,7 +91,7 @@ INDICATOR_COMPLEXES = {
         {"name": "화명롯데캐슬카이저", "households": 5239},
     ],
     "사상구": [
-        {"name": "사상중흥S-클래스그랜드센트럴", "households": 1508, "keywords": ["사상중흥에스클래스그랜드센트럴"]},
+        {"name": "사상중흥S-클래스그랜드센트럴", "households": 1572, "keywords": ["사상중흥에스클래스그랜드센트럴"]},
     ],
     "사하구": [
         {"name": "힐스테이트사하역", "households": 1314},
