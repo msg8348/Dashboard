@@ -695,6 +695,9 @@ async function sharePart(el, btn) {
           head.innerHTML = `<span>${REGION} · ${DATE.slice(2,4)}.${DATE.slice(4,6)}.${DATE.slice(6)}</span>`;
           if (br) { const lg = br.cloneNode(true); lg.classList.add('cap-mini'); head.insertBefore(lg, head.firstChild); }
           c.insertBefore(head, c.firstChild);
+          // 오른쪽 위 '지역 · 날짜'는 목록의 금액 글자와 같은 크기 (색은 그대로)
+          const pr = c.querySelector('.pr, .val, .row b, .mr b');
+          if (pr) head.lastElementChild.style.fontSize = doc.defaultView.getComputedStyle(pr).fontSize;
           if (c.classList.contains('qx')) head.style.padding = '12px 18px';
           if (c.classList.contains('ind-two')) {
             Object.assign(c.style, { display: 'grid', gridTemplateColumns: '1fr', width: '640px', padding: '18px', background: '#fff', borderRadius: '22px' });
