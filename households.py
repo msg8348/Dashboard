@@ -29,8 +29,9 @@ INFO_URLS = [f"{API}/AptBasisInfoServiceV4/getAphusBassInfoV4", f"{API}/AptBasis
 
 def _call(urls, params):
     """urls 를 차례로 시도해 (성공한 url, item 목록, totalCount) 반환. 실패하면 마지막 오류 메시지."""
-    last = ""
+    errs = []
     for url in urls:
+        last = ""
         for attempt in range(3):
             try:
                 r = requests.get(url, params={"serviceKey": requests.utils.unquote(KEY), **params}, timeout=30)
@@ -39,7 +40,7 @@ def _call(urls, params):
                 time.sleep(2 ** attempt)
                 continue
             if r.status_code != 200:
-                last = f"{url} HTTP {r.status_code} {r.text[:120]}"
+                last = f"{url} HTTP {r.status_code} {' '.join(r.text.split())[:300]}"
                 break
             text = r.text.strip()
             try:
@@ -66,7 +67,8 @@ def _call(urls, params):
             except (ValueError, ET.ParseError):
                 last = f"{url} 응답 해석 실패 {text[:120]}"
                 break
-    raise RuntimeError(last)
+        errs.append(" ".join(last.split()))
+    raise RuntimeError(" | ".join(errs))
 
 
 def collect(lawd_codes):
