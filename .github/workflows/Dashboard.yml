@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: 'pages'
-  cancel-in-progress: true
+  cancel-in-progress: false   # 전국 수집은 오래 걸리므로 진행 중인 실행을 끊지 않고 다음 실행은 기다림
 
 jobs:
   run-bot:
@@ -22,6 +22,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 300
     steps:
       - name: 저장소 체크아웃
         uses: actions/checkout@v4
@@ -36,23 +37,42 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 부동산 HTML 대시보드 리포트 생성
+      - name: 실거래 저장소 불러오기 (data 브랜치)
+        run: |
+          mkdir -p store
+          if git ls-remote --exit-code --heads origin data >/dev/null; then
+            git fetch --depth 1 origin data
+            git --work-tree=store checkout FETCH_HEAD -- .
+            git reset -q
+          fi
+          du -sh store || true
+
+      - name: 전국 대시보드 생성 (수집 + 페이지)
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          STORE_DIR: store
         run: |
-          python Dashboard.py
+          python national.py --minutes 70
 
-      - name: 실거래 DB 저장 (다음날 신규 거래·신고가 비교용)
+      - name: 실거래 저장소 저장 (data 브랜치, 매번 한 커밋으로 교체)
+        if: always()
+        env:
+          TOKEN: ${{ github.token }}
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add data/real_estate_db.json data/presale_db.json data/rent_db.json data/households.json 2>/dev/null || git add data/real_estate_db.json data/presale_db.json data/rent_db.json
-          git diff --cached --quiet || (git commit -m "data: 실거래 DB 갱신 [skip ci]" && (git push || (git pull --rebase && git push)))
+          [ -d store/sale ] || exit 0
+          cd store
+          rm -rf .git
+          git init -q -b data
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add -A
+          git commit -qm "data: 실거래 저장소 $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" data
 
       - name: GitHub Pages 업로드 설정
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: 'site'
 
       - name: GitHub Pages 배포
         id: deployment

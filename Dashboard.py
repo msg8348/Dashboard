@@ -199,6 +199,10 @@ class FetchError(Exception):
     pass
 
 
+class QuotaError(FetchError):
+    """공공데이터포털 일일 호출 한도 초과 — 이 출처는 오늘 더 호출하지 않는다."""
+
+
 def _text(item, *tags):
     for tag in tags:
         v = item.findtext(tag)
@@ -258,6 +262,8 @@ def fetch_month(src, district, lawd_cd, deal_ym):
             except requests.RequestException:
                 pass
             time.sleep(2 ** attempt)
+        if res is not None and res.status_code != 200 and "LIMITED_NUMBER" in res.text:
+            raise QuotaError(f"{SOURCES[src][2]} 호출 한도 초과")
         if res is None or res.status_code != 200:
             body = res.text[:150] if res is not None else ""
             raise FetchError(f"{SOURCES[src][2]} HTTP {getattr(res, 'status_code', '-')} ({district} {deal_ym}) {body}")
@@ -265,9 +271,11 @@ def fetch_month(src, district, lawd_cd, deal_ym):
             root = ET.fromstring(res.content)
         except ET.ParseError:
             raise FetchError(f"{SOURCES[src][2]} 응답 오류 ({district} {deal_ym}): {res.text[:150]}")
-        code = root.findtext(".//resultCode", "")
+        code = root.findtext(".//resultCode", "") or root.findtext(".//returnReasonCode", "")
         if code not in ("00", "000"):
             msg = root.findtext(".//resultMsg", "") or root.findtext(".//returnAuthMsg", "")
+            if code in ("22", "LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR") or "LIMITED" in msg:
+                raise QuotaError(f"{SOURCES[src][2]} 호출 한도 초과: {msg}")
             raise FetchError(f"{SOURCES[src][2]} API 오류 ({district} {deal_ym}): {code} {msg}")
 
         items = root.findall(".//item")
@@ -427,6 +435,7 @@ def build_trades(dbs, today):
         "high_cnt": sum(1 for r in rrows if r["up"]), "type_cnt": rent_type_cnt,
         "lists": by_type(rrows), "top5": rrows[:5],
         "jeonse_top5": [r for r in rrows if not r["monthly"]][:5],
+        "jeonse_top10": [r for r in rrows if not r["monthly"]][:10],
     }
     return sale_ctx, rent_ctx, highs_s, highs_r
 
@@ -435,25 +444,34 @@ def match_complex(name_keys, district, names):
     return [n for n in names if any(k in normalize(n) for k in name_keys)]
 
 
-def build_indicator(sale_trades, today, gu_hh=None):
+def build_indicator(sale_trades, today, gu_hh=None, complexes=None, key="d", gu_names=None):
+    complexes = INDICATOR_COMPLEXES if complexes is None else complexes
+    gu_names = list(BUSAN_LAWD_CD) if gu_names is None else gu_names
     today_s = today.strftime("%Y%m%d")
     d_1y = (today - timedelta(days=365)).strftime("%Y%m%d")
     d_3m = months_ago(today, 3).strftime("%Y%m%d")
     by_district = defaultdict(list)
     for t in sale_trades:
-        by_district[t["d"]].append(t)
+        by_district[t.get(key) or t["d"]].append(t)
 
     groups, items = [], []
-    for district, apts in INDICATOR_COMPLEXES.items():
+    for district, apts in complexes.items():
         gi = []
         for apt in apts:
             kws = [normalize(k) for k in apt.get("keywords", [apt["name"]])]
-            matched = [t for t in by_district.get(district, []) if any(k in normalize(t["n"]) for k in kws)]
+            pool = by_district.get(district, [])
+            if apt.get("seq"):
+                matched = [t for t in pool if t.get("s") == apt["seq"]]
+            elif apt.get("exact"):
+                matched = [t for t in pool if normalize(t["n"]) in kws]
+            else:
+                matched = [t for t in pool if any(k in normalize(t["n"]) for k in kws)]
             c1 = sum(1 for t in matched if d_1y < t["dt"] <= today_s)
             c3 = sum(1 for t in matched if d_3m < t["dt"] <= today_s)
-            hh = apt["households"]
-            it = {"name": apt["name"], "households": hh, "district": district,
-                  "c1": c1, "r1": c1 / hh * 100, "c3": c3, "r3": c3 / hh * 100}
+            hh = apt.get("households") or 0
+            it = {"name": apt["name"], "households": hh, "district": district, "avg84": apt.get("avg84"),
+                  "rule": apt.get("rule", ""), "c1": c1, "r1": c1 / hh * 100 if hh else 0,
+                  "c3": c3, "r3": c3 / hh * 100 if hh else 0, "nohh": not hh}
             change = (c3 * 4 / c1 - 1) * 100 if c1 else 0
             it["change"] = round(change)
             it["trend"] = ("strong" if change >= 10 else "up" if change >= 5 else
@@ -467,22 +485,24 @@ def build_indicator(sale_trades, today, gu_hh=None):
     for i in items:
         i["w1"] = round(i["r1"] / max_r1 * 100, 1)
         i["w3"] = round(i["r3"] / max_r3 * 100, 1)
-    hh = sum(i["households"] for i in items)
-    c1 = sum(i["c1"] for i in items)
-    c3 = sum(i["c3"] for i in items)
-    by_r3 = sorted(items, key=lambda i: -i["r3"])
+    rated = [i for i in items if not i["nohh"]]          # 세대수를 아는 단지만 회전율 순위에 넣음
+    hh = sum(i["households"] for i in rated)
+    c1 = sum(i["c1"] for i in rated)
+    c3 = sum(i["c3"] for i in rated)
+    by_r3 = sorted(rated, key=lambda i: -i["r3"])
     # 구별 거래량 (해당 구 전체 아파트 매매, 1년 / 3개월)
     gus = []
-    for district in BUSAN_LAWD_CD:
+    for district in gu_names:
         ts = by_district.get(district, [])
         g1 = sum(1 for t in ts if d_1y < t["dt"] <= today_s)
         g3 = sum(1 for t in ts if d_3m < t["dt"] <= today_s)
         ghh = (gu_hh or {}).get(district)
         gus.append({"name": district, "c1": g1, "c3": g3, "hh": ghh,
-                    "r1": g1 / ghh * 100 if ghh else None, "r3": g3 / ghh * 100 if ghh else None})
-    gu_rate = bool(gus) and all(g["hh"] for g in gus)   # 모든 구 세대수가 있을 때만 회전율로 표시
+                    "r1": g1 / ghh * 100 if ghh else 0, "r3": g3 / ghh * 100 if ghh else 0, "nohh": not ghh})
+    # 세대수를 아는 구·군이 대부분(80% 이상)일 때 회전율로 표시, 모르는 곳은 '-' 로 맨 아래
+    gu_rate = bool(gus) and sum(1 for g in gus if g["hh"]) >= 0.8 * len(gus)
     k1, k3 = ("r1", "r3") if gu_rate else ("c1", "c3")
-    gus.sort(key=lambda g: -g[k3])
+    gus.sort(key=lambda g: (g["nohh"] and gu_rate, -g[k3]))
     m1 = max([g[k1] for g in gus] + [0.0001])
     m3 = max([g[k3] for g in gus] + [0.0001])
     for g in gus:
@@ -490,6 +510,8 @@ def build_indicator(sale_trades, today, gu_hh=None):
     # 부산 전체 (구별 합계)
     t1, t3 = sum(g["c1"] for g in gus), sum(g["c3"] for g in gus)
     thh = sum(g["hh"] or 0 for g in gus) if gu_rate else None
+    if gu_rate:   # 합계 회전율은 세대수를 아는 구·군끼리
+        t1, t3 = sum(g["c1"] for g in gus if g["hh"]), sum(g["c3"] for g in gus if g["hh"])
     gu_total = {"c1": t1, "c3": t3, "hh": thh,
                 "r1": t1 / thh * 100 if thh else None, "r3": t3 / thh * 100 if thh else None}
     gu_total["w1"] = min(100, round(gu_total[k1] / m1 * 100, 1))
@@ -500,7 +522,7 @@ def build_indicator(sale_trades, today, gu_hh=None):
     return {
         "groups": groups, "count": len(items), "households": hh,
         "c1": c1, "r1": c1 / hh * 100 if hh else 0, "c3": c3, "r3": c3 / hh * 100 if hh else 0,
-        "top5_1y": sorted(items, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5], "by_r3": by_r3, "gus": gus, "gu_rate": gu_rate, "gu_total": gu_total,
+        "top5_1y": sorted(rated, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5], "by_r3": by_r3 + sorted((i for i in items if i["nohh"]), key=lambda i: -i["c3"]), "gus": gus, "gu_rate": gu_rate, "gu_total": gu_total,
         "period_1y": f"{ymd_label(d_1y)}~", "period_3m": f"{ymd_label(d_3m)}~",
     }
 
