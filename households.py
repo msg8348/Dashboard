@@ -91,6 +91,8 @@ def collect(lawd_codes):
             if not items or page * 1000 >= total:
                 break
             page += 1
+        if complexes and gu == next(iter(lawd_codes)):
+            print(f"ℹ️ 단지 목록 항목 필드: {complexes[0]}")
         hh, n, kinds = 0, 0, {}
         for c in complexes:
             kcode = c.get("kaptCode")
