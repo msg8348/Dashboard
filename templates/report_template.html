@@ -272,6 +272,16 @@
     </div>
     <div class="qx"><div class="hd"><div><small>세대수 대비 거래 회전율 · 최근 3개월 순</small><b>지표단지 거래량 Top5</b></div>
       <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
+      {% set t = ind.gu_total %}
+      <div class="bf one total"><span class="tot-chip">전체</span>
+        <div class="who"><b>부산 전체</b><span>{% if ind.gu_rate %}아파트 {{ "{:,}".format(t.hh) }}세대{% else %}16개 구·군{% endif %}</span></div>
+        {% if ind.gu_rate %}
+        <div class="side l"><span class="val c-m">{{ "%.2f"|format(t.r3) }}%<em>{{ "{:,}".format(t.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ t.iw3 }}%"></i></span></div><div class="axis"></div>
+        <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.iw1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(t.r1) }}%<em>{{ "{:,}".format(t.c1) }}건</em></span></div>
+        {% else %}
+        <div class="side l"><span class="val c-m">{{ "{:,}".format(t.c3) }}건</span></div><div class="axis"></div>
+        <div class="side r"><span class="val c-g">{{ "{:,}".format(t.c1) }}건</span></div>
+        {% endif %}</div>
       {% for a in ind.top5_3m %}<div class="bf one">{{ rk(loop.index0, 'cn') }}
         <div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span></div>
         <div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>

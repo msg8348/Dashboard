@@ -494,6 +494,9 @@ def build_indicator(sale_trades, today, gu_hh=None):
                 "r1": t1 / thh * 100 if thh else None, "r3": t3 / thh * 100 if thh else None}
     gu_total["w1"] = min(100, round(gu_total[k1] / m1 * 100, 1))
     gu_total["w3"] = min(100, round(gu_total[k3] / m3 * 100, 1))
+    # 요약 지표단지 Top5 눈금(지표단지 최고 회전율 기준)에 맞춘 막대 길이
+    gu_total["iw1"] = min(100, round((gu_total["r1"] or 0) / max_r1 * 100, 1))
+    gu_total["iw3"] = min(100, round((gu_total["r3"] or 0) / max_r3 * 100, 1))
     return {
         "groups": groups, "count": len(items), "households": hh,
         "c1": c1, "r1": c1 / hh * 100 if hh else 0, "c3": c3, "r3": c3 / hh * 100 if hh else 0,
