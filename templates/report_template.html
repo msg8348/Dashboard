@@ -262,11 +262,11 @@
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
     <div class="qx"><div class="hd"><div><small>세대수 대비 거래 회전율 · 최근 3개월 순</small><b>지표단지 거래량 Top5</b></div>
-      <div class="lg"><span><i class="i-g"></i>최근 1년</span><span><i class="i-m"></i>최근 3개월</span></div></div>
+      <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
       {% for a in ind.top5_3m %}<div class="bf one">{{ rk(loop.index0, 'cn') }}
         <div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span></div>
-        <div class="side l"><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span></div><div class="axis"></div>
-        <div class="side r"><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span></div></div>{% endfor %}
+        <div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>
+        <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}
     </div>
   </div></div>
 </div>
@@ -301,7 +301,7 @@
 <div class="report page" id="page4" hidden>
   <div class="head"><h1>부산 지표단지 거래량 <small>{{ date_label }} 기준 · 세대수 대비</small></h1></div>
   <div class="ind-two">
-    {% for cls, label, period, cnt, rate, key, rkey, ckey, rc in [('y1','최근 1년',ind.period_1y,ind.c1,ind.r1,'top5_1y','r1','c1','cj'),('m3','최근 3개월',ind.period_3m,ind.c3,ind.r3,'top5_3m','r3','c3','ca')] %}
+    {% for cls, label, period, cnt, rate, key, rkey, ckey, rc in [('m3','최근 3개월',ind.period_3m,ind.c3,ind.r3,'top5_3m','r3','c3','ca'),('y1','최근 1년',ind.period_1y,ind.c1,ind.r1,'top5_1y','r1','c1','cj')] %}
     <div class="icard {{ cls }}"><h3>{{ label }}</h3><div class="p">{{ period }} · {{ ind.count }}개 단지 · {{ "{:,}".format(ind.households) }}세대</div>
       <div class="nums"><div><div class="k">거래</div><div class="n">{{ "{:,}".format(cnt) }}<small>건</small></div></div><div><div class="k">회전율</div><div class="n">{{ "%.2f"|format(rate) }}<small>%</small></div></div></div>
       <div class="mini">{% for a in ind[key] %}<div class="mr">{{ rk(loop.index0, rc) }}<span class="nm">{{ a.name }}<small>{{ a.district }}</small></span><span class="c">{{ a[ckey] }}건</span><b>{{ "%.2f"|format(a[rkey]) }}%</b></div>{% endfor %}</div>
@@ -309,20 +309,20 @@
     {% endfor %}
   </div>
   <div class="tbl qx"><div class="hd"><div><small>{{ ind.count }}개 지표단지 · 세대수 대비 거래 회전율 · 최근 3개월 순</small><b>지표단지별 상세</b></div>
-    <div class="lg"><span><i class="i-g"></i>최근 1년</span><span><i class="i-m"></i>최근 3개월</span></div></div>
+    <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
     <div class="bfgrid" style="--rows:{{ ((ind.by_r3|length) / 2)|round(0, 'ceil')|int }}">{% for a in ind.by_r3 %}<div class="bf">{{ rk(loop.index0, 'cn') }}
       <div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span>
         {% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}</div>
-      <div class="side l"><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span></div><div class="axis"></div>
-      <div class="side r"><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span></div></div>{% endfor %}</div>
+      <div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>
+      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}</div>
     <div class="foot2">막대 길이는 기간별 최고 회전율 기준 · 추세 = 3개월 거래×4 와 1년 거래 비교</div>
   </div>
   <div class="tbl qx gu"><div class="hd"><div><small>{{ ind.gus|length }}개 구·군 · 아파트 매매 거래량 · 최근 3개월 순</small><b>구별 거래량</b></div>
-    <div class="lg"><span><i class="i-g"></i>최근 1년</span><span><i class="i-m"></i>최근 3개월</span></div></div>
+    <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
     <div class="bfgrid" style="--rows:{{ ((ind.gus|length) / 2)|round(0, 'ceil')|int }}">{% for g in ind.gus %}<div class="bf short">{{ rk(loop.index0, 'cn') }}
       <div class="who"><b>{{ g.name }}</b></div>
-      <div class="side l"><span class="val c-g">{{ "{:,}".format(g.c1) }}건</span><span class="bw"><i class="i-g" style="width:{{ g.w1 }}%"></i></span></div><div class="axis"></div>
-      <div class="side r"><span class="bw"><i class="i-m" style="width:{{ g.w3 }}%"></i></span><span class="val c-m">{{ "{:,}".format(g.c3) }}건</span></div></div>{% endfor %}</div>
+      <div class="side l"><span class="val c-m">{{ "{:,}".format(g.c3) }}건</span><span class="bw"><i class="i-m" style="width:{{ g.w3 }}%"></i></span></div><div class="axis"></div>
+      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ g.w1 }}%"></i></span><span class="val c-g">{{ "{:,}".format(g.c1) }}건</span></div></div>{% endfor %}</div>
     <div class="foot2">막대 길이는 기간별 최고 거래량 기준</div>
   </div>
 </div>
@@ -359,7 +359,7 @@ const SHOTS = {
   1: [{ ko: '1_요약', en: '1_summary' }],
   2: [{ ko: '2_매매', en: '2_sale' }],
   3: [{ ko: '3_전월세', en: '3_rent' }],
-  4: [{ ko: '4_지표단지_1년3개월', en: '4_indicator_summary', hide: '.tbl', stack: true },
+  4: [{ ko: '4_지표단지_3개월1년', en: '4_indicator_summary', hide: '.tbl', stack: true },
       { ko: '4_지표단지_상세', en: '4_indicator_detail', hide: '.ind-two, .tbl.gu' },
       { ko: '4_구별거래량', en: '4_district', hide: '.ind-two, .tbl:not(.gu)' }],
 };
