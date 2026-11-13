@@ -465,6 +465,7 @@
 <script>
 let currentPage = 1;
 function showPage(n) {
+  if (n !== currentPage) window.scrollTo(0, 0);   // 탭을 바꾸면 페이지 맨 위로
   currentPage = n;
   document.querySelectorAll('.page').forEach(el => { el.hidden = el.id !== 'page' + n; });
   document.querySelectorAll('[data-page]').forEach(t => t.classList.toggle('on', t.dataset.page == n));
