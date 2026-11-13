@@ -1,0 +1,70 @@
+{
+ "date": "20261113",
+ "source": "국토교통부 공동주택 기본정보(K-apt)",
+ "gu": {
+  "중구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "서구": {
+   "households": 266,
+   "complexes": 1
+  },
+  "동구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "영도구": {
+   "households": 1527,
+   "complexes": 2
+  },
+  "부산진구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "동래구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "남구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "북구": {
+   "households": 114,
+   "complexes": 1
+  },
+  "해운대구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "사하구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "금정구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "강서구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "연제구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "수영구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "사상구": {
+   "households": 0,
+   "complexes": 0
+  },
+  "기장군": {
+   "households": 0,
+   "complexes": 0
+  }
+ }
+}
