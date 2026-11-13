@@ -43,6 +43,7 @@
   .bnav{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(560px,calc(100% - 28px));display:flex;padding:5px;border-radius:999px;z-index:20;transition:transform .3s ease;
     background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
     border:1px solid rgba(255,255,255,.7);box-shadow:0 8px 30px rgba(20,30,60,.18),inset 0 1px 0 rgba(255,255,255,.6)}
+  .bnav{touch-action:none;user-select:none;-webkit-user-select:none}
   .bnav.hide{transform:translate(-50%,calc(100% + 34px))}
   .bnav .bpill{position:absolute;top:5px;bottom:5px;left:0;width:0;border-radius:999px;background:rgba(23,32,44,.9);box-shadow:0 2px 8px rgba(20,30,60,.25);transition:transform .35s cubic-bezier(.3,1.25,.5,1),width .35s cubic-bezier(.3,1.25,.5,1);pointer-events:none}
   .bnav .bt{position:relative;z-index:1;flex:1;border:0;background:transparent;font:inherit;font-size:15px;font-weight:800;color:#2a3342;padding:12px 4px;border-radius:999px;white-space:nowrap;cursor:pointer;transition:color .25s}
@@ -482,6 +483,40 @@ function movePill() {   // 하단 메뉴: 선택 표시가 미끄러지듯 이�
 }
 window.addEventListener('resize', movePill);
 window.addEventListener('load', movePill);
+// 하단 메뉴 드래그: 선택 표시를 손가락으로 끌면 따라오고, 놓으면 가까운 탭으로 이동
+(() => {
+  const nav = document.getElementById('bnav'), pill = document.getElementById('bpill');
+  if (!nav || !pill) return;
+  const tabs = [...nav.querySelectorAll('.bt')];
+  let d = null, suppress = false;
+  const pillX = () => { const m = /translateX\(([-\d.]+)px\)/.exec(pill.style.transform); return m ? +m[1] : 0; };
+  const nearest = cx => tabs.reduce((b, t) => Math.abs(t.offsetLeft + t.offsetWidth / 2 - cx) < Math.abs(b.offsetLeft + b.offsetWidth / 2 - cx) ? t : b);
+  nav.addEventListener('pointerdown', e => { d = { x: e.clientX, x0: pillX(), moved: false }; });
+  window.addEventListener('pointermove', e => {
+    if (!d) return;
+    const dx = e.clientX - d.x;
+    if (!d.moved && Math.abs(dx) < 6) return;
+    d.moved = true;
+    pill.style.transition = 'none';
+    const w = pill.offsetWidth, min = tabs[0].offsetLeft, max = tabs[tabs.length - 1].offsetLeft;
+    const x = Math.max(min - 6, Math.min(max + 6, d.x0 + dx));
+    pill.style.transform = `translateX(${x}px)`;
+    const t = nearest(x + w / 2);
+    tabs.forEach(b => b.classList.toggle('on', b === t));
+  });
+  const end = () => {
+    if (!d) return;
+    const moved = d.moved; d = null;
+    pill.style.transition = '';
+    if (!moved) return;
+    suppress = true; setTimeout(() => { suppress = false; }, 50);
+    const t = nearest(pillX() + pill.offsetWidth / 2);
+    showPage(+t.dataset.page);
+  };
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', end);
+  nav.addEventListener('click', e => { if (suppress) { e.stopPropagation(); e.preventDefault(); } }, true);
+})();
 // 하단 안내 문구는 한 줄에 맞춰 글자 크기를 줄임
 function fitFoot() {
   document.querySelectorAll('.page:not([hidden]) .foot2').forEach(el => {
