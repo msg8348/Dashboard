@@ -50,6 +50,7 @@
   .bnav .bpill{position:absolute;top:5px;bottom:5px;left:0;width:0;border-radius:999px;background:rgba(23,32,44,.9);box-shadow:0 2px 8px rgba(20,30,60,.25);transition:transform .35s cubic-bezier(.3,1.25,.5,1),width .35s cubic-bezier(.3,1.25,.5,1);pointer-events:none}
   .bnav .bt{position:relative;z-index:1;flex:1;border:0;background:transparent;font:inherit;font-size:15px;font-weight:800;color:#2a3342;padding:12px 4px;border-radius:999px;white-space:nowrap;cursor:pointer;transition:color .25s}
   .bnav .bt.on{color:#fff}
+  .bnav .bt.home{flex:.8;text-decoration:none;text-align:center;color:var(--muted)}
   .mdim{position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:30}
   .drawer{position:fixed;top:0;right:0;height:100%;width:min(320px,82vw);background:#fff;z-index:31;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(20,30,60,.18);overflow:auto}
   .drawer.open{transform:none}
@@ -444,6 +445,7 @@
 
 <nav class="bnav" id="bnav">
   <span class="bpill" id="bpill"></span>
+  <a class="bt home" href="{{ home_href|default('./') }}">홈</a>
   {% for t, k in PAGES %}<button class="bt {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }})">{{ t }}</button>{% endfor %}
 </nav>
 <div class="mdim" id="mdim" hidden onclick="closeMenu()"></div>
@@ -498,7 +500,7 @@ window.addEventListener('load', movePill);
 (() => {
   const nav = document.getElementById('bnav'), pill = document.getElementById('bpill');
   if (!nav || !pill) return;
-  const tabs = [...nav.querySelectorAll('.bt')];
+  const tabs = [...nav.querySelectorAll('.bt[data-page]')];   // '홈'은 링크라 드래그 대상에서 제외
   let d = null, suppress = false;
   const pillX = () => { const m = /translateX\(([-\d.]+)px\)/.exec(pill.style.transform); return m ? +m[1] : 0; };
   const nearest = cx => tabs.reduce((b, t) => Math.abs(t.offsetLeft + t.offsetWidth / 2 - cx) < Math.abs(b.offsetLeft + b.offsetWidth / 2 - cx) ? t : b);
