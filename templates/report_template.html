@@ -669,6 +669,9 @@ function partTitle(el) {
 }
 const partCache = new Map();
 async function sharePart(el, btn) {
+  // 지표단지 최근 3개월·1년 카드는 두 카드를 세로로 묶어 한 장으로
+  const pair = el.classList.contains('icard') && el.closest('.ind-two');
+  if (pair) { if (!pair.dataset.part) pair.dataset.part = 'ind2'; el = pair; }
   const label = btn.innerHTML;
   btn.disabled = true; btn.textContent = '준비 중…';
   try {
@@ -687,10 +690,14 @@ async function sharePart(el, btn) {
           if (br) { const lg = br.cloneNode(true); lg.classList.add('cap-mini'); head.insertBefore(lg, head.firstChild); }
           c.insertBefore(head, c.firstChild);
           if (c.classList.contains('qx')) head.style.padding = '12px 18px';
+          if (c.classList.contains('ind-two')) {
+            Object.assign(c.style, { display: 'grid', gridTemplateColumns: '1fr', width: '640px', padding: '18px', background: '#fff', borderRadius: '22px' });
+            head.style.gridColumn = '1 / -1';
+          }
         }
       });
       const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-      partCache.set(el, Object.assign(new File([blob], `${REGION}_${DATE}_${partTitle(el)}.png`, { type: 'image/png' }), { en: `apt_${DATE}_part${+el.dataset.part + 1}.png` }));
+      partCache.set(el, Object.assign(new File([blob], `${REGION}_${DATE}_${pair ? '지표단지_3개월1년' : partTitle(el)}.png`, { type: 'image/png' }), { en: pair ? `apt_${DATE}_indicator_3m1y.png` : `apt_${DATE}_part${+el.dataset.part + 1}.png` }));
     }
   } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); return; }
   finally { btn.disabled = false; btn.innerHTML = label; }
