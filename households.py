@@ -22,11 +22,13 @@ REFRESH_DAYS = 30
 KST = timezone(timedelta(hours=9))
 API = "https://apis.data.go.kr/1613000"
 # 서비스 버전이 바뀌는 경우가 있어 여러 주소를 차례로 시도
-_V = [("1613000", "AptListService3", "getSigunguAptList3"), ("1613000", "AptListService2", "getSigunguAptList2"),
+_V = [("1613000", "AptListService4", "getSigunguAptList4"), ("1613000", "AptListService4", "getSigunguAptList"),
+      ("1613000", "AptListService3", "getSigunguAptList3"), ("1613000", "AptListService2", "getSigunguAptList2"),
       ("1613000", "AptListService1", "getSigunguAptList1"), ("1613000", "AptListService", "getSigunguAptList"),
       ("1611000", "AptListService2", "getSigunguAptList"), ("1611000", "AptListService", "getSigunguAptList")]
 LIST_URLS = [f"https://apis.data.go.kr/{a}/{b}/{c}" for a, b, c in _V]
-_I = [("1613000", "AptBasisInfoServiceV4", "getAphusBassInfoV4"), ("1613000", "AptBasisInfoServiceV3", "getAphusBassInfoV3"),
+_I = [("1613000", "AptBasisInfoServiceV4", "getAphusBassInfoV4"), ("1613000", "AptBasisInfoService4", "getAphusBassInfo4"),
+      ("1613000", "AptBasisInfoServiceV4", "getAphusBassInfo"), ("1613000", "AptBasisInfoServiceV3", "getAphusBassInfoV3"),
       ("1613000", "AptBasisInfoServiceV2", "getAphusBassInfoV2"), ("1613000", "AptBasisInfoService1", "getAphusBassInfo1"),
       ("1613000", "AptBasisInfoService", "getAphusBassInfo"), ("1611000", "AptBasisInfoService", "getAphusBassInfo")]
 INFO_URLS = [f"https://apis.data.go.kr/{a}/{b}/{c}" for a, b, c in _I]
