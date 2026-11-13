@@ -4,7 +4,9 @@
 <meta http-equiv="Cache-Control" content="no-cache">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ root|default('') }}favicon-32.png">
 <link rel="icon" type="image/png" sizes="48x48" href="{{ root|default('') }}favicon-48.png">
-<link rel="apple-touch-icon" href="{{ root|default('') }}apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ root|default('') }}apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ root|default('') }}icon-192.png">
+<link rel="shortcut icon" href="{{ root|default('') }}favicon.ico">
 <link rel="manifest" href="{{ root|default('') }}manifest.webmanifest">
 <meta name="apple-mobile-web-app-title" content="옆집얼마">
 <meta name="application-name" content="옆집얼마">
@@ -491,30 +493,40 @@ window.addEventListener('load', movePill);
   let d = null, suppress = false;
   const pillX = () => { const m = /translateX\(([-\d.]+)px\)/.exec(pill.style.transform); return m ? +m[1] : 0; };
   const nearest = cx => tabs.reduce((b, t) => Math.abs(t.offsetLeft + t.offsetWidth / 2 - cx) < Math.abs(b.offsetLeft + b.offsetWidth / 2 - cx) ? t : b);
-  nav.addEventListener('pointerdown', e => { d = { x: e.clientX, x0: pillX(), moved: false }; });
-  window.addEventListener('pointermove', e => {
+  const start = x => { d = { x, x0: pillX(), moved: false }; };
+  const move = (x, ev) => {
     if (!d) return;
-    const dx = e.clientX - d.x;
+    const dx = x - d.x;
     if (!d.moved && Math.abs(dx) < 6) return;
     d.moved = true;
+    if (ev && ev.cancelable) ev.preventDefault();   // iPhone: 끄는 동안 페이지가 움직이지 않게
     pill.style.transition = 'none';
     const w = pill.offsetWidth, min = tabs[0].offsetLeft, max = tabs[tabs.length - 1].offsetLeft;
-    const x = Math.max(min - 6, Math.min(max + 6, d.x0 + dx));
-    pill.style.transform = `translateX(${x}px)`;
-    const t = nearest(x + w / 2);
+    const nx = Math.max(min - 6, Math.min(max + 6, d.x0 + dx));
+    pill.style.transform = `translateX(${nx}px)`;
+    const t = nearest(nx + w / 2);
     tabs.forEach(b => b.classList.toggle('on', b === t));
-  });
+  };
   const end = () => {
     if (!d) return;
     const moved = d.moved; d = null;
     pill.style.transition = '';
     if (!moved) return;
-    suppress = true; setTimeout(() => { suppress = false; }, 50);
+    suppress = true; setTimeout(() => { suppress = false; }, 400);
     const t = nearest(pillX() + pill.offsetWidth / 2);
     showPage(+t.dataset.page);
   };
-  window.addEventListener('pointerup', end);
-  window.addEventListener('pointercancel', end);
+  if ('ontouchstart' in window) {   // 휴대폰: 터치 이벤트로 직접 처리 (Safari 호환)
+    nav.addEventListener('touchstart', e => start(e.touches[0].clientX), { passive: true });
+    nav.addEventListener('touchmove', e => move(e.touches[0].clientX, e), { passive: false });
+    nav.addEventListener('touchend', end);
+    nav.addEventListener('touchcancel', end);
+  } else {
+    nav.addEventListener('pointerdown', e => start(e.clientX));
+    window.addEventListener('pointermove', e => move(e.clientX));
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+  }
   nav.addEventListener('click', e => { if (suppress) { e.stopPropagation(); e.preventDefault(); } }, true);
 })();
 // 하단 안내 문구는 한 줄에 맞춰 글자 크기를 줄임
