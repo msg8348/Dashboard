@@ -132,7 +132,12 @@
   .bf .who{min-width:0}
   .bf .who b{display:block;font-size:14.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bf .who span{display:block;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .bf .who .trend{display:inline-block;margin-top:3px;font-size:10px;padding:1px 6px}
+  .bf .who .trend{display:inline-block;margin-top:3px;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px}
+  .bf .who .trend.strong{background:#d93a1f;color:#fff}
+  .bf .who .trend.weak{background:#2f5596;color:#fff}
+  .bf .who .trend.up{background:#ffe1d8;color:#c4321a}
+  .bf .who .trend.down{background:#dfe8f6;color:#2a4f8f}
+  .bf .who .trend.none{background:#eef0f3;color:#4a5566}
   .bf .side{display:flex;align-items:center;gap:6px;height:24px;min-width:0}
   .bf .side .bw{flex:1;min-width:0;display:flex}
   .bf .side.l .bw{justify-content:flex-end}
@@ -168,8 +173,8 @@
   .val2{font-size:13px;font-weight:600;color:var(--ink-2);text-align:right;white-space:nowrap}
   .val2 b{font-weight:800}.val2 b.y1{color:var(--teal)}.val2 b.m3{color:var(--amber)}
   .trend{justify-self:end;font-size:11px;font-weight:700;padding:3px 7px;border-radius:6px;white-space:nowrap}
-  .trend.up{background:var(--red-bg);color:var(--red)}.trend.down{background:#eaf0f8;color:#4b6a99}
-  .trend.strong{background:var(--red);color:#fff}.trend.weak{background:#4b6a99;color:#fff}
+  .trend.up{background:#ffe1d8;color:#c4321a}.trend.down{background:#dfe8f6;color:#2a4f8f}
+  .trend.strong{background:#d93a1f;color:#fff}.trend.weak{background:#2f5596;color:#fff}
   .trend.none{color:var(--muted)}
 
   /* 공유 · 저장 버튼 */
