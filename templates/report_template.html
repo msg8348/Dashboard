@@ -54,9 +54,9 @@
   .rtag{font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;background:#fff3cd;color:#8a6100;margin-left:4px;vertical-align:middle}
   .page[hidden]{display:none}
   .report{background:#fff;border-radius:28px;padding:34px 34px 30px;border:1px solid #dfe5ea}
-  .head{padding-bottom:16px;border-bottom:2px solid var(--line);margin-bottom:18px}
-  .head h1{font-size:34px;font-weight:800}
-  .head h1 small{font-size:20px;color:var(--ink-2);font-weight:700;margin-left:6px}
+  .head{padding-bottom:12px;border-bottom:2px solid var(--line);margin-bottom:16px}
+  .head h1{font-size:34px;font-weight:800;display:flex;align-items:baseline;gap:10px}
+  .head h1 small{font-size:20px;color:var(--ink-2);font-weight:700;margin-left:auto;white-space:nowrap}
   .notice{background:#fff7e0;color:#8a6100;font-size:13px;font-weight:600;padding:9px 14px;border-radius:10px;margin-bottom:14px;line-height:1.5}
   .empty{color:var(--muted);font-size:14px;font-weight:600;text-align:center;padding:28px 10px}
 
@@ -166,6 +166,7 @@
   .bf{display:grid;grid-template-columns:26px 150px 1fr 2px 1fr;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid #eef0f6;border-right:1px solid #eef0f6}
   .bf .rkc{width:26px;height:26px}
   .bf .who{min-width:0}
+  .bf > .rkc{margin-right:3px}
   .bf .who b{display:block;font-size:14.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bf .who span{display:block;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bf .who .trend{display:inline-block;margin-top:3px;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px}
@@ -244,7 +245,8 @@
     .wrap,.actions{width:100%}
     .tab{font-size:11.5px;padding:9px 1px}
     .report{padding:18px 12px 16px;border-radius:18px}
-    .head h1{font-size:22px}.head h1 small{display:block;font-size:14px;margin:4px 0 0}
+    .head h1{font-size:22px}.head h1 small{font-size:14px}
+    .head{padding-bottom:10px;margin-bottom:12px}
     .cards{gap:6px}
     .cards .cd{padding:10px 10px 8px;min-height:0}
     .cd .l{font-size:12px}.cd .l span{display:block;font-size:10px;margin:2px 0 0}
@@ -264,6 +266,7 @@
     .mini .mr{grid-template-columns:22px 1fr 44px 54px;font-size:13px;gap:6px}
     .bfgrid{grid-template-columns:1fr;grid-template-rows:none;grid-auto-flow:row}
     .bf{grid-template-columns:22px 96px 1fr 2px 1fr;gap:5px;padding:10px;border-right:0}
+    .bf > .rkc{margin-right:5px}
     .bf .who b{font-size:12.5px;white-space:normal;word-break:keep-all}
     .bf .who span{font-size:10px}
     .bf .val{font-size:11.5px}
@@ -319,7 +322,7 @@
     </div>
   </div></div>
   {% if has_ind %}
-  <div class="qx sumind"><div class="hd"><div><small>세대수 대비 거래 회전율 · 최근 3개월 순 · 추세 = 3개월 거래×4 와 1년 거래 비교</small><b>지표단지 거래량 Top10</b></div>
+  <div class="qx sumind"><div class="hd"><div><b>지표단지 거래량 Top10</b></div>
     <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
     {% set t = ind.gu_total %}
     <div class="bf one wide total"><span class="tot-chip">전체</span>
@@ -343,14 +346,14 @@
 <!-- ============ 2. 매매 / 3. 전월세 ============ -->
 {% for pg, kind, d in [(2, 'sale', sale), (3, 'rent', rent)] %}
 <div class="report page" id="page{{ pg }}" hidden>
-  <div class="head"><h1>{{ RG }} 아파트 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ d.title }}</small></h1></div>
+  <div class="head"><h1>{{ RG }} 아파트 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ date_label }}</small></h1></div>
   <div class="cards c2">
     {% if kind == 'sale' %}
-    <div class="cd b"><div class="l">신규 실거래</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">84타입 {{ d.type_cnt['84타입'] }} · 59타입 {{ d.type_cnt['59타입'] }} · 기타 {{ d.type_cnt['기타'] }}{% if d.pre_cnt %} · 분양권 {{ d.pre_cnt }} 포함{% endif %}</div></div></div>
-    <div class="cd r"><div class="l">신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div><div class="h mu">동일 단지·타입 최고가 경신</div></div></div>
+    <div class="cd b"><div class="l">신규 실거래</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
+    <div class="cd r"><div class="l">신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
     {% else %}
-    <div class="cd t"><div class="l">신규 전월세</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div><div class="h mu">전세 {{ d.jeonse }} · 월세 {{ d.wolse }}</div></div></div>
-    <div class="cd r"><div class="l">전세 신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div><div class="h mu">동일 단지·타입 최고 전세 보증금 경신</div></div></div>
+    <div class="cd t"><div class="l">신규 전월세</div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
+    <div class="cd r"><div class="l">전세 신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
     {% endif %}
   </div>
   {% macro section(k, rows, wide, kind) %}
@@ -369,7 +372,7 @@
 <!-- ============ 4. 지표단지 ============ -->
 {% if has_ind %}
 <div class="report page" id="page4" hidden>
-  <div class="head"><h1>{{ RG }} 지표단지 거래량 <small>{{ date_label }} 기준 · 세대수 대비</small></h1></div>
+  <div class="head"><h1>{{ RG }} 지표단지 거래량 <small>{{ date_label }}</small></h1></div>
   {% if ind_rule %}<div class="rule">지표단지: {{ ind_rule }}</div>{% endif %}
   <div class="ind-two">
     {% for cls, label, period, cnt, rate, key, rkey, ckey, rc in [('m3','최근 3개월',ind.period_3m,ind.c3,ind.r3,'top5_3m','r3','c3','ca'),('y1','최근 1년',ind.period_1y,ind.c1,ind.r1,'top5_1y','r1','c1','cj')] %}
