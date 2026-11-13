@@ -29,6 +29,7 @@ import regions
 
 STORE = os.environ.get("STORE_DIR", "store")
 SITE = "site"
+SITE_URL = "https://nextdoorprice.com"
 regions.PATH = os.path.join(STORE, "regions.json")
 IND_PATH = os.path.join(STORE, "indicators.json")
 BUSAN = "26"
@@ -308,6 +309,7 @@ def main():
     if os.path.isdir("static"):   # 아이콘·매니페스트
         shutil.copytree("static", SITE)
     months = D.month_list(now, D.WINDOW_MONTHS)
+    urls = []
     home = []
     for sd in sidos:
         key = sd["key"]
@@ -329,7 +331,7 @@ def main():
             l2slug[l["key"]] = sl
         os.makedirs(os.path.join(SITE, sdir), exist_ok=True)
         base = {"date_label": now.strftime("%y.%m.%d"), "date_full": now.strftime("%Y%m%d"), "notices": [],
-                "l2_word": l2_word, "home_href": "../index.html", "root": "../"}
+                "l2_word": l2_word, "home_href": "../index.html", "root": "../", "site_url": SITE_URL}
         if not ready:
             base["notices"].append("이 지역은 실거래 데이터를 수집하고 있습니다. 며칠 안에 채워집니다.")
         # --- 레벨1
@@ -351,7 +353,8 @@ def main():
             rule = f"{l2_word}별 최근 1년 84타입 평균거래가 상위 5위 안에서 거래량 최다 단지 · 84타입 거래가 없으면 거래 최다 단지 · {quarter(now)} 고정"
         ctx = dict(base, sale=sale_ctx, rent=rent_ctx, indicator=ind, has_ind=bool(ind["count"]), level=1,
                    region=sd["short"], region_full=sd["sido"], ind_rule=rule,
-                   crumbs=[("전국", "../index.html"), (sd["short"], None)])
+                   crumbs=[("전국", "../index.html"), (sd["short"], None)], page_url=f"{SITE_URL}/{sdir}/")
+        urls.append(f"{SITE_URL}/{sdir}/")
         redirect(f"r/{key}/index.html", f"{sdir}/index.html")   # 예전 주소 → 새 주소
         with open(os.path.join(SITE, sdir, "index.html"), "w", encoding="utf-8") as f:
             f.write(tpl.render(ctx))
@@ -362,7 +365,9 @@ def main():
                 s2, r2, _, _ = D.build_trades(subset(sdb, set(l["codes"])), now)
                 c2 = dict(base, sale=s2, rent=r2, indicator=None, has_ind=False, level=2,
                           region=l["name"], region_full=f"{sd['sido']} {l['name']}",
-                          crumbs=[("전국", "../index.html"), (sd["short"], "index.html"), (l["name"], None)])
+                          crumbs=[("전국", "../index.html"), (sd["short"], "index.html"), (l["name"], None)],
+                          page_url=f"{SITE_URL}/{sdir}/{l2slug[l['key']]}.html")
+                urls.append(f"{SITE_URL}/{sdir}/{l2slug[l['key']]}.html")
                 redirect(f"r/{key}/{l['key']}.html", f"{sdir}/{l2slug[l['key']]}.html")
                 with open(os.path.join(SITE, sdir, f"{l2slug[l['key']]}.html"), "w", encoding="utf-8") as f:
                     f.write(tpl.render(c2))
@@ -372,11 +377,20 @@ def main():
                      "avg84": avg84(sdb["sale"]["trades"], now), "l2_word": l2_word, "chips": chips})
         print(f"🧾 {sd['short']}: 신규 매매 {sale_ctx['cnt']} · 신고가 {sale_ctx['high_cnt']} · 페이지 {1 + len(chips)}개")
 
-    hc = {"date_label": now.strftime("%y.%m.%d"), "sidos": home,
+    hc = {"date_label": now.strftime("%y.%m.%d"), "sidos": home, "site_url": SITE_URL,
           "tot": {k: sum(h[k] for h in home) for k in ("cnt", "high", "rent")},
           "max_cnt": max([h["cnt"] for h in home] + [1])}
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
         f.write(env.get_template("home.html").render(hc))
+    # 검색엔진용: 사이트맵 · robots.txt
+    today_iso = now.strftime("%Y-%m-%d")
+    with open(os.path.join(SITE, "sitemap.xml"), "w", encoding="utf-8") as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
+        for u in [f"{SITE_URL}/"] + urls:
+            f.write(f"<url><loc>{u}</loc><lastmod>{today_iso}</lastmod><changefreq>daily</changefreq></url>\n")
+        f.write("</urlset>\n")
+    with open(os.path.join(SITE, "robots.txt"), "w", encoding="utf-8") as f:
+        f.write(f"User-agent: *\nAllow: /\nDisallow: /r/\n\nSitemap: {SITE_URL}/sitemap.xml\n")
     if D.MOLIT_API_KEY:
         for src in D.SOURCES:
             for sd in sidos:

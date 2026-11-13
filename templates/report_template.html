@@ -8,12 +8,23 @@
 <link rel="icon" type="image/png" sizes="192x192" href="{{ root|default('') }}icon-192.png">
 <link rel="shortcut icon" href="{{ root|default('') }}favicon.ico">
 <link rel="manifest" href="{{ root|default('') }}manifest.webmanifest">
+<meta name="naver-site-verification" content="24be3abd117ba1ac1c26c884cf0dc9ced9795e63" />
 <meta name="apple-mobile-web-app-title" content="옆집얼마">
 <meta name="application-name" content="옆집얼마">
 <meta name="theme-color" content="#eef1f4">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ region|default("부산") }} 아파트 실거래 ({{ date_label }}) | 옆집얼마</title>
+{% set FULL = region_full|default(region|default("부산")) %}
+<title>{{ FULL }} 아파트 실거래가 | 옆집얼마</title>
+<meta name="description" content="{{ FULL }} 아파트 신규 실거래·신고가를 매일 알려드립니다. 매매·전월세 최고가{% if has_ind|default(true) %}, 지표단지 거래량{% endif %} — 옆집얼마 우리동네 아파트 실거래가 알리미">
+{% if page_url %}<link rel="canonical" href="{{ page_url }}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="옆집얼마">
+<meta property="og:title" content="{{ FULL }} 아파트 실거래가 | 옆집얼마">
+<meta property="og:description" content="{{ FULL }} 아파트 신규 실거래·신고가를 매일 알려드립니다.">
+<meta property="og:url" content="{{ page_url }}">
+<meta property="og:image" content="{{ site_url }}/og.png">
+<meta name="twitter:card" content="summary_large_image">{% endif %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
