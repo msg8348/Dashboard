@@ -8,6 +8,7 @@
 import json
 import os
 import re
+import time
 from collections import Counter
 from datetime import datetime
 
@@ -119,8 +120,16 @@ def _stanregin(key):
     import requests
     rows, page = [], 1
     while True:
-        r = requests.get(STAN_URL, params={"serviceKey": requests.utils.unquote(key), "pageNo": page,
-                                           "numOfRows": 1000, "type": "json"}, timeout=30)
+        r = None
+        for attempt in range(4):   # 응답이 느린 API라 넉넉히 기다리고 다시 시도
+            try:
+                r = requests.get(STAN_URL, params={"serviceKey": requests.utils.unquote(key), "pageNo": page,
+                                                   "numOfRows": 500, "type": "json"}, timeout=(10, 120))
+                break
+            except requests.RequestException as e:
+                if attempt == 3:
+                    raise RuntimeError(f"법정동코드 API 응답 없음 ({page}쪽): {e}")
+                time.sleep(5 * (attempt + 1))
         if r.status_code != 200:
             raise RuntimeError(f"법정동코드 API HTTP {r.status_code}: {' '.join(r.text.split())[:200]}")
         try:
@@ -134,7 +143,9 @@ def _stanregin(key):
         total = next((int(h["totalCount"]) for h in head if "totalCount" in h), 0)
         got = next((p["row"] for p in parts if "row" in p), [])
         rows += got
-        if not got or page * 1000 >= total:
+        if page == 1:
+            print(f"🗺️ 법정동코드 API 연결됨: 전체 {total:,}행")
+        if not got or page * 500 >= total:
             break
         page += 1
     sgg = {}
