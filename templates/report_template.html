@@ -317,13 +317,18 @@
       <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}</div>
     <div class="foot2">막대 길이는 기간별 최고 회전율 기준 · 추세 = 3개월 거래×4 와 1년 거래 비교</div>
   </div>
-  <div class="tbl qx gu"><div class="hd"><div><small>{{ ind.gus|length }}개 구·군 · 아파트 매매 거래량 · 최근 3개월 순</small><b>구별 거래량</b></div>
+  <div class="tbl qx gu"><div class="hd"><div><small>{{ ind.gus|length }}개 구·군 · 아파트 매매 · {% if ind.gu_rate %}세대수 대비 거래 회전율{% else %}거래량{% endif %} · 최근 3개월 순</small><b>구별 거래량</b></div>
     <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
-    <div class="bfgrid" style="--rows:{{ ((ind.gus|length) / 2)|round(0, 'ceil')|int }}">{% for g in ind.gus %}<div class="bf short">{{ rk(loop.index0, 'cn') }}
-      <div class="who"><b>{{ g.name }}</b></div>
+    <div class="bfgrid" style="--rows:{{ ((ind.gus|length) / 2)|round(0, 'ceil')|int }}">{% for g in ind.gus %}<div class="bf {% if not ind.gu_rate %}short{% endif %}">{{ rk(loop.index0, 'cn') }}
+      <div class="who"><b>{{ g.name }}</b>{% if ind.gu_rate %}<span>아파트 {{ "{:,}".format(g.hh) }}세대</span>{% endif %}</div>
+      {% if ind.gu_rate %}
+      <div class="side l"><span class="val c-m">{{ "%.2f"|format(g.r3) }}%<em>{{ "{:,}".format(g.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ g.w3 }}%"></i></span></div><div class="axis"></div>
+      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ g.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(g.r1) }}%<em>{{ "{:,}".format(g.c1) }}건</em></span></div></div>
+      {% else %}
       <div class="side l"><span class="val c-m">{{ "{:,}".format(g.c3) }}건</span><span class="bw"><i class="i-m" style="width:{{ g.w3 }}%"></i></span></div><div class="axis"></div>
-      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ g.w1 }}%"></i></span><span class="val c-g">{{ "{:,}".format(g.c1) }}건</span></div></div>{% endfor %}</div>
-    <div class="foot2">막대 길이는 기간별 최고 거래량 기준</div>
+      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ g.w1 }}%"></i></span><span class="val c-g">{{ "{:,}".format(g.c1) }}건</span></div></div>
+      {% endif %}{% endfor %}</div>
+    <div class="foot2">{% if ind.gu_rate %}세대수: 국토교통부 공동주택 기본정보(K-apt) 아파트·주상복합 합계 · 소규모 단지는 미포함{% else %}막대 길이는 기간별 최고 거래량 기준{% endif %}</div>
   </div>
 </div>
 </div>

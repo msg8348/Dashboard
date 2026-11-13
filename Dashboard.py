@@ -435,7 +435,7 @@ def match_complex(name_keys, district, names):
     return [n for n in names if any(k in normalize(n) for k in name_keys)]
 
 
-def build_indicator(sale_trades, today):
+def build_indicator(sale_trades, today, gu_hh=None):
     today_s = today.strftime("%Y%m%d")
     d_1y = (today - timedelta(days=365)).strftime("%Y%m%d")
     d_3m = months_ago(today, 3).strftime("%Y%m%d")
@@ -477,16 +477,20 @@ def build_indicator(sale_trades, today):
         ts = by_district.get(district, [])
         g1 = sum(1 for t in ts if d_1y < t["dt"] <= today_s)
         g3 = sum(1 for t in ts if d_3m < t["dt"] <= today_s)
-        gus.append({"name": district, "c1": g1, "c3": g3})
-    gus.sort(key=lambda g: -g["c3"])
-    m1 = max([g["c1"] for g in gus] + [1])
-    m3 = max([g["c3"] for g in gus] + [1])
+        ghh = (gu_hh or {}).get(district)
+        gus.append({"name": district, "c1": g1, "c3": g3, "hh": ghh,
+                    "r1": g1 / ghh * 100 if ghh else None, "r3": g3 / ghh * 100 if ghh else None})
+    gu_rate = bool(gus) and all(g["hh"] for g in gus)   # 모든 구 세대수가 있을 때만 회전율로 표시
+    k1, k3 = ("r1", "r3") if gu_rate else ("c1", "c3")
+    gus.sort(key=lambda g: -g[k3])
+    m1 = max([g[k1] for g in gus] + [0.0001])
+    m3 = max([g[k3] for g in gus] + [0.0001])
     for g in gus:
-        g["w1"], g["w3"] = round(g["c1"] / m1 * 100, 1), round(g["c3"] / m3 * 100, 1)
+        g["w1"], g["w3"] = round(g[k1] / m1 * 100, 1), round(g[k3] / m3 * 100, 1)
     return {
         "groups": groups, "count": len(items), "households": hh,
         "c1": c1, "r1": c1 / hh * 100 if hh else 0, "c3": c3, "r3": c3 / hh * 100 if hh else 0,
-        "top5_1y": sorted(items, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5], "by_r3": by_r3, "gus": gus,
+        "top5_1y": sorted(items, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5], "by_r3": by_r3, "gus": gus, "gu_rate": gu_rate,
         "period_1y": f"{ymd_label(d_1y)}~", "period_3m": f"{ymd_label(d_3m)}~",
     }
 
@@ -502,9 +506,9 @@ def render(context, out_path):
     print(f"✅ {out_path} 생성 완료")
 
 
-def build_context(dbs, today):
+def build_context(dbs, today, gu_hh=None):
     sale_ctx, rent_ctx, highs_s, highs_r = build_trades(dbs, today)
-    indicator = build_indicator(dbs["sale"]["trades"], today)
+    indicator = build_indicator(dbs["sale"]["trades"], today, gu_hh)
     return {
         "date_label": today.strftime("%y.%m.%d"), "date_full": today.strftime("%Y%m%d"),
         "sale": sale_ctx, "rent": rent_ctx, "indicator": indicator, "notices": [],
@@ -589,7 +593,9 @@ def main():
     else:
         print("⚠️ MOLIT_API_KEY 가 없어 기존 DB 로만 리포트를 만듭니다.")
 
-    ctx, highs_s, highs_r = build_context(dbs, now)
+    import households
+    gu_hh = households.ensure(BUSAN_LAWD_CD, now)
+    ctx, highs_s, highs_r = build_context(dbs, now, gu_hh)
     for src, errs in errors.items():
         if errs and not dbs[src]["trades"]:
             ctx["notices"].append(f"{SOURCES[src][2]} 실거래를 받지 못했습니다: {errs[0][:80]}")
