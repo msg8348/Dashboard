@@ -129,9 +129,10 @@
 
   /* 나비형 막대 */
   .qx{background:#fff;border:1px solid #dfe3ee;border-radius:18px;overflow:hidden}
-  .qx .hd{background:var(--navy);color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
-  .qx .hd small{display:block;font-size:11.5px;opacity:.75;font-weight:600}
-  .qx .hd b{font-size:18px;font-weight:800}
+  .qx .hd{background:var(--navy);color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .qx .hd > div:first-child{min-width:0}
+  .qx .hd small{display:block;font-size:11.5px;opacity:.75;font-weight:600;margin-top:3px}
+  .qx .hd b{display:block;font-size:18px;font-weight:800}
   .qx .lg{display:flex;gap:12px;font-size:11.5px;font-weight:700;white-space:nowrap}
   .qx .lg i{display:inline-block;width:12px;height:8px;border-radius:2px;margin-right:4px}
   .tb{display:grid;grid-template-columns:26px 150px 1fr 70px;gap:12px;align-items:center;padding:14px 18px;border-top:1px solid #eef0f6}
@@ -290,7 +291,9 @@
     .bf .who span{font-size:10px}
     .bf .val{font-size:11.5px}
     .bf.short{grid-template-columns:22px 58px 1fr 2px 1fr}
-    .qx .hd{flex-direction:column;align-items:flex-start;gap:6px}
+    .qx .hd{gap:8px;padding:12px 14px}
+    .qx .hd small{font-size:10.5px}
+    .qx .lg{flex-direction:column;gap:4px;font-size:11px}
     .tbl-head{display:none}
     .dgroup{padding:4px 12px}
     .tr{grid-template-columns:1fr auto;grid-template-areas:"dist dist" "name trend" "c1 c1" "c3 c3";row-gap:6px;padding:11px 0}
@@ -401,7 +404,7 @@
     </div>
     {% endfor %}
   </div>
-  <div class="tbl qx"><div class="hd"><div><small>{{ ind.count }}개 지표단지 · 세대수 대비 거래 회전율 · 최근 3개월 순</small><b>지표단지별 상세</b></div>
+  <div class="tbl qx"><div class="hd"><div><b>지표단지별 상세</b><small>{{ ind.count }}개 지표단지 · 세대수 대비 거래 회전율 · 최근 3개월 순</small></div>
     <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
     <div class="bfgrid" style="--rows:{{ ((ind.by_r3|length) / 2)|round(0, 'ceil')|int }}">{% for a in ind.by_r3 %}<div class="bf">{{ rk(loop.index0, 'cn') }}
       <div class="who"><b>{{ a.name }}{% if a.rule %}<span class="rtag">{{ a.rule }}</span>{% endif %}</b><span>{{ a.district }} · {% if a.nohh %}세대수 미확인{% else %}{{ "{:,}".format(a.households) }}세대{% endif %}{% if a.avg84 %} · 84 평균 {{ a.avg84 }}{% endif %}</span>
@@ -412,7 +415,7 @@
       <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endif %}{% endfor %}</div>
     <div class="foot2">막대 길이는 기간별 최고 회전율 기준 · 추세 = 3개월 거래×4 와 1년 거래 비교</div>
   </div>
-  <div class="tbl qx gu"><div class="hd"><div><small>{{ ind.gus|length }}개 {{ L2W }} · 아파트 매매 · {% if ind.gu_rate %}세대수 대비 거래 회전율{% else %}거래량{% endif %} · 최근 3개월 순</small><b>{{ L2W }}별 거래량</b></div>
+  <div class="tbl qx gu"><div class="hd"><div><b>{{ L2W }}별 거래량</b><small>{{ ind.gus|length }}개 {{ L2W }} · 아파트 매매 · {% if ind.gu_rate %}세대수 대비 거래 회전율{% else %}거래량{% endif %} · 최근 3개월 순</small></div>
     <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
     {% set t = ind.gu_total %}
     <div class="bf total"><span class="tot-chip">전체</span>
