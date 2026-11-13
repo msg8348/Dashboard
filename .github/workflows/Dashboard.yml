@@ -47,7 +47,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add data/real_estate_db.json data/presale_db.json data/rent_db.json data/households.json 2>/dev/null || git add data/real_estate_db.json data/presale_db.json data/rent_db.json
-          git diff --cached --quiet || (git commit -m "data: 실거래 DB 갱신 [skip ci]" && git push)
+          git diff --cached --quiet || (git commit -m "data: 실거래 DB 갱신 [skip ci]" && (git push || (git pull --rebase && git push)))
 
       - name: GitHub Pages 업로드 설정
         uses: actions/upload-pages-artifact@v3
