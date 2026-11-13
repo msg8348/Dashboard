@@ -150,6 +150,7 @@
   .sec{background:#f7f9fb;border:1px solid var(--line);border-radius:18px;padding:16px 22px 10px;margin-bottom:14px;min-width:0}
   .sec h2{display:flex;align-items:center;gap:10px;margin-bottom:4px}
   .chip{font-size:15px;font-weight:800;color:#fff;padding:4px 14px;border-radius:999px;white-space:nowrap}
+  .sec h2 .n.hi{color:var(--red)}
   .sec h2 .n{font-size:13px;color:var(--muted);font-weight:600}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .list{display:grid;grid-template-columns:1fr}
@@ -380,16 +381,16 @@
     <div class="cd r"><div class="l">전세 신고가</div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
     {% endif %}
   </div>
-  {% macro section(k, rows, wide, kind, total) %}
-  <div class="sec"><h2><span class="chip" style="background:{{ colcolor[k] }}">{{ k }}</span><span class="n">{{ "{:,}".format(total) }}건</span></h2>
+  {% macro section(k, rows, wide, kind, total, high) %}
+  <div class="sec"><h2><span class="chip" style="background:{{ colcolor[k] }}">{{ k }}</span><span class="n">{{ "{:,}".format(total) }}건</span><span class="n hi">신고가 {{ high }}건</span></h2>
     <div class="list {% if wide %}wide{% endif %}">
     {% for r in rows %}<div class="row">{{ rk(loop.index0, colcls[k]) }}<span class="nm"><span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="fl">{{ r.floor }}</span>
       {% if kind == 'sale' %}<span class="pr">{{ r.price }}</span>{% else %}<span class="pr {{ 'w' if r.monthly else 'j' }}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span>{% endif %}</div>
     {% else %}<div class="empty">해당 거래가 없습니다</div>{% endfor %}
     </div></div>
   {% endmacro %}
-  <div class="two">{{ section('84타입', d.lists['84타입'], false, kind, d.type_cnt['84타입']) }}{{ section('59타입', d.lists['59타입'], false, kind, d.type_cnt['59타입']) }}</div>
-  {{ section('기타', d.lists['기타'], true, kind, d.type_cnt['기타']) }}
+  <div class="two">{{ section('84타입', d.lists['84타입'], false, kind, d.type_cnt['84타입'], d.type_high['84타입']) }}{{ section('59타입', d.lists['59타입'], false, kind, d.type_cnt['59타입'], d.type_high['59타입']) }}</div>
+  {{ section('기타', d.lists['기타'], true, kind, d.type_cnt['기타'], d.type_high['기타']) }}
 </div>
 {% endfor %}
 
