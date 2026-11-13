@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+{% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ region|default("부산") }} 아파트 실거래 ({{ date_label }})</title>
+<title>{{ region|default("부산") }} 아파트 실거래 ({{ date_label }}) | 옆집얼마</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
@@ -16,6 +16,15 @@
   .tabs{display:flex;gap:4px;background:#fff;border:1px solid #dfe5ea;border-radius:12px;padding:4px;margin-bottom:12px}
   .tab{flex:1;border:0;background:transparent;font:inherit;font-size:15px;font-weight:700;color:var(--ink-2);padding:10px 4px;border-radius:8px;white-space:nowrap;cursor:pointer}
   .tab.on{background:var(--ink);color:#fff}
+{{ brand_css() }}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin:0 2px 12px}
+  .pshare{display:flex;justify-content:flex-end;padding:10px 0 6px}
+  .qx>.pshare,.tbl>.pshare{padding:10px 16px 12px;border-top:1px solid #eef0f6}
+  .pshare button{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:14px;font-weight:700;color:var(--ink);background:#fff;border:1.5px solid #c9d0da;border-radius:12px;padding:7px 14px;cursor:pointer}
+  .pshare button:disabled{opacity:.55}
+  .pshare svg{width:16px;height:16px}
+  .cap-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:#4a5566;padding:0 2px 10px}
+  .cap-head b{color:#2c3563}.cap-head b em{font-style:normal;color:#4b8770}
   .crumb{display:flex;align-items:center;gap:4px;font-size:14px;font-weight:700;color:var(--ink-2);margin:0 2px 8px}
   .crumb a{color:var(--ink-2);text-decoration:none}.crumb b{color:var(--ink)}
   .crumb .home{margin-left:auto;font-size:13px;background:#fff;border:1px solid #dfe5ea;border-radius:999px;padding:5px 12px}
@@ -254,6 +263,7 @@
 {% set colcolor = {'84타입': 'var(--blue)', '59타입': 'var(--teal)', '기타': '#6b7686'} %}
 
 <div class="wrap">
+<div class="topbar">{{ brand(home_href|default('./')) }}</div>
 {% if crumbs %}<nav class="crumb">{% for c in crumbs %}{% if c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a> › {% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}<a class="home" href="{{ home_href }}">지역 선택</a></nav>{% endif %}
 <div class="tabs">
   {% for t in (['요약','매매','전월세','지표단지'] if has_ind else ['요약','매매','전월세']) %}
@@ -388,7 +398,7 @@
   <div class="msg">이미지를 <b>길게 눌러</b> 저장하거나<br>아래 <b>공유하기</b>를 다시 눌러주세요</div>
   <div class="imgwrap"><img id="save-img" alt="리포트 이미지"></div>
   <div class="acts">
-    <button class="btn" onclick="shareReport(true)">공유하기</button>
+    <button class="btn" onclick="shareFiles(pendingFiles, true)">공유하기</button>
     <button class="btn" onclick="closeSheet()">닫기</button>
   </div>
 </div>
@@ -456,30 +466,78 @@ function busy(id, on, text) {
   else { b.textContent = b.dataset.label || b.textContent; b.disabled = false; }
 }
 
-async function shareReport(fromSheet) {
-  const n = currentPage;
-  busy('share-btn', true, '이미지 준비 중…');
-  let shots;
-  try { shots = await render(n); }
-  catch (e) { alert('이미지를 만들지 못했습니다: ' + e); return; }
-  finally { busy('share-btn', false); }
-  const files = shots.map(s => new File([s.blob], s.ko, { type: 'image/png' }));
+let pendingFiles = [];
+async function shareFiles(files, fromSheet) {
+  pendingFiles = files;
   if (!(navigator.canShare && navigator.canShare({ files }))) {
     alert('이 브라우저는 이미지 공유를 지원하지 않아 저장으로 대신합니다.');
-    return shots.forEach(s => download(s.blob, s.en));
+    return files.forEach(f => download(f, f.en || f.name));
   }
   try {
     await navigator.share({ files });
     if (fromSheet) closeSheet();
   } catch (e) {
     if (e.name === 'AbortError') return;
-    if (e.name === 'NotAllowedError' && !fromSheet) {
-      document.getElementById('save-img').src = URL.createObjectURL(shots[0].blob);
+    if (e.name === 'NotAllowedError' && !fromSheet) {   // 이미지 만드는 사이 터치 권한이 끊긴 경우: 미리보기 후 한 번 더 누르게
+      document.getElementById('save-img').src = URL.createObjectURL(files[0]);
       document.getElementById('save-sheet').hidden = false;
       return;
     }
     alert('공유에 실패했습니다: ' + e.message);
   }
+}
+
+async function shareReport(fromSheet) {
+  busy('share-btn', true, '이미지 준비 중…');
+  let shots;
+  try { shots = await render(currentPage); }
+  catch (e) { alert('이미지를 만들지 못했습니다: ' + e); return; }
+  finally { busy('share-btn', false); }
+  shareFiles(shots.map(s => Object.assign(new File([s.blob], s.ko, { type: 'image/png' }), { en: s.en })), fromSheet);
+}
+
+// ---- 영역별 공유 버튼 (각 영역 하단)
+const PART_SEL = '.page .q, .page .qx, .page .sec, .page .icard';
+const SHARE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>';
+document.querySelectorAll(PART_SEL).forEach((el, i) => {
+  el.dataset.part = i;
+  const box = document.createElement('div');
+  box.className = 'pshare';
+  box.setAttribute('data-html2canvas-ignore', '');
+  box.innerHTML = `<button type="button">${SHARE_ICON}공유</button>`;
+  box.querySelector('button').onclick = () => sharePart(el, box.querySelector('button'));
+  el.appendChild(box);
+});
+function partTitle(el) {
+  const h = el.querySelector('h3, h2, .hd b');
+  return (h ? (h.childNodes[0].textContent || h.textContent) : '영역').trim().replace(/[\\/:*?"<>|\s]+/g, '');
+}
+const partCache = new Map();
+async function sharePart(el, btn) {
+  const label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = '준비 중…';
+  try {
+    if (!partCache.has(el)) {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const canvas = await html2canvas(el, {
+        scale: 2, backgroundColor: '#ffffff', useCORS: true,
+        windowWidth: CAPTURE_WIDTH, scrollX: 0, scrollY: -window.scrollY,
+        onclone: doc => {
+          const c = doc.querySelector(`[data-part="${el.dataset.part}"]`);
+          c.closest('.page').hidden = false;
+          const head = doc.createElement('div');
+          head.className = 'cap-head';
+          head.innerHTML = `<b>옆집<em>얼마</em></b><span>${REGION} · ${DATE.slice(2,4)}.${DATE.slice(4,6)}.${DATE.slice(6)}</span>`;
+          c.insertBefore(head, c.firstChild);
+          if (c.classList.contains('qx')) head.style.padding = '12px 18px';
+        }
+      });
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      partCache.set(el, Object.assign(new File([blob], `${REGION}_${DATE}_${partTitle(el)}.png`, { type: 'image/png' }), { en: `apt_${DATE}_part${+el.dataset.part + 1}.png` }));
+    }
+  } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); return; }
+  finally { btn.disabled = false; btn.innerHTML = label; }
+  shareFiles([partCache.get(el)]);
 }
 
 async function saveReport() {

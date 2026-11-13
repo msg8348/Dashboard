@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+{% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>전국 아파트 실거래 ({{ date_label }})</title>
+<title>옆집얼마 | 우리동네 아파트 실거래가 알리미</title>
+<meta name="description" content="옆집얼마 — 우리동네 아파트 실거래가 알리미. 전국 시도·시군구 신규 실거래와 신고가를 매일 알려드립니다.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
   :root{--ink:#17202c;--ink-2:#4a5566;--muted:#8a94a3;--line:#e6eaef;--blue:#2754d6;--red:#e0472c;--navy:#2b3a67}
@@ -12,7 +13,8 @@
   a{color:inherit;text-decoration:none}
   .wrap{max-width:1080px;margin:0 auto}
   .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-  .brand{font-size:24px;font-weight:800}.brand small{font-size:14px;color:var(--muted);font-weight:600;margin-left:8px}
+{{ brand_css() }}
+  .top .dt{font-size:13px;color:var(--muted);font-weight:700}
   .hero{background:var(--navy);color:#fff;border-radius:22px;padding:22px 26px;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:16px;align-items:center;margin-bottom:16px}
   .hero h1{font-size:24px;font-weight:800}.hero p{font-size:13px;opacity:.75;margin-top:4px}
   .hero .k{font-size:12.5px;opacity:.8;font-weight:600}.hero .v{font-size:30px;font-weight:800;margin-top:2px}.hero .v span{font-size:15px}
@@ -51,7 +53,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><div class="brand">아파트 실거래 <small>{{ date_label }} 신규 공개</small></div></div>
+  <div class="top">{{ brand("index.html") }}<span class="dt">{{ date_label }} 신규 공개</span></div>
   <div class="hero"><div><h1>전국 아파트 실거래</h1><p>지역을 고르면 해당 시도·시군구 리포트로 이동합니다</p></div>
     <div><div class="k">신규 매매</div><div class="v">{{ "{:,}".format(tot.cnt) }}<span>건</span></div></div>
     <div><div class="k">신고가</div><div class="v r">{{ "{:,}".format(tot.high) }}<span>건</span></div></div>
