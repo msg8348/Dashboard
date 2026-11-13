@@ -436,6 +436,7 @@ def build_trades(dbs, today):
         "lists": by_type(rrows), "top5": rrows[:5],
         "jeonse_top5": [r for r in rrows if not r["monthly"]][:5],
         "jeonse_top10": [r for r in rrows if not r["monthly"]][:10],
+        "jeonse_top15": [r for r in rrows if not r["monthly"]][:15],
     }
     return sale_ctx, rent_ctx, highs_s, highs_r
 
