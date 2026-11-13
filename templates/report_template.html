@@ -57,7 +57,7 @@
   .quad{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
   /* 좌우 아래 선 맞춤: 각 열의 마지막 칸이 남는 높이를 채우고, 그 안의 줄 간격을 고르게 벌림 */
   .colA > :last-child,.colB > :last-child{flex:1;display:flex;flex-direction:column}
-  .colA > :last-child > .r,.colB > :last-child > .r,.colB > :last-child > .tb{flex:1}
+  .colA > :last-child > .r,.colB > :last-child > .r,.colB > :last-child > .bf{flex:1}
   .colA,.colB{display:flex;flex-direction:column;gap:14px;min-width:0}
   .q{border-radius:18px;padding:16px 18px 8px;border:1px solid var(--line)}
   .q h3{font-size:17px;font-weight:800;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline}
@@ -145,6 +145,7 @@
   .qx .lg{display:flex;gap:12px;font-size:11.5px;font-weight:700;white-space:nowrap}
   .qx .lg i{display:inline-block;width:12px;height:8px;border-radius:2px;margin-right:4px}
   .tbl.qx{padding:0;background:#fff}
+  .bf.one{border-right:0;grid-template-columns:26px 150px 1fr 2px 1fr}
   .tbl.gu{margin-top:14px}
   .bf.short{grid-template-columns:26px 74px 1fr 2px 1fr}
   .foot2{font-size:12px;color:var(--muted);text-align:center;padding:8px 0 12px;border-top:1px solid #eef0f6}
@@ -260,10 +261,12 @@
       {% for r in rent.jeonse_top5 %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
       {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
     </div>
-    <div class="qx"><div class="hd"><div><small>최근 3개월 · 세대수 대비 거래 회전율</small><b>지표단지 거래량 Top5</b></div></div>
-      {% set mx = (ind.top5_3m[0].r3 if ind.top5_3m else 1) or 1 %}
-      {% for a in ind.top5_3m %}<div class="tb">{{ rk(loop.index0, 'cn') }}<div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span></div>
-        <div class="tbar"><i style="width:{{ (a.r3 / mx * 100)|round(1) }}%"></i></div><div class="tv"><b>{{ "%.2f"|format(a.r3) }}%</b><em>{{ a.c3 }}건</em></div></div>{% endfor %}
+    <div class="qx"><div class="hd"><div><small>세대수 대비 거래 회전율 · 최근 3개월 순</small><b>지표단지 거래량 Top5</b></div>
+      <div class="lg"><span><i class="i-g"></i>최근 1년</span><span><i class="i-m"></i>최근 3개월</span></div></div>
+      {% for a in ind.top5_3m %}<div class="bf one">{{ rk(loop.index0, 'cn') }}
+        <div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span></div>
+        <div class="side l"><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span></div><div class="axis"></div>
+        <div class="side r"><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span></div></div>{% endfor %}
     </div>
   </div></div>
 </div>
