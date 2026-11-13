@@ -165,6 +165,10 @@
   .icard.y1{background:var(--teal-bg)}.icard.m3{background:var(--amber-bg)}
   .icard h3{font-size:18px;font-weight:800}.icard.y1 h3{color:var(--teal)}.icard.m3 h3{color:var(--amber)}
   .icard .p{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+  .icard h3 .pd{font-size:12px;color:var(--muted);font-weight:600;margin-left:8px}
+  .icard .irow{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+  .icard .irow .p{margin:0 0 6px}
+  .icard .irow .nums{margin-left:auto;text-align:right}
   .nums{display:flex;gap:22px;align-items:flex-end;margin:8px 0 12px}
   .nums .k{font-size:12px;color:var(--muted);font-weight:700}
   .nums .n{font-size:32px;font-weight:800}.nums .n small{font-size:16px}
@@ -390,8 +394,9 @@
   <div class="head"><h1>{{ RG }} 지표단지 거래량 <small>{{ date_label }}</small></h1></div>
   <div class="ind-two">
     {% for cls, label, period, cnt, rate, key, rkey, ckey, rc in [('m3','최근 3개월',ind.period_3m,ind.c3,ind.r3,'top5_3m','r3','c3','ca'),('y1','최근 1년',ind.period_1y,ind.c1,ind.r1,'top5_1y','r1','c1','cj')] %}
-    <div class="icard {{ cls }}"><h3>{{ label }}</h3><div class="p">{{ period }} · {{ ind.count }}개 단지 · {{ "{:,}".format(ind.households) }}세대</div>
-      <div class="nums"><div><div class="k">거래</div><div class="n">{{ "{:,}".format(cnt) }}<small>건</small></div></div><div><div class="k">회전율</div><div class="n">{{ "%.2f"|format(rate) }}<small>%</small></div></div></div>
+    <div class="icard {{ cls }}"><h3>{{ label }}<span class="pd">{{ period }}</span></h3>
+      <div class="irow"><div class="p">{{ ind.count }}개 단지 · {{ "{:,}".format(ind.households) }}세대</div>
+      <div class="nums"><div><div class="k">거래</div><div class="n">{{ "{:,}".format(cnt) }}<small>건</small></div></div><div><div class="k">회전율</div><div class="n">{{ "%.2f"|format(rate) }}<small>%</small></div></div></div></div>
       <div class="mini">{% for a in ind[key] %}<div class="mr">{{ rk(loop.index0, rc) }}<span class="nm">{{ a.name }}<small>{{ a.district }}</small></span><span class="c">{{ a[ckey] }}건</span><b>{{ "%.2f"|format(a[rkey]) }}%</b></div>{% endfor %}</div>
     </div>
     {% endfor %}
