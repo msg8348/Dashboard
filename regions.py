@@ -109,6 +109,51 @@ def _discover(call):
     return out
 
 
+STAN_URL = "https://apis.data.go.kr/1741000/StanReginCd/getStanReginCdList"
+
+
+def _stanregin(key):
+    """행정안전부 행정표준코드 법정동코드 API → {시군구코드5: {sido, name}} (현행 코드, 행정구역 개편 반영).
+
+    구가 있는 시는 국토부 실거래가 구 단위 코드(예: 41111 수원시 장안구)를 쓰므로, 아래 구가 있는 시 코드(41110)는 뺀다."""
+    import requests
+    rows, page = [], 1
+    while True:
+        r = requests.get(STAN_URL, params={"serviceKey": requests.utils.unquote(key), "pageNo": page,
+                                           "numOfRows": 1000, "type": "json"}, timeout=30)
+        if r.status_code != 200:
+            raise RuntimeError(f"법정동코드 API HTTP {r.status_code}: {' '.join(r.text.split())[:200]}")
+        try:
+            j = r.json()
+        except ValueError:
+            raise RuntimeError(f"법정동코드 API 응답 해석 실패: {' '.join(r.text.split())[:200]}")
+        if "StanReginCd" not in j:
+            raise RuntimeError(f"법정동코드 API 오류: {str(j)[:200]}")
+        parts = j["StanReginCd"]
+        head = next((p["head"] for p in parts if "head" in p), [])
+        total = next((int(h["totalCount"]) for h in head if "totalCount" in h), 0)
+        got = next((p["row"] for p in parts if "row" in p), [])
+        rows += got
+        if not got or page * 1000 >= total:
+            break
+        page += 1
+    sgg = {}
+    for x in rows:
+        code = str(x.get("region_cd") or "")
+        if len(code) != 10 or code[5:] != "00000" or code[2:5] == "000":
+            continue          # 시군구 단위만 (시도·읍면동 제외)
+        name = " ".join(str(x.get("locatadd_nm") or "").split())
+        if not name:
+            continue
+        sido, _, rest = name.partition(" ")
+        sgg[code[:5]] = {"sido": sido, "name": rest or ("세종시" if "세종" in sido else sido)}
+    # 아래에 구가 있는 시(예: 41110 수원시) 제외
+    leaf = {c: v for c, v in sgg.items()
+            if not (c.endswith("0") and any(o != c and o[:4] == c[:4] for o in sgg))}
+    print(f"🗺️ 법정동코드 API: 전체 {len(rows):,}행 · 시군구 {len(leaf)}개")
+    return leaf
+
+
 def load(today=None, refresh=False):
     """{코드: {sido, name}} — API 확인 결과(30일 보관) 또는 내장 표."""
     today = today or datetime.now()
@@ -121,7 +166,11 @@ def load(today=None, refresh=False):
         try:
             import households
             if households.KEY:
-                found = _discover(households._call)
+                try:
+                    found = _stanregin(households.KEY)
+                except Exception as e:
+                    print(f"⚠️ {str(e)[:200]} — 단지 목록 API로 확인")
+                    found = _discover(households._call)
                 if len(found) >= 200:
                     st = {"date": today.strftime("%Y%m%d"), "source": "api", "codes": found}
                     os.makedirs(os.path.dirname(PATH), exist_ok=True)
