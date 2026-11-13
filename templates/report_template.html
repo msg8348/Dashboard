@@ -2,6 +2,13 @@
 <html lang="ko">
 <head>
 <meta http-equiv="Cache-Control" content="no-cache">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ root|default('') }}favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="{{ root|default('') }}favicon-48.png">
+<link rel="apple-touch-icon" href="{{ root|default('') }}apple-touch-icon.png">
+<link rel="manifest" href="{{ root|default('') }}manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="옆집얼마">
+<meta name="application-name" content="옆집얼마">
+<meta name="theme-color" content="#eef1f4">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ region|default("부산") }} 아파트 실거래 ({{ date_label }}) | 옆집얼마</title>
@@ -33,10 +40,13 @@
   .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}
   .menu-btn .ic{width:22px;height:22px}
   body{padding-bottom:92px}
-  .bnav{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(1080px,calc(100% - 24px));display:flex;gap:4px;background:#fff;border:1px solid #dfe5ea;border-radius:14px;padding:4px;box-shadow:0 6px 24px rgba(20,30,60,.14);z-index:20;transition:transform .25s ease}
-  .bnav.hide{transform:translate(-50%,calc(100% + 30px))}
-  .bnav .bt{flex:1;border:0;background:transparent;font:inherit;font-size:15px;font-weight:700;color:var(--ink-2);padding:11px 4px;border-radius:10px;white-space:nowrap;cursor:pointer}
-  .bnav .bt.on{background:var(--ink);color:#fff}
+  .bnav{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(560px,calc(100% - 28px));display:flex;padding:5px;border-radius:999px;z-index:20;transition:transform .3s ease;
+    background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
+    border:1px solid rgba(255,255,255,.7);box-shadow:0 8px 30px rgba(20,30,60,.18),inset 0 1px 0 rgba(255,255,255,.6)}
+  .bnav.hide{transform:translate(-50%,calc(100% + 34px))}
+  .bnav .bpill{position:absolute;top:5px;bottom:5px;left:0;width:0;border-radius:999px;background:rgba(23,32,44,.9);box-shadow:0 2px 8px rgba(20,30,60,.25);transition:transform .35s cubic-bezier(.3,1.25,.5,1),width .35s cubic-bezier(.3,1.25,.5,1);pointer-events:none}
+  .bnav .bt{position:relative;z-index:1;flex:1;border:0;background:transparent;font:inherit;font-size:15px;font-weight:800;color:#2a3342;padding:12px 4px;border-radius:999px;white-space:nowrap;cursor:pointer;transition:color .25s}
+  .bnav .bt.on{color:#fff}
   .mdim{position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:30}
   .drawer{position:fixed;top:0;right:0;height:100%;width:min(320px,82vw);background:#fff;z-index:31;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(20,30,60,.18);overflow:auto}
   .drawer.open{transform:none}
@@ -423,6 +433,7 @@
 </div>
 
 <nav class="bnav" id="bnav">
+  <span class="bpill" id="bpill"></span>
   {% for t, k in PAGES %}<button class="bt {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }})">{{ t }}</button>{% endfor %}
 </nav>
 <div class="mdim" id="mdim" hidden onclick="closeMenu()"></div>
@@ -458,10 +469,19 @@ function showPage(n) {
   currentPage = n;
   document.querySelectorAll('.page').forEach(el => { el.hidden = el.id !== 'page' + n; });
   document.querySelectorAll('[data-page]').forEach(t => t.classList.toggle('on', t.dataset.page == n));
+  movePill();
   try { localStorage.setItem('busanPage2', n); } catch (e) {}
   prerender();
 }
 
+function movePill() {   // 하단 메뉴: 선택 표시가 미끄러지듯 이동
+  const on = document.querySelector('#bnav .bt.on'), pill = document.getElementById('bpill');
+  if (!on || !pill) return;
+  pill.style.width = on.offsetWidth + 'px';
+  pill.style.transform = `translateX(${on.offsetLeft}px)`;
+}
+window.addEventListener('resize', movePill);
+window.addEventListener('load', movePill);
 function openMenu() {
   document.getElementById('mdim').hidden = false;
   const d = document.getElementById('drawer'); d.classList.add('open'); d.setAttribute('aria-hidden', 'false');

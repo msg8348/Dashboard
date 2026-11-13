@@ -291,6 +291,8 @@ def main():
     env = Environment(loader=FileSystemLoader("templates"), autoescape=True)
     tpl = env.get_template("report_template.html")
     shutil.rmtree(SITE, ignore_errors=True)
+    if os.path.isdir("static"):   # 아이콘·매니페스트
+        shutil.copytree("static", SITE)
     months = D.month_list(now, D.WINDOW_MONTHS)
     home = []
     for sd in sidos:
@@ -305,7 +307,7 @@ def main():
         l2_word = "구·군" if sd["metro"] else "시·군"
         os.makedirs(os.path.join(SITE, "r", key), exist_ok=True)
         base = {"date_label": now.strftime("%y.%m.%d"), "date_full": now.strftime("%Y%m%d"), "notices": [],
-                "l2_word": l2_word, "home_href": "../../index.html"}
+                "l2_word": l2_word, "home_href": "../../index.html", "root": "../../"}
         if not ready:
             base["notices"].append("이 지역은 실거래 데이터를 수집하고 있습니다. 며칠 안에 채워집니다.")
         # --- 레벨1
