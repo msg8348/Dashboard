@@ -331,10 +331,11 @@
       <div class="side l"><span class="val c-m">{{ "{:,}".format(t.c3) }}건</span></div><div class="axis"></div>
       <div class="side r"><span class="val c-g">{{ "{:,}".format(t.c1) }}건</span></div>
       {% endif %}</div>
-    {% for a in ind.by_r3[:10] if not a.nohh %}<div class="bf one wide">{{ rk(loop.index0, 'cn') }}
-      <div class="who"><b>{{ a.name }}</b><span class="meta">{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span>{{ trendb(a) }}</div>
+    {% set top10 = (ind.by_r3|rejectattr('nohh')|list)[:10] %}
+    <div class="bfgrid" style="--rows:{{ ((top10|length) / 2)|round(0, 'ceil')|int }}">{% for a in top10 %}<div class="bf">{{ rk(loop.index0, 'cn') }}
+      <div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span>{{ trendb(a) }}</div>
       <div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>
-      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}
+      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}</div>
   </div>
   {% endif %}
 </div>

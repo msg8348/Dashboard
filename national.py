@@ -277,6 +277,11 @@ def main():
     print(f"🗺️ {len(sidos)}개 시도 · {sum(len(s['codes']) for s in sidos)}개 시군구")
 
     dbs = {src: {sd["key"]: load_db(src, sd["key"]) for sd in sidos} for src in D.SOURCES}
+    if args.no_fetch:   # 수집 없이 화면만 만들 때는 마지막으로 신규 거래가 잡힌 날 기준으로 표시 (자정 이후 0건 방지)
+        last = max((t.get("seen") or "" for db in dbs["sale"].values() for t in db["trades"]), default="")
+        if last and last < now.strftime("%Y%m%d"):
+            now = now.replace(year=int(last[:4]), month=int(last[4:6]), day=int(last[6:]))
+            print(f"🗓️ 마지막 수집일 {last} 기준으로 표시")
     if D.MOLIT_API_KEY and not args.no_fetch:
         for src in D.SOURCES:
             update(src, dbs[src], sidos, now, args.max_calls, args.minutes)
