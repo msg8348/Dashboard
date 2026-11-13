@@ -1,6 +1,7 @@
 {% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
 <html lang="ko">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>옆집얼마 | 우리동네 아파트 실거래가 알리미</title>
@@ -13,6 +14,7 @@
   a{color:inherit;text-decoration:none}
   .wrap{max-width:1080px;margin:0 auto}
   .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .top{position:sticky;top:0;z-index:15;margin-top:-18px;padding-top:calc(18px - 8px);padding-bottom:8px;background:rgba(238,241,244,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 0 0 100vmax rgba(238,241,244,.94);clip-path:inset(0 -100vmax)}
 {{ brand_css() }}
   .tr{display:flex;align-items:center;gap:12px}
   .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}.menu-btn svg{width:22px;height:22px}
