@@ -97,6 +97,10 @@
   .cd .v{font-size:32px;font-weight:800;text-align:right;color:var(--ink);line-height:1.1;white-space:nowrap}
   .cd .v span{font-size:18px;margin-left:1px}
   .cd .h{font-size:12.5px;font-weight:800;color:var(--red);text-align:right;margin-top:3px;white-space:nowrap}
+  .cd.go{cursor:pointer;position:relative}
+  .cd.go:active{transform:scale(.98)}
+  .capturing .cd.go::after{display:none}
+  .cd.go::after{content:'›';position:absolute;top:12px;right:16px;font-size:20px;font-weight:700;color:#9aa4b2}
   .cd .h.mu{color:var(--ink-2);font-weight:700}
   .cd.b{background:#e8eefc}.cd.b .l{color:var(--blue)}
   .cd.t{background:#dff1ec}.cd.t .l{color:var(--teal)}
@@ -344,8 +348,8 @@
   <div class="head"><h1>{{ RG }} 아파트 실거래 요약 <small>{{ date_label }}</small></h1></div>
   {{ notices_box() }}
   <div class="cards c2">
-    <div class="cd b"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
-    <div class="cd t"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">전세 신고가 {{ rent.high_cnt }}건</div></div></div>
+    <div class="cd b go" role="button" onclick="showPage(2)"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
+    <div class="cd t go" role="button" onclick="showPage(3)"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">전세 신고가 {{ rent.high_cnt }}건</div></div></div>
   </div>
   <div class="quad"><div class="colA">
     <div class="q s"><h3>매매 최고가 <small>금액순 · 분양권 포함</small></h3>
@@ -607,6 +611,7 @@ function renderOne(n, shot) {
       onclone: doc => {
         const page = doc.getElementById('page' + n);
         page.hidden = false;
+        page.classList.add('capturing');
         const br = doc.querySelector('.topbar .brand');   // 저장 이미지 좌측 상단 로고
         if (br) { const c = br.cloneNode(true); c.classList.add('cap-brand'); page.insertBefore(c, page.firstChild); }
         if (shot.hide) page.querySelectorAll(shot.hide).forEach(e => { e.style.display = 'none'; });
