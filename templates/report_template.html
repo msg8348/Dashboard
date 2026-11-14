@@ -402,10 +402,10 @@
   <div class="head"><h1>{{ RG }} 아파트 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ date_label }}</small></h1></div>
   <div class="cards c2">
     {% if kind == 'sale' %}
-    <div class="cd b"><div class="l">신규 매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
+    <div class="cd b{% if d.cnt %} go{% endif %}" {% if d.cnt %}role="button" onclick="openHighs(7)"{% endif %}><div class="l">신규 매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
     <div class="cd r{% if d.high_cnt %} go{% endif %}" {% if d.high_cnt %}role="button" onclick="openHighs({{ 5 if kind == 'sale' else 6 }})"{% endif %}><div class="l">신고가 <span>&nbsp;</span></div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
     {% else %}
-    <div class="cd t"><div class="l">신규 전월세 <span>전세 {{ d.jeonse }} · 월세 {{ d.wolse }}</span></div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
+    <div class="cd t{% if d.cnt %} go{% endif %}" {% if d.cnt %}role="button" onclick="openHighs(8)"{% endif %}><div class="l">신규 전월세 <span>전세 {{ d.jeonse }} · 월세 {{ d.wolse }}</span></div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
     <div class="cd r{% if d.high_cnt %} go{% endif %}" {% if d.high_cnt %}role="button" onclick="openHighs(6)"{% endif %}><div class="l">신고가 <span>&nbsp;</span></div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
     {% endif %}
   </div>
@@ -430,6 +430,18 @@
   <div class="q hl {{ 's' if kind == 'sale' else 'j' }}"><h3>신고가 {{ d.highs|length }}건 <small>{{ '금액순 · 분양권 포함' if kind == 'sale' else '보증금순 · 전세' }}</small></h3>
     {% for r in d.highs %}<div class="r">{{ rk(loop.index0, 'cr') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {{ '' if kind == 'sale' else 'j' }}">{{ r.price }}</span></div>
     {% else %}<div class="empty">신고가 거래가 없습니다</div>{% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+<!-- ============ 7·8. 신규 거래 전체 ============ -->
+{% for pg, kind, d, back in [(7, 'sale', sale, 2), (8, 'rent', rent, 3)] %}
+<div class="report page" id="page{{ pg }}" hidden>
+  <div class="head"><h1>{{ RG }} 신규 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ date_label }}</small></h1></div>
+  <button class="backlink" type="button" onclick="history.state && history.state.hp ? history.back() : showPage({{ back }})">‹ {{ '매매' if kind == 'sale' else '전월세' }}로 돌아가기</button>
+  <div class="q hl {{ 's' if kind == 'sale' else 'j' }}"><h3>신규 {{ "{:,}".format(d.all|length) }}건 <small>{{ '금액순 · 분양권 포함' if kind == 'sale' else '보증금순 · 월세는 환산 보증금' }}</small></h3>
+    {% for r in d.all %}<div class="r">{{ rk(loop.index0, 'cs' if kind == 'sale' else 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if kind == 'rent' %}{{ 'w' if r.monthly else 'j' }}{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
+    {% else %}<div class="empty">신규 거래가 없습니다</div>{% endfor %}
   </div>
 </div>
 {% endfor %}
@@ -522,7 +534,7 @@ function showPage(n) {
   if (n !== currentPage) window.scrollTo(0, 0);   // 탭을 바꾸면 페이지 맨 위로
   currentPage = n;
   document.querySelectorAll('.page').forEach(el => { el.hidden = el.id !== 'page' + n; });
-  const tab = n === 5 ? 2 : n === 6 ? 3 : n;   // 신고가 페이지는 매매·전월세 탭 표시
+  const tab = (n === 5 || n === 7) ? 2 : (n === 6 || n === 8) ? 3 : n;   // 신고가 페이지는 매매·전월세 탭 표시
   document.querySelectorAll('[data-page]').forEach(t => t.classList.toggle('on', t.dataset.page == tab));
   movePill();
   fitFoot();
@@ -595,7 +607,7 @@ function openHighs(n) {   // 신고가 전체 페이지로 이동 (휴대폰 뒤
   try { history.pushState({ hp: n }, ''); } catch (e) {}
   showPage(n);
 }
-window.addEventListener('popstate', () => { if (currentPage === 5) showPage(2); else if (currentPage === 6) showPage(3); });
+window.addEventListener('popstate', () => { if (currentPage === 5 || currentPage === 7) showPage(2); else if (currentPage === 6 || currentPage === 8) showPage(3); });
 function openMenu() {
   document.getElementById('mdim').hidden = false;
   const d = document.getElementById('drawer'); d.classList.add('open'); d.setAttribute('aria-hidden', 'false');
@@ -629,6 +641,8 @@ const SHOTS = {
       { ko: '4_구별거래량', en: '4_district', hide: '.ind-two, .tbl:not(.gu)' }],
   5: [{ ko: '5_매매신고가', en: '5_sale_highs', hide: '.backlink' }],
   6: [{ ko: '6_전세신고가', en: '6_jeonse_highs', hide: '.backlink' }],
+  7: [{ ko: '7_신규매매', en: '7_sale_all', hide: '.backlink' }],
+  8: [{ ko: '8_신규전월세', en: '8_rent_all', hide: '.backlink' }],
 };
 const CAPTURE_WIDTH = 1200;   // 저장 이미지는 화면 크기와 관계없이 PC(가로형) 배치로 만듦
 
