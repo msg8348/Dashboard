@@ -1,0 +1,117 @@
+{% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>관심단지 | 옆집얼마</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root { --ink:#17202c; --ink-2:#4a5566; --muted:#8a94a3; --line:#e6eaef;
+    --blue:#2754d6; --blue-bg:#ebf1ff; --red:#e0472c; --red-bg:#fff1ec; --teal:#0f6b5c; --teal-bg:#e5f4f0;
+    --amber:#b86e0a; --amber-bg:#fdf3e2; --violet:#6c6787; --navy:#2b3a67; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#eef1f4;color:var(--ink);padding:0 16px 40px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:0 auto}
+{{ brand_css() }}
+  .topbar{position:sticky;top:0;z-index:15;background:rgba(238,241,244,.95);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:12px 0 8px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .tbtns{display:flex;gap:8px}
+  .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}
+  .menu-btn svg{width:22px;height:22px}.menu-btn.on{color:#f5b301}.menu-btn.on svg{fill:#f5b301}
+  .head{display:flex;justify-content:space-between;align-items:center;margin:8px 2px 12px}
+  .head h1{font-size:24px;font-weight:900;letter-spacing:-.4px}.head h1 small{font-size:13px;color:var(--muted);font-weight:700;margin-left:6px}
+  .setbtn{font:inherit;font-size:13.5px;font-weight:800;border:1.5px solid #d6dce4;background:#fff;border-radius:999px;padding:7px 13px;color:var(--ink);cursor:pointer;white-space:nowrap}
+  .sub{font-size:12.5px;color:var(--muted);font-weight:700;margin:-6px 2px 12px}
+{% include "_tcard_css.html" %}
+  .tcard[data-h]{cursor:pointer}
+  .tshare{display:none}
+  .empty{text-align:center;color:var(--muted);font-size:14.5px;padding:46px 10px;line-height:1.7;background:#fff;border-radius:22px;border:1px solid #dfe5ea}
+  .empty button{margin-top:14px}
+  .dim{position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:40}
+  .fsheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:720px;max-height:80vh;background:#fff;border-radius:24px 24px 0 0;z-index:41;padding:10px 18px 20px;display:flex;flex-direction:column}
+  .fsheet[hidden],.dim[hidden]{display:none}
+  .fsheet .grab{width:44px;height:5px;background:#d9dee6;border-radius:3px;margin:0 auto 12px;flex:none}
+  .fsheet h2{font-size:18px;font-weight:900;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .fsheet h2 button{border:0;background:none;font:inherit;font-size:14px;font-weight:800;color:var(--muted);cursor:pointer}
+  .flist{overflow:auto;flex:1}
+  .fi{display:flex;align-items:center;gap:10px;padding:12px 2px;border-bottom:1px solid #f0f2f5}
+  .fi .t{flex:1;min-width:0}.fi b{display:block;font-size:15.5px;font-weight:800}.fi small{font-size:12.5px;color:var(--muted)}
+  .fi .rm{font:inherit;font-size:13px;font-weight:800;border:1px solid #f3c9bf;color:var(--red);background:#fff;border-radius:999px;padding:6px 11px;cursor:pointer;flex:none}
+  .fi .st{color:#f5b301;font-size:18px;flex:none}
+  .addbtn{margin-top:12px;font:inherit;font-size:15px;font-weight:800;border:0;background:var(--navy);color:#fff;border-radius:14px;padding:13px;cursor:pointer;flex:none}
+  .fempty{color:var(--muted);text-align:center;font-size:14px;padding:24px 0}
+</style>
+</head>
+<body><div class="wrap">
+<div class="topbar">{{ brand('index.html') }}<span class="tbtns"><a class="menu-btn on" href="fav.html" aria-label="관심단지"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></a><button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></span></div>
+<div class="head"><h1>관심단지<small id="fcnt"></small></h1><button class="setbtn" type="button" onclick="openSet()">관심단지 설정</button></div>
+<div class="sub">최근 7일 신규 공개 실거래 · 금액순</div>
+<div class="tf1" id="ff"><button class="all on" data-k="all">전체</button><button class="sale" data-k="sale">매매</button><button class="rent" data-k="jeon">전세</button><button class="rent" data-k="wol">월세</button><button class="hi" id="ffhi" type="button">신고가</button></div>
+<div class="tcnt" id="tcnt"></div>
+<div id="tout"></div>
+</div>
+<div class="dim" id="dim" hidden onclick="closeSet()"></div>
+<div class="fsheet" id="fsheet" hidden>
+  <div class="grab"></div>
+  <h2>관심단지 설정<button type="button" onclick="closeSet()">완료</button></h2>
+  <div class="flist" id="flist"></div>
+  <button class="addbtn" type="button" onclick="addFav()">+ 단지 추가</button>
+</div>
+<script src="search.js?v={{ today }}"></script>
+<script>
+const DATE = '{{ today }}', APTB = '';
+{% include "_tcard_js.html" %}
+const F = { k: 'all', hi: false };
+let CARDS = [];
+const favs = () => NDPFav.get();
+async function loadCards() {
+  const list = favs(), dirs = [...new Set(list.map(f => f[2].split('/')[0]))];
+  const want = new Set(list.map(f => f[2]));
+  const all = await Promise.all(dirs.map(d => fetch(`fav/${d}.json?v=${DATE}`).then(r => r.ok ? r.json() : []).catch(() => [])
+    .then(cs => cs.map(c => Object.assign(c, { path: `${d}/${c.h}.html` })))));
+  CARDS = all.flat().filter(c => want.has(c.path));
+  render();
+}
+function render() {
+  const n = favs().length;
+  document.getElementById('fcnt').textContent = n ? `${n}곳` : '';
+  const out = document.getElementById('tout');
+  if (!n) {
+    out.innerHTML = '<div class="empty">아직 관심단지가 없어요<br>단지 페이지의 ☆ 를 누르거나 아래에서 추가하세요<br><button class="setbtn" type="button" onclick="addFav()">+ 단지 추가</button></div>';
+    document.getElementById('tcnt').textContent = '';
+    return;
+  }
+  const rs = CARDS.filter(r => (F.k === 'all' || (F.k === 'sale' ? r.k !== 'rent' : F.k === 'jeon' ? r.k === 'rent' && !r.m : r.k === 'rent' && r.m)) && (!F.hi || r.up))
+    .sort((a, b) => tConv(b) - tConv(a));
+  document.getElementById('tcnt').textContent = `${rs.length.toLocaleString()}건`;
+  out.innerHTML = rs.length ? rs.map(r => tCard(r, CARDS.indexOf(r)).replace('class="tcard', `data-h="${r.path}" class="tcard`)).join('')
+    : '<div class="empty">최근 7일 동안 공개된 해당 거래가 없어요</div>';
+}
+document.querySelectorAll('#ff [data-k]').forEach(b => b.onclick = () => {
+  F.k = b.dataset.k; document.querySelectorAll('#ff [data-k]').forEach(x => x.classList.toggle('on', x === b)); render();
+});
+document.getElementById('ffhi').onclick = e => { F.hi = !F.hi; e.currentTarget.classList.toggle('on', F.hi); render(); };
+document.getElementById('tout').addEventListener('click', e => {
+  if (e.target.closest('button')) return;
+  const el = e.target.closest('[data-h]');
+  if (el) location.href = el.dataset.h;
+});
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function drawSet() {
+  const l = favs();
+  document.getElementById('flist').innerHTML = l.length ? l.map((f, i) => `<div class="fi"><span class="st">★</span><a class="t" href="${esc(f[2])}" style="text-decoration:none;color:inherit"><b>${esc(f[0])}</b><small>${esc(f[1])}</small></a><button class="rm" type="button" data-i="${i}">해제</button></div>`).join('')
+    : '<div class="fempty">관심단지가 없어요</div>';
+  document.querySelectorAll('#flist .rm').forEach(b => b.onclick = () => { NDPFav.remove(favs()[+b.dataset.i][2]); drawSet(); loadCards(); });
+}
+function openSet() { drawSet(); document.getElementById('dim').hidden = false; document.getElementById('fsheet').hidden = false; }
+function closeSet() { document.getElementById('dim').hidden = true; document.getElementById('fsheet').hidden = true; }
+function addFav() {
+  closeSet();
+  openSearch(it => { NDPFav.add(it); loadCards(); openSet(); });
+}
+loadCards();
+</script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "abacec54a0cc4c2a9c18d8b390e67068"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

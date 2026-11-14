@@ -514,6 +514,7 @@ def main():
             return ccache[ck]
 
         sale_ctx, rent_ctx, highs_s, highs_r = D.build_trades(subset(sdb, set(sd["codes"])), now, cinfo)
+        favc = [c for c in sale_ctx["cards"] if c.get("h")]   # 관심단지 화면용 (최근 7일, 단지 페이지 있는 거래)
         if not fallback:   # 날짜별 기준값도 보관 (최근 3일) — 신규 공개가 없는 날 전날 기준으로 다시 보여줄 때 사용
             for src, h in (("sale", highs_s), ("rent", highs_r)):
                 by = sdb[src].setdefault("highs3_by", {})
@@ -570,6 +571,7 @@ def main():
             arch = dict(base, date_label=day.strftime("%y.%m.%d"), date_full=dd, home_href="../../index.html", root="../../", apt_base=f"../../{sdir}/",
                         archive=True, page_url=None)
             s1, r1, _, _ = D.build_trades(subset_asof(sdb, set(sd["codes"]), dd), day, cinfo)
+            favc += [c for c in s1["cards"] if c.get("h")]
             ind_d = D.build_indicator([t for t in sdb["sale"]["trades"] if (t.get("seen") or "") <= dd], day, *ind_args)
             cd = dict(arch, sale=s1, rent=r1, indicator=ind_d, has_ind=bool(ind_d["count"]), level=1,
                       region=sd["short"], region_full=sd["sido"], ind_rule=rule,
@@ -588,6 +590,10 @@ def main():
                               seo_title=f"{sd['short']} {l['name']} 아파트 실거래가·신고가 | 옆집얼마", seo_desc="")
                     with open(os.path.join(ddir, f"{sl}.html"), "w", encoding="utf-8") as f:
                         f.write(tpl.render(c2))
+        if key in APT_SIDOS:
+            os.makedirs(os.path.join(SITE, "fav"), exist_ok=True)
+            with open(os.path.join(SITE, "fav", f"{sdir}.json"), "w", encoding="utf-8") as f:
+                json.dump(favc, f, ensure_ascii=False, separators=(",", ":"))
         home.append({"key": key, "short": sd["short"], "sido": sd["sido"], "href": f"{sdir}/index.html",
                      "ready": ready, "cnt": sale_ctx["cnt"], "high": sale_ctx["high_cnt"], "rent": rent_ctx["cnt"],
                      "avg84": avg84(sdb["sale"]["trades"], now), "l2_word": l2_word, "chips": chips})
@@ -598,6 +604,8 @@ def main():
           "max_cnt": max([h["cnt"] for h in home] + [1])}
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
         f.write(env.get_template("home.html").render(hc))
+    with open(os.path.join(SITE, "fav.html"), "w", encoding="utf-8") as f:   # 관심단지 (기기에 저장한 단지의 최근 7일 거래)
+        f.write(env.get_template("fav.html").render(today=now.strftime("%Y%m%d")))
     with open(os.path.join(SITE, "search.json"), "w", encoding="utf-8") as f:   # 단지 검색 목록 [이름, 위치, 주소, 거래수]
         json.dump(sorted(search, key=lambda a: -a[3]), f, ensure_ascii=False, separators=(",", ":"))
     # 검색엔진용: 사이트맵 · robots.txt

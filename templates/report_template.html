@@ -106,38 +106,7 @@
 
   /* ---- 실거래 탭 ---- */
   .trd .head{margin-bottom:12px}
-  .tf1{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
-  .tf1 button{font:inherit;font-size:14px;font-weight:800;border:1.5px solid #dfe3ea;background:#fff;border-radius:999px;padding:7px 15px;cursor:pointer}
-  .tf1 .all{color:var(--ink)}.tf1 .sale{color:var(--blue)}.tf1 .rent{color:var(--teal)}.tf1 .hi{color:var(--red)}
-  .tf1 button.on{background:var(--navy);color:#fff;border-color:var(--navy)}.tf1 .hi.on{background:var(--red);border-color:var(--red);color:#fff}
-  .tf2{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
-  .tft{display:flex;gap:2px;flex:none}.tft button{font:inherit;font-size:13.5px;font-weight:800;color:var(--ink-2);border:0;background:none;border-radius:9px;padding:6px 9px;cursor:pointer;white-space:nowrap}
-  .tft button.on{background:#e3e7ef;color:var(--ink)}
-  .tfv{flex:none;display:flex;background:#e6e9ef;border-radius:12px;padding:3px}
-  .tfv button{font:inherit;font-size:13px;font-weight:800;color:var(--ink-2);border:0;background:none;border-radius:8px;padding:6px 8px;white-space:nowrap;display:flex;align-items:center;gap:5px;cursor:pointer}
-  .tfv button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(20,30,60,.12)}.tfv svg{width:16px;height:16px}
-  .tcnt{font-size:13px;color:var(--muted);font-weight:700;margin:0 4px 8px}
-  .tcard{background:#fff;border:1.5px solid #c9cfd8;border-radius:22px;padding:14px 18px 10px;margin-bottom:12px}
-  .tcard.hi{border-color:var(--red)}
-  .tcard .c1{display:flex;align-items:center;gap:8px}
-  .tcard .c1 .ty{font-size:13px;padding:3px 8px;border-radius:7px}
-  .tcard .c1 .nm{font-size:18px;font-weight:900;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .tbadge{font-size:12.5px;font-weight:800;border-radius:999px;padding:5px 10px;white-space:nowrap;flex:none}
-  .tbadge.hi{background:var(--red);color:#fff}.tbadge.to{background:#eef1f8;color:#3c4a6b}.tbadge.pre{background:#fde4ec;color:#c2185b}
-  .tcard .c2{font-size:12px;color:var(--ink-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tcard .c2 b{color:var(--ink)}
-  .tcard .c3{display:flex;justify-content:space-between;align-items:center;margin-top:3px;line-height:1.15}
-  .tcard .price{display:flex;align-items:baseline;gap:6px}
-  .tcard .kl{font-size:14px;font-weight:800}.kl.sale{color:var(--blue)}.kl.pre{color:#c2185b}.kl.jeon{color:var(--teal)}.kl.wol{color:var(--amber)}
-  .tcard .price .v{font-size:30px;font-weight:900;letter-spacing:-.6px}.tcard .price .v small{font-size:17px;font-weight:800;margin:0 2px}
-  .tcard.hi .price .v{color:var(--red)}
-  .tshare{width:36px;height:36px;border:0;background:none;color:#5b6472;display:grid;place-items:center;cursor:pointer}.tshare svg{width:22px;height:22px}
-  .tcard .c4{display:flex;justify-content:space-between;align-items:baseline;margin-top:0}
-  .tcard .spec{font-size:15px;font-weight:800;color:var(--navy)}.tcard .spec i{font-style:normal;color:#b4bcc8;margin:0 4px}
-  .tcard .dt{font-size:13px;color:var(--muted)}
-  .tcard .c5{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #edf0f4;margin-top:9px;padding-top:7px;font-size:12px;color:var(--ink-2);min-height:28px}
-  .tcard .c5 .ft{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.tcard .c5 b{color:var(--teal)}
-  .logo-slot{display:none;align-items:center;gap:4px;font-weight:800;font-size:12px;color:#5b6472;flex:none;margin-left:8px}.logo-slot svg{width:19px;height:14px;flex:none}
-  .capturing .logo-slot{display:flex}
+{% include "_tcard_css.html" %}
   .tmore{text-align:center;font-size:14px;font-weight:800;color:var(--muted);padding:10px 0 4px}
   .tq .pr.j{color:var(--teal)}
   .dsel{margin-left:auto;position:relative;display:inline-flex;align-items:center;flex:none}
@@ -382,7 +351,7 @@
 {% macro rk(i, c) %}<span class="rkc {{ c }} {% if i >= 3 %}lt{% endif %}">{{ i + 1 }}</span>{% endmacro %}
 {% macro tyb(t) %}<span class="ty {{ 'ty84' if t == '84타입' else 'ty59' if t == '59타입' else 'tyx' }}">{{ t[:2] if t != '기타' else '기타' }}</span>{% endmacro %}
 {% macro notices_box() %}{% if notices %}<div class="notice">{% for n in notices %}⚠ {{ n }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}{% endmacro %}
-{% macro ic(n) %}<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if n == 'menu' %}<path d="M4 6h16M4 12h16M4 18h16"/>{% elif n == 'x' %}<path d="M6 6l12 12M18 6L6 18"/>{% elif n == 'sum' %}<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>{% elif n == 'sale' %}<path d="M4 7h11M4 12h16M4 17h9"/><circle cx="19" cy="7" r="1.6"/>{% elif n == 'rent' %}<path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>{% elif n == 'ind' %}<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>{% elif n == 'map' %}<path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/>{% elif n == 'up' %}<path d="M12 19V5M6 11l6-6 6 6"/>{% endif %}</svg>{% endmacro %}
+{% macro ic(n) %}<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if n == 'menu' %}<path d="M4 6h16M4 12h16M4 18h16"/>{% elif n == 'x' %}<path d="M6 6l12 12M18 6L6 18"/>{% elif n == 'sum' %}<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>{% elif n == 'sale' %}<path d="M4 7h11M4 12h16M4 17h9"/><circle cx="19" cy="7" r="1.6"/>{% elif n == 'rent' %}<path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>{% elif n == 'ind' %}<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>{% elif n == 'map' %}<path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/>{% elif n == 'star' %}<path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>{% elif n == 'up' %}<path d="M12 19V5M6 11l6-6 6 6"/>{% endif %}</svg>{% endmacro %}
 {% macro trendb(a) %}{% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}{% endmacro %}
 {% set ind = indicator %}
 {% set RG = region|default('부산') %}
@@ -392,7 +361,7 @@
 {% set colcolor = {'84타입': 'var(--blue)', '59타입': 'var(--teal)', '기타': '#6b7686'} %}
 
 <div class="wrap">
-<div class="topbar">{{ brand(home_href|default('./')) }}<span class="tbtns"><button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button class="menu-btn" type="button" aria-label="메뉴" onclick="openMenu()">{{ ic('menu') }}</button></span></div>
+<div class="topbar">{{ brand(home_href|default('./')) }}<span class="tbtns"><a class="menu-btn" href="{{ root|default('') }}fav.html" aria-label="관심단지">{{ ic('star') }}</a><button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button class="menu-btn" type="button" aria-label="메뉴" onclick="openMenu()">{{ ic('menu') }}</button></span></div>
 {% if crumbs %}<nav class="crumb">{% for c in crumbs %}{% if loop.last and l2opts and level == 2 %}{% elif c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a><span class="sep">›</span>{% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}
 {%- if l2opts %}{% if level == 1 %}<span class="sep">›</span>{% endif %}<label class="l2sel"><select aria-label="{{ L2W }} 선택" onchange="if (this.value) location.href = this.value">
 <option value="{{ 'index.html' if level == 2 else '' }}"{% if level == 1 %} selected{% endif %}>{{ L2W }} 전체</option>
@@ -515,6 +484,7 @@
     {% for t, k, pn in PAGES %}<button class="dr-it {% if loop.first %}on{% endif %}" data-page="{{ pn }}" onclick="showPage({{ pn }}); closeMenu(); window.scrollTo(0, 0)">{{ ic(k) }}<span>{{ t }}</span></button>{% endfor %}
   </div>
   <div class="dr-list sub">
+    <a class="dr-it" href="{{ root|default('') }}fav.html">{{ ic('star') }}<span>관심단지</span></a>
     <a class="dr-it" href="{{ home_href|default('./') }}">{{ ic('map') }}<span>지역 선택</span></a>
     {% if crumbs and crumbs|length > 2 %}<a class="dr-it" href="{{ crumbs[1][1] }}">{{ ic('up') }}<span>{{ crumbs[1][0] }} 전체 보기</span></a>{% endif %}
   </div>
@@ -816,41 +786,9 @@ function closeSheet() { document.getElementById('save-sheet').hidden = true; }
 // ---------------- 실거래 (카드형·리스트형) ----------------
 const TDATA = JSON.parse(document.getElementById('tdata').textContent || '[]');
 const TR = { k: 'all', hi: false, t: 'all', v: 'card' };
-const GLOGO = '<svg viewBox="0 0 60 44"><path d="M3 19 L17 5 L31 19 V41 H3 Z" fill="#5b6472" stroke="#5b6472" stroke-width="4" stroke-linejoin="round"/><rect x="9" y="22" width="7" height="7" rx="1.5" fill="#fff"/><path d="M25 26 L40 12 L55 26 V41 H25 Z" fill="#fff" stroke="#fff" stroke-width="8" stroke-linejoin="round"/><path d="M25 26 L40 12 L55 26 V41 H25 Z" fill="#5b6472" stroke="#5b6472" stroke-width="4" stroke-linejoin="round"/><rect x="36" y="27" width="8" height="8" rx="1.5" fill="#fff"/></svg>';
-const SHARE_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>';
-const tMan = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() + '만' : '') || '0'; };
-const tShort = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() : '') || '0'; };
-const tBig = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? `${e}<small>억</small>` : '') + (r ? ` ${r.toLocaleString()}<small>만</small>` : '') || '0'; };
-const tEok = v => (Math.round(v / 1000) / 10).toFixed(1).replace(/\.0$/, '') + '억';
-const tTy = t => t === '84타입' ? ['ty84', '84'] : t === '59타입' ? ['ty59', '59'] : ['tyx', '기타'];
-const tDt = s => `${s.slice(2, 4)}.${s.slice(4, 6)}.${s.slice(6)}`;
-const tFl = f => /^-?\d+$/.test(String(f)) ? f + '층' : (f || '-');
-const tConv = r => r.p + (r.m || 0) * 250;
+{% include "_tcard_js.html" %}
 function tRows() {
   return TDATA.filter(r => (TR.k === 'all' || (TR.k === 'sale' ? r.k !== 'rent' : r.k === 'rent')) && (!TR.hi || r.up) && (TR.t === 'all' || r.ty === TR.t));
-}
-function tCard(r, i) {
-  const [tc, tl] = tTy(r.ty), now = +DATE.slice(0, 4);
-  const kl = r.k === 'sale' ? ['sale', '매매'] : r.k === 'pre' ? ['pre', '분양권'] : r.m ? ['wol', '월세'] : ['jeon', '전세'];
-  const badge = r.up ? `<span class="tbadge hi">신고가 +${tMan(r.p - (r.b || r.p))}</span>`
-    : r.k === 'pre' ? '<span class="tbadge pre">분양권</span>'
-    : r.b && !r.m ? (r.b > r.p ? `<span class="tbadge to">신고가까지 ${tMan(r.b - r.p)}</span>` : '<span class="tbadge to">최고가 동일</span>') : '';
-  const yr = r.ad ? (+r.ad.slice(0, 4) > now || (r.k === 'pre' && +r.ad.slice(0, 4) >= now) ? `${r.ad.slice(2, 4)}년 입주예정` : `${r.ad.slice(2, 4)}년 입주(${now - +r.ad.slice(0, 4) + 1}년차)`) : (r.k === 'pre' ? '입주예정' : '');
-  const meta = [`${r.gu} ${r.u}`.trim(), yr, r.hh ? `${r.k === 'pre' ? '분양 ' : ''}${r.hh.toLocaleString()}세대` : '', `3개월 ${r.c3}건 거래`].filter(Boolean).join(' · ');
-  const price = r.m ? `${r.p ? tBig(r.p) : '0'}<small>/</small>${r.m.toLocaleString()}<small>만</small>` : tBig(r.p);
-  const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '';   // 전세가율 = 전세가 / 매매가
-  const tyLbl = r.ty === '기타' ? `${Math.round(r.a)}㎡` : r.ty;
-  const foot = r.k === 'rent'
-    ? (r.sv ? `최근 1개월 매매가 평균 <b>${tEok(r.sv)}</b> · 갭 <b>${tEok(r.sv - r.p)}</b> (${pct(r.p, r.sv)})` : '최근 1개월 매매 거래 없음')   // 월세는 보증금 기준
-    : r.k === 'pre'
-    ? (r.sup ? `${tyLbl} 분양 ${r.sup.toLocaleString()}세대 중 <b>${(r.pc || 0).toLocaleString()}건</b> 거래(${pct(r.pc || 0, r.sup)})` : `분양 이후 <b>${(r.pc || 0).toLocaleString()}건</b> 거래`)
-    : r.j ? `최근 1개월 전세가 평균 <b>${tEok(r.j)}</b> · 갭 <b>${tEok(r.p - r.j)}</b> (${pct(r.j, r.p)})` : '최근 1개월 전세 거래 없음';
-  return `<div class="tcard ${r.up ? 'hi' : ''}" data-i="${i}"${r.h && APTB ? ` data-h="${r.h}"` : ''}>
-    <div class="c1"><span class="ty ${tc}">${tl}</span><span class="nm">${r.n}</span>${badge}</div>
-    <div class="c2">${meta}</div>
-    <div class="c3"><div class="price"><span class="kl ${kl[0]}">${kl[1]}</span><span class="v">${price}</span></div><button class="tshare" type="button" aria-label="공유" onclick="shareCard(this)">${SHARE_I}</button></div>
-    <div class="c4"><span class="spec">${r.a.toFixed(2)}㎡<i>·</i>${r.py}평<i>·</i>${tFl(r.f)}</span><span class="dt">${tDt(r.dt)} 계약</span></div>
-    <div class="c5"><span class="ft">${foot}</span><span class="logo-slot">${GLOGO}옆집얼마</span></div></div>`;
 }
 function tList(title, cls, rs, sub, rc) {
   return `<div class="q ${cls} tq" data-part="tl-${cls}"><h3>${title} ${rs.length.toLocaleString()}건 <small>${sub}</small></h3>` + (rs.length ? rs.map((r, i) => {

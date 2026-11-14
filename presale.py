@@ -88,7 +88,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         meta = " · ".join(x for x in ("분양권", f"{mv[:4]}년 {int(mv[4:6])}월 입주예정" if len(mv) == 6 else "", hh) if x)
         data = {"ty": [[t[2], t[1], t[3]] for t in types], "t": trades, "scan": bool(prices),
                 "rng": {l: [min(r[2] for r in v), max(r[2] for r in v)] for l, v in (prices or {}).items()}}
-        ctx = {"name": h["name"], "addr": h["addr"].replace(sd["sido"], sd["short"]), "meta": meta, "crumbs": crumbs,
+        ctx = {"name": h["name"], "fav": [h["name"], f"{sd['short']} {gu} · 분양권", f"{sdir}/{PRE_DIR}/{hid}.html"], "addr": h["addr"].replace(sd["sido"], sd["short"]), "meta": meta, "crumbs": crumbs,
                "root": "../../", "today": now.strftime("%Y%m%d"), "data": data, "map_q": f"{h['addr']} {h['name']}",
                "info": {"gen": h.get("total") or gen, "total": total, "mv": f"{mv[:4]}.{mv[4:]}" if len(mv) == 6 else "-",
                         "pbl": (h.get("pbl") or "")[:7].replace("-", "."), "builder": h.get("builder") or "-", "n": len(trades)},
