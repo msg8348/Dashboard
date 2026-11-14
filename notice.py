@@ -14,7 +14,7 @@ import requests
 
 UA = {"User-Agent": "Mozilla/5.0 (compatible; nextdoorprice-bot)"}
 RETRY_DAYS = 30
-VER = 2   # 읽는 방식이 바뀌면 올려서 다시 읽게 함
+VER = 3   # 읽는 방식이 바뀌면 올려서 다시 읽게 함
 
 
 def _int(s):
@@ -114,6 +114,17 @@ def parse(data, types):
         m = re.search(r"공급\s*규모[^\n]*?총\s*([\d,]+)\s*세대", whole) or re.search(r"총\s*([\d,]+)\s*세대", whole)
         if m:
             info["total"] = _int(m.group(1))
+        m = re.search(r"공급\s*규모[^\n]*", whole)       # '아파트 지하 4층, 지상 48층 3개동 총 660세대'
+        if m:
+            g = re.search(r"지상\s*(?:최고\s*)?(\d+)\s*층", m.group(0)) or re.search(r"지상\s*\d+\s*~\s*(\d+)\s*층", m.group(0))
+            if g:
+                info["fl"] = int(g.group(1))
+            g = re.search(r"(\d+)\s*개\s*동", m.group(0))
+            if g:
+                info["bd"] = int(g.group(1))
+        m = re.search(r"주차\s*(?:대수|계획)?\s*[:：]?\s*(?:총\s*)?([\d,]{2,})\s*대", whole)
+        if m:
+            info["pk"] = _int(m.group(1))
         for k, pat in (("gen", r"일반\s*분양\s*([\d,]+)\s*세대"), ("mem", r"(?:토지등소유자|조합원)(?:\s*분양)?\s*([\d,]+)\s*세대"),
                        ("res", r"보류지\s*([\d,]+)\s*세대")):
             m = re.search(pat, whole)

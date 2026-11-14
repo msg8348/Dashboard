@@ -92,6 +92,15 @@
     one(M.length - 1);
   }
 
+  (function act() {   // 거래 활발도: 최근 3개월·1년 거래, 세대수 대비 회전율, 추세
+    const d365 = ago(365), c3 = T.filter(t => t[0] >= d92).length, c1 = T.filter(t => t[0] >= d365).length;
+    const ch = c1 ? Math.round((c3 * 4 / c1 - 1) * 100) : 0;
+    const tr = !c1 ? ['', '-'] : ch >= 10 ? ['strong', '▲ 강세'] : ch >= 5 ? ['up', '▲ 증가'] : ch <= -10 ? ['weak', '▼ 약세'] : ch <= -5 ? ['down', '▼ 감소'] : ['', '보합'];
+    const rate = n => D.hh ? `<div class="sub">회전율 ${(n / D.hh * 100).toFixed(2)}%</div>` : '';
+    $('actb').innerHTML = `<div><small>최근 3개월</small><b style="color:#c46a1c">${c3}건</b>${rate(c3)}</div>` +
+      `<div><small>최근 1년</small><b style="color:#137a6c">${c1}건</b>${rate(c1)}</div>` +
+      `<div><small>추세</small>${c1 ? `<span class="badge ${tr[0]}">${tr[1]} ${ch > 0 ? '+' : ''}${ch}%</span>` : '<b>-</b>'}</div>`;
+  })();
   const nm = document.querySelector('.nmap[data-lat]');   // 네이버지도 앱: 단지 위치 핀
   if (nm && /iPhone|iPad|Android/i.test(navigator.userAgent)) nm.addEventListener('click', e => {
     e.preventDefault();

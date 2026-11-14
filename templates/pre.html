@@ -30,16 +30,12 @@
 
 <section class="card">
   <div class="h1row"><h1>{{ name }}<span class="ptag">분양권</span></h1><button class="favb" type="button" data-fav='{{ fav|tojson }}'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></button></div>
-  <div class="addr">{{ addr }} <a class="nmap" href="https://map.naver.com/p/search/{{ map_q|urlencode }}" target="_blank" rel="noopener" aria-label="네이버지도에서 보기"{% if poi %} data-lat="{{ poi.y }}" data-lng="{{ poi.x }}" data-name="{{ name }}"{% endif %}><b>N</b>지도</a></div>
-  <div class="meta">{{ meta }}</div>
+  <div class="addr"><span class="t">{{ loc2 or addr }}{% if meta %} · {{ meta }}{% endif %}</span><a class="nmap" href="https://map.naver.com/p/search/{{ map_q|urlencode }}" target="_blank" rel="noopener" aria-label="네이버지도에서 보기"{% if poi %} data-lat="{{ poi.y }}" data-lng="{{ poi.x }}" data-name="{{ name }}"{% endif %}><b>N</b>지도</a></div>
   <div class="info">
-    <div><small>{{ '총 세대' if info.total else '분양 세대' }}</small><b>{{ "{:,}".format(info.total or info.gen) }}세대</b></div>
-    <div><small>입주 예정</small><b>{{ info.mv }}</b></div>
-    <div><small>모집 공고</small><b>{{ info.pbl or '-' }}</b></div>
-    <div><small>시공사</small><b>{{ info.builder }}</b></div>
-    <div><small>일반 분양</small><b>{{ "{:,}".format(info.gen) }}세대</b></div>
-    <div><small>분양권 거래</small><b>{{ "{:,}".format(info.n) }}건</b></div>
-    {% if poi %}{% for k, lbl in (('sc', '초등학교'), ('st', '지하철'), ('bus', '버스')) if k != 'bus' or poi.bk %}<div><small>{{ lbl }}</small><b>{% if poi[k] %}{{ '도보' if k == 'bus' else poi[k][0] }} {{ poi[k][1] }}분{% else %}-{% endif %}</b></div>{% endfor %}{% endif %}
+    <div><b>{{ "{:,}".format(info.hh) }}세대</b></div>
+    <div><b>{% if info.bd %}{{ info.bd }}개동{% endif %}{% if info.bd and info.mf %} · {% endif %}{% if info.mf %}{{ info.mf }}층{% endif %}{% if not info.bd and not info.mf %}-{% endif %}</b></div>
+    <div><b>{% if info.pk %}주차 {{ info.pk }}대{% else %}주차 -{% endif %}</b></div>
+    {% if poi %}{% for k, lbl in (('sc', '초등학교'), ('st', '지하철'), ('bus', '버스')) if k != 'bus' or poi.bk %}<div><b>{% if poi[k] %}{{ '버스' if k == 'bus' else poi[k][0] }} {{ poi[k][1] }}분{% else %}{{ lbl }} -{% endif %}</b></div>{% endfor %}{% endif %}
   </div>
 </section>
 
@@ -47,6 +43,11 @@
   <div class="sec-t"><h2>타입별 분양가 · 프리미엄</h2><small id="pcap"></small></div>
   <table class="tt pt"><thead><tr><th>타입</th><th>분양 세대</th><th>분양가</th><th>최근 3개월 평균</th><th>프리미엄</th></tr></thead><tbody id="ptab"></tbody></table>
   <p class="note" id="pnote"></p>
+</section>
+
+<section class="card" id="act">
+  <div class="sec-t"><h2>거래 활발도</h2><small>분양권 · 전체 타입</small></div>
+  <div class="act" id="actb"></div>
 </section>
 
 <section class="card">
