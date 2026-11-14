@@ -2,6 +2,7 @@
 const GLOGO = '<svg viewBox="0 0 60 44"><path d="M3 19 L17 5 L31 19 V41 H3 Z" fill="#5b6472" stroke="#5b6472" stroke-width="4" stroke-linejoin="round"/><rect x="9" y="22" width="7" height="7" rx="1.5" fill="#fff"/><path d="M25 26 L40 12 L55 26 V41 H25 Z" fill="#fff" stroke="#fff" stroke-width="8" stroke-linejoin="round"/><path d="M25 26 L40 12 L55 26 V41 H25 Z" fill="#5b6472" stroke="#5b6472" stroke-width="4" stroke-linejoin="round"/><rect x="36" y="27" width="8" height="8" rx="1.5" fill="#fff"/></svg>';
 const SHARE_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>';
 const tMan = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() + '만' : '') || '0'; };
+const tGap = v => v >= 10000 && v % 1000 === 0 && v % 10000 !== 0 ? (v / 10000).toFixed(1) + '억' : tMan(v);   // 1억5,000만 → 1.5억
 const tShort = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() : '') || '0'; };
 const tBig = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? `${e}<small>억</small>` : '') + (r ? ` ${r.toLocaleString()}<small>만</small>` : '') || '0'; };
 const tEok = v => (Math.round(v / 1000) / 10).toFixed(1).replace(/\.0$/, '') + '억';
@@ -13,8 +14,7 @@ function tCard(r, i) {
   const [tc, tl] = tTy(r.ty), now = +DATE.slice(0, 4);
   const kl = r.k === 'sale' ? ['sale', '매매'] : r.k === 'pre' ? ['pre', '분양권'] : r.m ? ['wol', '월세'] : ['jeon', '전세'];
   const badge = r.up ? `<span class="tbadge hi">신고가 +${tMan(r.p - (r.b || r.p))}</span>`
-    : r.k === 'pre' ? '<span class="tbadge pre">분양권</span>'
-    : r.b && !r.m ? (r.b > r.p ? `<span class="tbadge to">신고가까지 ${tMan(r.b - r.p)}</span>` : '<span class="tbadge to">최고가 동일</span>') : '';
+    : r.b && !r.m ? (r.b > r.p ? `<span class="tbadge to">신고가까지 ${tGap(r.b - r.p)}</span>` : '<span class="tbadge to">최고가 동일</span>') : '';
   const yr = r.ad ? (+r.ad.slice(0, 4) > now || (r.k === 'pre' && +r.ad.slice(0, 4) >= now) ? `${r.ad.slice(2, 4)}년 입주예정` : `${r.ad.slice(2, 4)}년 입주(${now - +r.ad.slice(0, 4) + 1}년차)`) : (r.k === 'pre' ? '입주예정' : '');
   const meta = [`${r.gu} ${r.u}`.trim(), yr, r.hh ? `${r.k === 'pre' ? '분양 ' : ''}${r.hh.toLocaleString()}세대` : '', `3개월 ${r.c3}건 거래`].filter(Boolean).join(' · ');
   const price = r.m ? `${r.p ? tBig(r.p) : '0'}<small>/</small>${r.m.toLocaleString()}<small>만</small>` : tBig(r.p);
