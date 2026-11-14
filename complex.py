@@ -169,8 +169,8 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
         crumbs.append((a["n"], None))
         loc = " ".join(x for x in (sd["short"], gu, a["u"]) if x)
         ad = info.get("ad") or ""
-        built = (f"{ad[:4]}년 {int(ad[4:6])}월 준공" if len(ad) >= 6 else
-                 f"{a['by']}년 준공" if a["by"] else "")
+        built = (f"{ad[2:4]}년 {int(ad[4:6])}월" if len(ad) >= 6 else
+                 f"{str(a['by'])[2:]}년" if a["by"] else "")
         year = int(ad[:4]) if ad else (int(a["by"]) if str(a["by"]).isdigit() else 0)
         age = f"{now.year - year + 1}년차" if year and year <= now.year else ("입주예정" if year else "")
         data = {"s": a["s"], "r": a["r"], "by": year, "hh": info.get("hh", 0)}
