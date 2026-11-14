@@ -412,11 +412,14 @@ def trade_card(t, cnt3, jeon1, cinfo, sale1=None):
     if t["src"] == "rent" and sale1 and sale1.get((key, ty)):
         r["sv"] = sale1[(key, ty)]   # 같은 단지·타입 최근 1개월 매매 평균
     if cinfo:
-        hh, ad = cinfo(t)
+        info = cinfo(t)
+        hh, ad = info[0], info[1]
         if hh:
             r["hh"] = hh
         if ad:
             r["ad"] = ad[:6]
+        if len(info) > 2 and info[2]:
+            r.update(info[2])   # 분양권: 타입 공급세대(sup)·분양 이후 누적 거래(pc)
     return r
 
 

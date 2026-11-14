@@ -134,8 +134,8 @@
   .tcard .dt{font-size:13px;color:var(--muted)}
   .tcard .c5{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #edf0f4;margin-top:9px;padding-top:7px;font-size:12px;color:var(--ink-2);min-height:28px}
   .tcard .c5 .ft{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.tcard .c5 b{color:var(--teal)}
-  .logo-slot{display:flex;align-items:center;gap:4px;font-weight:800;font-size:12px;color:#5b6472;opacity:0;flex:none;margin-left:8px}.logo-slot svg{width:19px;height:14px;flex:none}
-  .capturing .logo-slot{opacity:1}
+  .logo-slot{display:none;align-items:center;gap:4px;font-weight:800;font-size:12px;color:#5b6472;flex:none;margin-left:8px}.logo-slot svg{width:19px;height:14px;flex:none}
+  .capturing .logo-slot{display:flex}
   .tmore{text-align:center;font-size:14px;font-weight:800;color:var(--muted);padding:10px 0 4px}
   .tq .pr.j{color:var(--teal)}
   .dsel{margin-left:auto;position:relative;display:inline-flex;align-items:center;flex:none}
@@ -832,12 +832,16 @@ function tCard(r, i) {
   const badge = r.up ? `<span class="tbadge hi">신고가 +${tMan(r.p - (r.b || r.p))}</span>`
     : r.k === 'pre' ? '<span class="tbadge pre">분양권</span>'
     : r.b && !r.m ? (r.b > r.p ? `<span class="tbadge to">신고가까지 ${tMan(r.b - r.p)}</span>` : '<span class="tbadge to">최고가 동일</span>') : '';
-  const yr = r.ad ? (+r.ad.slice(0, 4) > now || r.k === 'pre' ? `${r.ad.slice(2, 4)}년 입주예정` : `${r.ad.slice(2, 4)}년 입주(${now - +r.ad.slice(0, 4) + 1}년차)`) : (r.k === 'pre' ? '입주예정' : '');
+  const yr = r.ad ? (+r.ad.slice(0, 4) > now || (r.k === 'pre' && +r.ad.slice(0, 4) >= now) ? `${r.ad.slice(2, 4)}년 입주예정` : `${r.ad.slice(2, 4)}년 입주(${now - +r.ad.slice(0, 4) + 1}년차)`) : (r.k === 'pre' ? '입주예정' : '');
   const meta = [`${r.gu} ${r.u}`.trim(), yr, r.hh ? `${r.hh.toLocaleString()}세대` : '', `3개월 ${r.c3}건 거래`].filter(Boolean).join(' · ');
   const price = r.m ? `${r.p ? tBig(r.p) : '0'}<small>/</small>${r.m.toLocaleString()}<small>만</small>` : tBig(r.p);
+  const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '';   // 전세가율 = 전세가 / 매매가
+  const tyLbl = r.ty === '기타' ? `${Math.round(r.a)}㎡` : r.ty;
   const foot = r.k === 'rent'
-    ? (r.sv ? `최근 1개월 매매가 평균 <b>${tEok(r.sv)}</b> · 갭 <b>${tEok(r.sv - r.p)}</b>` : '최근 1개월 매매 거래 없음')   // 월세는 보증금 기준
-    : r.j ? `최근 1개월 전세가 평균 <b>${tEok(r.j)}</b> · 갭 <b>${tEok(r.p - r.j)}</b>` : '최근 1개월 전세 거래 없음';
+    ? (r.sv ? `최근 1개월 매매가 평균 <b>${tEok(r.sv)}</b> · 갭 <b>${tEok(r.sv - r.p)}</b> (${pct(r.p, r.sv)})` : '최근 1개월 매매 거래 없음')   // 월세는 보증금 기준
+    : r.k === 'pre'
+    ? (r.sup ? `${tyLbl} ${r.sup.toLocaleString()}세대 중 <b>${(r.pc || 0).toLocaleString()}건</b>(${pct(r.pc || 0, r.sup)}) 거래` : `분양 이후 <b>${(r.pc || 0).toLocaleString()}건</b> 거래`)
+    : r.j ? `최근 1개월 전세가 평균 <b>${tEok(r.j)}</b> · 갭 <b>${tEok(r.p - r.j)}</b> (${pct(r.j, r.p)})` : '최근 1개월 전세 거래 없음';
   return `<div class="tcard ${r.up ? 'hi' : ''}" data-i="${i}">
     <div class="c1"><span class="ty ${tc}">${tl}</span><span class="nm">${r.n}</span>${badge}</div>
     <div class="c2">${meta}</div>

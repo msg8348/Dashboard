@@ -53,13 +53,20 @@ jobs:
             git --work-tree=store checkout FETCH_HEAD -- .
             git reset -q
           fi
-          du -sh store || true
+          mkdir -p hist   # 과거 분양권(분양 이후 누적 거래 수) — history 브랜치의 pre_*.json.gz
+          if git ls-remote --exit-code --heads origin history >/dev/null; then
+            git fetch --depth 1 origin history
+            files=$(git ls-tree --name-only FETCH_HEAD | grep '^pre_' || true)
+            [ -n "$files" ] && git --work-tree=hist checkout FETCH_HEAD -- $files && git reset -q
+          fi
+          du -sh store hist || true
 
       - name: 전국 대시보드 생성 (수집 + 페이지)
         id: gen
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           STORE_DIR: store
+          HIST_DIR: hist
         run: |
           python national.py --minutes 70 ${{ inputs.fetch == false && '--no-fetch' || '' }} ${{ (github.event_name == 'schedule' || inputs.probe) && '--probe' || '' }}
           if [ -f SKIP_DEPLOY ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
