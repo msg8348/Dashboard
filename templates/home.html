@@ -86,7 +86,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="top">{{ brand("index.html") }}<span class="tr"><span class="dt">{{ date_label }} 신규 공개</span><button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button class="menu-btn" type="button" aria-label="메뉴" onclick="openMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></span></div>
+  <div class="top">{{ brand("index.html") }}<span class="tr"><span class="dt">{{ date_label }} 신규 공개</span><a class="menu-btn" href="fav.html" aria-label="관심단지"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></a><button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button class="menu-btn" type="button" aria-label="메뉴" onclick="openMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></span></div>
   <div class="hero"><div><h1>전국 아파트 실거래</h1><p>지역을 고르면 해당 시도·시군구 리포트로 이동합니다</p></div>
     <div><div class="k">신규 매매</div><div class="v">{{ "{:,}".format(tot.cnt) }}<span>건</span></div></div>
     <div><div class="k">신고가</div><div class="v r">{{ "{:,}".format(tot.high) }}<span>건</span></div></div>
@@ -115,6 +115,7 @@
 <div class="mdim" id="mdim" hidden onclick="closeMenu()"></div>
 <aside class="drawer" id="drawer" aria-hidden="true">
   <div class="dr-top"><b>지역 선택</b><button class="dr-x" type="button" aria-label="닫기" onclick="closeMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="dr-list"><a class="dr-it" href="fav.html"><span>★ 관심단지</span><em>›</em></a></div>
   <div class="dr-list">{% for s in sidos %}<a class="dr-it" href="{{ s.href }}"><span>{{ s.sido }}</span><em>{{ "{:,}".format(s.cnt) }}건</em></a>{% endfor %}</div>
 </aside>
 <div class="sheet" id="sheet" hidden></div>

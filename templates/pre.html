@@ -24,11 +24,11 @@
 </style>
 </head>
 <body><div class="wrap">
-<div class="topbar">{{ brand(root ~ 'index.html') }}<span class="tbtns"><button class="sbtn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></span></div>
+<div class="topbar">{{ brand(root ~ 'index.html') }}<span class="tbtns"><a class="sbtn" href="{{ root }}fav.html" aria-label="관심단지"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></a><button class="sbtn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></span></div>
 <nav class="crumb">{% for c in crumbs %}{% if c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a><span class="sep">›</span>{% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}</nav>
 
 <section class="card">
-  <h1>{{ name }}<span class="ptag">분양권</span></h1>
+  <div class="h1row"><h1>{{ name }}<span class="ptag">분양권</span></h1><button class="favb" type="button" data-fav='{{ fav|tojson }}'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></button></div>
   <div class="addr">{{ addr }} <a class="nmap" href="https://map.naver.com/p/search/{{ map_q|urlencode }}" target="_blank" rel="noopener" aria-label="네이버지도에서 보기">N</a></div>
   <div class="meta">{{ meta }}</div>
   <div class="info">

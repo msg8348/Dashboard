@@ -25,6 +25,25 @@
 .ssheet .si small{display:block;font-size:12.5px;color:#8a94a3;margin-top:1px}
 .ssheet .si .t{flex:1;min-width:0}.ssheet .si .del{border:0;background:none;color:#b4bcc8;font-size:20px;padding:4px 8px;cursor:pointer}
 .ssheet .empty2{text-align:center;color:#8a94a3;font-size:14px;padding:30px 0;line-height:1.6}`;
+  // ---- 관심단지 (이 기기에 저장): [[단지명, 위치, 주소(시도/apt/번호.html)], ...]
+  const FKEY = 'ndp_fav';
+  const Fav = {
+    get() { try { return JSON.parse(localStorage.getItem(FKEY)) || []; } catch (e) { return []; } },
+    set(a) { try { localStorage.setItem(FKEY, JSON.stringify(a)); } catch (e) {} },
+    has(p) { return Fav.get().some(x => x[2] === p); },
+    add(it) { if (!Fav.has(it[2])) Fav.set([it, ...Fav.get()]); },
+    remove(p) { Fav.set(Fav.get().filter(x => x[2] !== p)); },
+    toggle(it) { if (Fav.has(it[2])) { Fav.remove(it[2]); return false; } Fav.add(it); return true; },
+  };
+  window.NDPFav = Fav;
+  window.NDPRoot = ROOT;
+  // 단지·분양권 페이지의 별 버튼 (data-fav='[이름, 위치, 주소]')
+  document.querySelectorAll('[data-fav]').forEach(b => {
+    const it = JSON.parse(b.dataset.fav);
+    const paint = () => { const on = Fav.has(it[2]); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', on ? '관심단지 해제' : '관심단지 추가'); };
+    b.onclick = () => { Fav.toggle(it); paint(); };
+    paint();
+  });
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   const wrap = document.createElement('div');
   wrap.innerHTML = `<div class="sdim" hidden></div><div class="ssheet" role="dialog" aria-label="단지 검색"><div class="grab"></div><div class="srow">
@@ -65,7 +84,9 @@
       ? hits.map((a, i) => `<div class="si" data-h="${i}"><span class="ic">${HOME}</span><span class="t"><b>${hl(a[0], raw)}</b><small>${esc(a[1])}</small></span></div>`).join('')
       : `<div class="empty2">'${esc(raw)}' 검색 결과가 없습니다<br><small>현재 부산 단지부터 제공합니다</small></div>`;
   }
+  let pickFn = null;                       // 관심단지 추가 모드: 결과를 누르면 이동 대신 추가
   function go(a) {
+    if (pickFn) { const f = pickFn; close(); f([a[0], a[1], a[2]]); return; }
     setRecent([[a[0], a[1], a[2]], ...getRecent().filter(x => x[2] !== a[2])]);
     location.href = ROOT + a[2];
   }
@@ -77,8 +98,10 @@
     else if (t.dataset.r !== undefined) go(getRecent()[+t.dataset.r]);
     else go(hits[+t.dataset.h]);
   });
-  function close() { dim.hidden = true; sheet.classList.remove('open'); inp.blur(); }
-  window.openSearch = function () {
+  function close() { dim.hidden = true; sheet.classList.remove('open'); inp.blur(); pickFn = null; inp.placeholder = '단지명 검색'; }
+  window.openSearch = function (pick) {
+    pickFn = typeof pick === 'function' ? pick : null;
+    inp.placeholder = pickFn ? '추가할 단지명 검색' : '단지명 검색';
     dim.hidden = false; sheet.classList.add('open'); inp.value = ''; render(); load();
     setTimeout(() => inp.focus(), 250);
   };
