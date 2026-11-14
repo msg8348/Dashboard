@@ -428,6 +428,7 @@ def build_trades(dbs, today):
         "title": title, "cnt": len(srows),
         "pre_cnt": sum(1 for r in srows if r["pre"]), "high_cnt": sum(1 for r in srows if r["up"]),
         "type_cnt": type_cnt, "type_high": Counter(r["type"] for r in srows if r["up"]),
+        "highs": [r for r in srows if r["up"]],   # 신고가 전체 (금액순)
         "lists": by_type(srows), "top15": srows[:15],
     }
     rent_ctx = {
