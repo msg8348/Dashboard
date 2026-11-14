@@ -14,6 +14,10 @@ on:
         description: '국토부 실거래 수집 (끄면 저장된 데이터로 화면만 빠르게 배포)'
         type: boolean
         default: true
+      probe:
+        description: '확인 모드 (새 공개가 있을 때만 수집·배포) — 외부 예약(Cloudflare)용'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -61,7 +65,7 @@ jobs:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           STORE_DIR: store
         run: |
-          python national.py --minutes 70 ${{ inputs.fetch == false && '--no-fetch' || '' }} ${{ github.event_name == 'schedule' && '--probe' || '' }}
+          python national.py --minutes 70 ${{ inputs.fetch == false && '--no-fetch' || '' }} ${{ (github.event_name == 'schedule' || inputs.probe) && '--probe' || '' }}
           if [ -f SKIP_DEPLOY ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
 
       - name: 실거래 저장소 저장 (data 브랜치, 매번 한 커밋으로 교체)
