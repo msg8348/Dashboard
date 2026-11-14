@@ -64,7 +64,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         if not types:
             continue
         nt = notice.get(h, cache, now.replace(tzinfo=None), budget) or {}
-        prices = nt.get("prices") if nt.get("ok") else {}
+        prices = nt.get("prices") or {}   # 읽은 타입만 층별, 나머지는 최고 분양가
         trades = []
         for dt, p, f, a in sorted(rows, key=lambda r: -r[0]):
             t = label_of(types, a)
@@ -86,7 +86,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         total = nt.get("total") if nt.get("total", 0) >= gen else 0
         hh = f"총 {total:,}세대 (일반분양 {h.get('total') or gen:,})" if total and total != (h.get("total") or gen) else f"분양 {h.get('total') or gen:,}세대"
         meta = " · ".join(x for x in ("분양권", f"{mv[:4]}년 {int(mv[4:6])}월 입주예정" if len(mv) == 6 else "", hh) if x)
-        data = {"ty": [[t[2], t[1], t[3]] for t in types], "t": trades, "scan": bool(prices),
+        data = {"ty": [[t[2], t[1], t[3]] for t in types], "t": trades, "scan": sorted(prices),
                 "rng": {l: [min(r[2] for r in v), max(r[2] for r in v)] for l, v in (prices or {}).items()}}
         ctx = {"name": h["name"], "fav": [h["name"], f"{sd['short']} {gu} · 분양권", f"{sdir}/{PRE_DIR}/{hid}.html"], "addr": h["addr"].replace(sd["sido"], sd["short"]), "meta": meta, "crumbs": crumbs,
                "root": "../../", "today": now.strftime("%Y%m%d"), "data": data, "map_q": f"{h['addr']} {h['name']}",
@@ -101,6 +101,6 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         search.append([h["name"], f"{sd['short']} {gu} · 분양권".strip(), f"{sdir}/{PRE_DIR}/{hid}.html", len(trades)])
         urls.append(ctx["page_url"])
     notice.save(npath, cache)
-    scanned = sum(1 for hid in done if (cache.get(hid) or {}).get("ok"))
+    scanned = sum(1 for hid in done if (cache.get(hid) or {}).get("prices"))
     print(f"🏗️ {sd['short']}: 분양권 페이지 {len(done)}개 (상세 분양가 읽음 {scanned}개)")
     return done, search, urls

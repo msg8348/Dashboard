@@ -14,6 +14,7 @@ import requests
 
 UA = {"User-Agent": "Mozilla/5.0 (compatible; nextdoorprice-bot)"}
 RETRY_DAYS = 30
+VER = 2   # 읽는 방식이 바뀌면 올려서 다시 읽게 함
 
 
 def _int(s):
@@ -54,6 +55,12 @@ def _rows(text):
                 d = nums[k + 3]
                 if a > 0 and b > 0 and abs(a + b + c - d) <= 2 and d >= 1000 and d > a:
                     tot = d
+                    break
+        if not tot:   # 합계만 있는 표: 바로 뒤에 계약금(10%·5%·20%)이 오는 금액
+            for k in range(len(nums) - 1):
+                a, b = nums[k], nums[k + 1]
+                if a >= 1000 and b and any(abs(a * f - b) <= 1 for f in (0.1, 0.05, 0.2)):
+                    tot = a
                     break
         if tot:
             out.append([lo, hi, tot])
@@ -135,12 +142,12 @@ def get(house, cache, today, budget):
     """캐시에 있으면 그대로, 없으면 (budget 남을 때) 받아서 읽는다. budget: [남은 횟수]."""
     hid = house["id"]
     c = cache.get(hid)
-    if c and (c.get("ok") or (today - datetime.strptime(c["date"], "%Y%m%d")).days < RETRY_DAYS):
+    if c and c.get("v") == VER and (c.get("ok") or (today - datetime.strptime(c["date"], "%Y%m%d")).days < RETRY_DAYS):
         return c
     if budget[0] <= 0 or not house.get("url") or not house.get("types") or len(house["types"][0]) < 4:
         return c
     budget[0] -= 1
-    out = {"date": today.strftime("%Y%m%d"), "ok": False, "prices": {}}
+    out = {"v": VER, "date": today.strftime("%Y%m%d"), "ok": False, "prices": {}}
     s = requests.Session()
     s.headers.update(UA)
     try:
