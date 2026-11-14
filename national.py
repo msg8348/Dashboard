@@ -19,6 +19,7 @@ import re
 import shutil
 import time
 from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
 from jinja2 import Environment, FileSystemLoader
@@ -33,6 +34,7 @@ SITE_URL = "https://nextdoorprice.com"
 regions.PATH = os.path.join(STORE, "regions.json")
 IND_PATH = os.path.join(STORE, "indicators.json")
 BUSAN = "26"
+WORKERS = int(os.environ.get("FETCH_WORKERS", "8"))   # 동시 요청 수
 
 
 # ---------------------------------------------------------------- 저장소
@@ -102,39 +104,49 @@ def update(src, dbs, sidos, today, max_calls=40000, minutes=70):
 
     calls = ok = errs = streak = 0
     started = time.time()
-    for phase, key, code, name, ym in tasks:
-        if calls >= max_calls or time.time() - started > minutes * 60:
-            print(f"⏸️ 시간·호출 한도 — 남은 {len(tasks) - calls}건은 다음 실행에서 이어 받음")
-            break
-        db = dbs[key]
-        try:
-            calls += 1
-            fresh = D.fetch_month(src, name, code, ym)
-        except D.QuotaError as e:
-            print(f"⛔ {e} — 남은 {len(tasks) - calls + 1}건은 다음 실행에서 이어 받음")
-            break
-        except D.FetchError as e:
-            errs += 1
-            streak += 1
-            if errs <= 5:
-                print("⚠️", e)
-            if streak >= 30:
-                print("⛔ 연속 실패가 많아 이 출처는 중단")
+    fetched_sets = {k: set(db["fetched"]) for k, db in dbs.items()}
+    stop, i = False, 0
+    with ThreadPoolExecutor(WORKERS) as ex:   # 여러 지역을 동시에 요청 (순서대로 처리)
+        while i < len(tasks) and not stop:
+            if calls >= max_calls or time.time() - started > minutes * 60:
+                print(f"⏸️ 시간·호출 한도 — 남은 {len(tasks) - i}건은 다음 실행에서 이어 받음")
                 break
-            continue
-        streak = 0
-        ok += 1
-        g = grp(key)
-        k = f"{code}|{ym}"
-        known = k in set(db["fetched"])
-        old_ids = {t["id"]: t for t in g.get((code, ym), [])}
-        for t in fresh:
-            t["c"] = code
-            prev = old_ids.get(t["id"])
-            t["seen"] = prev["seen"] if prev else (today_s if known else "")
-        g[(code, ym)] = fresh
-        if not known:
-            db["fetched"].append(k)
+            batch = tasks[i:i + WORKERS * 2]
+            i += len(batch)
+            futs = [(t, ex.submit(D.fetch_month, src, t[3], t[2], t[4])) for t in batch]
+            for (phase, key, code, name, ym), fut in futs:
+                calls += 1
+                try:
+                    fresh = fut.result()
+                except D.QuotaError as e:
+                    if not stop:
+                        print(f"⛔ {e} — 남은 분량은 다음 실행에서 이어 받음")
+                    stop = True
+                    continue
+                except D.FetchError as e:
+                    errs += 1
+                    streak += 1
+                    if errs <= 5:
+                        print("⚠️", e)
+                    if streak >= 30:
+                        print("⛔ 연속 실패가 많아 이 출처는 중단")
+                        stop = True
+                    continue
+                streak = 0
+                ok += 1
+                db = dbs[key]
+                g = grp(key)
+                k = f"{code}|{ym}"
+                known = k in fetched_sets[key]
+                old_ids = {t["id"]: t for t in g.get((code, ym), [])}
+                for t in fresh:
+                    t["c"] = code
+                    prev = old_ids.get(t["id"])
+                    t["seen"] = prev["seen"] if prev else (today_s if known else "")
+                g[(code, ym)] = fresh
+                if not known:
+                    db["fetched"].append(k)
+                    fetched_sets[key].add(k)
     for key, g in groups.items():
         dbs[key]["trades"] = [t for (c, ym), ts in g.items() if ym >= oldest for t in ts]
     for db in dbs.values():
@@ -276,11 +288,37 @@ def redirect(old, new):
                 f'<link rel="canonical" href="{up}{new}"><script>location.replace("{up}{new}")</script>')
 
 
+PROBE_CODES = ["11680", "41135", "26350", "11650"]   # 강남구 · 성남 분당구 · 해운대구 · 서초구
+
+
+def probe(dbs, sidos, today):
+    """국토부에 새 거래가 공개됐는지 몇 곳만 빠르게 확인 (이번 달·지난달 매매 건수 비교)."""
+    names = {c: n for sd in sidos for c, n in sd["codes"].items()}
+    months = D.month_list(today, 2)
+    for code in PROBE_CODES:
+        if code not in names:
+            continue
+        key = code[:2]
+        for ym in months:
+            try:
+                fresh = D.fetch_month("sale", names[code], code, ym)
+            except D.FetchError as e:
+                print("⚠️ 확인 실패 — 전체 수집 진행:", e)
+                return True
+            have = sum(1 for t in dbs["sale"].get(key, {}).get("trades", []) if t.get("c") == code and t["dt"][:6] == ym)
+            if len(fresh) != have:
+                print(f"🔔 새 공개 확인: {names[code]} {ym} {have}→{len(fresh)}건 — 전체 수집 시작")
+                return True
+    print("💤 아직 새로 공개된 거래 없음 — 이번 실행은 건너뜀")
+    return False
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-fetch", action="store_true")
     ap.add_argument("--max-calls", type=int, default=40000)
     ap.add_argument("--minutes", type=float, default=70, help="출처별 수집 시간 한도(분)")
+    ap.add_argument("--probe", action="store_true", help="새 공개가 있을 때만 수집·배포 (예약 실행용)")
     ap.add_argument("--only", default="", help="시도 코드만 (예: 26,41) — 시험용")
     args = ap.parse_args()
     now = datetime.now(D.KST)
@@ -292,6 +330,9 @@ def main():
     print(f"🗺️ {len(sidos)}개 시도 · {sum(len(s['codes']) for s in sidos)}개 시군구")
 
     dbs = {src: {sd["key"]: load_db(src, sd["key"]) for sd in sidos} for src in D.SOURCES}
+    if args.probe and D.MOLIT_API_KEY and not args.no_fetch and not probe(dbs, sidos, now):
+        open("SKIP_DEPLOY", "w").close()
+        return
     if D.MOLIT_API_KEY and not args.no_fetch:
         for src in D.SOURCES:
             update(src, dbs[src], sidos, now, args.max_calls, args.minutes)
