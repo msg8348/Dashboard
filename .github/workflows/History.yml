@@ -1,0 +1,79 @@
+name: HISTORY
+
+# 과거 매매 실거래(2006년~) 수집 — 단지 페이지용. 받은 데까지 'history' 브랜치에 저장하고,
+# 시간 제한으로 끊기면 스스로 다시 실행해 이어 받는다. 하루 호출 예산(--daily)을 넘기면 다음 날 이어 받음.
+on:
+  schedule:
+    - cron: '17 23 * * *'   # KST 08:17 (매일 아침 갱신 이후)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: 'history'
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 의존성 설치
+        run: pip install -r requirements.txt
+
+      - name: 저장된 과거 데이터·지역 목록 불러오기
+        run: |
+          mkdir -p hist store
+          if git ls-remote --exit-code --heads origin history >/dev/null; then
+            git fetch --depth 1 origin history
+            git --work-tree=hist checkout FETCH_HEAD -- .
+            git reset -q
+          fi
+          if git ls-remote --exit-code --heads origin data >/dev/null; then
+            git fetch --depth 1 origin data
+            git show FETCH_HEAD:regions.json > store/regions.json 2>/dev/null || rm -f store/regions.json
+          fi
+          du -sh hist || true
+
+      - name: 과거 매매 수집
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          HIST_DIR: hist
+          STORE_DIR: store
+        run: python history.py --minutes 280 --daily 7000
+
+      - name: 저장 (history 브랜치, 매번 한 커밋으로 교체)
+        if: always()
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          [ -n "$(ls hist 2>/dev/null)" ] || exit 0
+          cd hist
+          rm -rf .git
+          git init -q -b history
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add -A
+          git commit -qm "history: 과거 매매 $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" history
+
+      - name: 남았으면 이어서 다시 실행
+        if: success()
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          s=$(cat HIST_STATUS 2>/dev/null || echo done)
+          echo "상태: $s"
+          if [ "$s" = "more" ]; then
+            curl -sS -X POST -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/History.yml/dispatches" \
+              -d '{"ref":"main"}'
+          fi
