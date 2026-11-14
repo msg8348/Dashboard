@@ -43,12 +43,19 @@ jobs:
           fi
           du -sh hist || true
 
+      - name: 과거 분양권 수집 (2020년~, 분양권 카드 누적 거래용)
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          HIST_DIR: hist
+          STORE_DIR: store
+        run: python history.py --src pre --minutes 90 --daily 6000
+
       - name: 과거 매매 수집
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           HIST_DIR: hist
           STORE_DIR: store
-        run: python history.py --minutes 280 --daily 7000
+        run: python history.py --minutes 180 --daily 7000
 
       - name: 저장 (history 브랜치, 매번 한 커밋으로 교체)
         if: always()
@@ -70,9 +77,9 @@ jobs:
         env:
           TOKEN: ${{ github.token }}
         run: |
-          s=$(cat HIST_STATUS 2>/dev/null || echo done)
-          echo "상태: $s"
-          if [ "$s" = "more" ]; then
+          a=$(cat HIST_STATUS_sale 2>/dev/null || echo done); b=$(cat HIST_STATUS_pre 2>/dev/null || echo done)
+          echo "상태: 매매 $a · 분양권 $b"
+          if [ "$a" = "more" ] || [ "$b" = "more" ]; then
             curl -sS -X POST -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
               "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/History.yml/dispatches" \
               -d '{"ref":"main"}'

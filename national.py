@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 from jinja2 import Environment, FileSystemLoader
 
 import Dashboard as D
+import applyhome
 import kapt
 import regions
 
@@ -33,6 +34,7 @@ SITE = "site"
 SITE_URL = "https://nextdoorprice.com"
 regions.PATH = os.path.join(STORE, "regions.json")
 IND_PATH = os.path.join(STORE, "indicators.json")
+HIST = os.environ.get("HIST_DIR", "hist")
 BUSAN = "26"
 WORKERS = int(os.environ.get("FETCH_WORKERS", "8"))   # 동시 요청 수
 
@@ -268,6 +270,40 @@ def subset(dbs, codes):
             for src, db in dbs.items()}
 
 
+def pre_history(key):
+    """과거 분양권(2020년~, history 브랜치) → {(시군구코드, 단지키): [전용면적, ...]}"""
+    p = os.path.join(HIST, f"pre_{key}.json.gz")
+    out = defaultdict(list)
+    if os.path.exists(p):
+        with gzip.open(p, "rt", encoding="utf-8") as f:
+            db = json.load(f)
+        for a in db.get("apts", {}).values():
+            out[(a["c"], ckey(a["n"]))] += [r[4] for r in a["t"]]
+    return out
+
+
+def same_type(area, ref):
+    """84·59 는 타입으로, 기타는 전용면적 ±1.5㎡ 로 같은 평형 판단."""
+    t = D.area_type(ref)
+    return D.area_type(area) == t if t != "기타" else abs(area - ref) <= 1.5
+
+
+def match_house(houses, sd, t):
+    """분양권 거래 → 청약홈 분양 단지 (같은 시군구 + 단지명)."""
+    gu = t["d"].split()[-1]
+    k = ckey(t["n"])
+    best = None
+    for h in houses:
+        if gu not in h["addr"] or (sd["short"][:2] not in h["addr"] and sd["short"] != "광주전남"):
+            continue
+        hk = ckey(h["name"])
+        if hk == k or (k and hk and (k in hk or hk in k)):
+            score = (hk == k, -abs(len(hk) - len(k)), h["id"])
+            if best is None or score > best[0]:
+                best = (score, h)
+    return best[1] if best else None
+
+
 def subset_asof(dbs, codes, day):
     """그날(day, YYYYMMDD)까지 공개된 거래만 + 그날의 신고가 기준값 — 지난 날짜 화면용."""
     out = {}
@@ -383,6 +419,7 @@ def main():
                 legacy = json.load(f).get("highs3")
             if legacy:
                 db.setdefault("highs3_by", {})["20261113"] = legacy
+    houses = applyhome.load(os.path.join(STORE, "applyhome.json"), D.MOLIT_API_KEY, now)
     today_s = now.strftime("%Y%m%d")
     d7 = (now - timedelta(days=6)).strftime("%Y%m%d")
     seen_days = {t.get("seen") for src in ("sale", "rent") for db in dbs[src].values() for t in db["trades"]}
@@ -425,8 +462,29 @@ def main():
         kapt_l2 = kapt_rows_by_l2(sd)
         ccache = {}
 
-        def cinfo(t, kapt_l2=kapt_l2, l2_of=l2_of, ccache=ccache):
-            """실거래 카드용 단지 세대수·사용승인일 (K-apt)."""
+        pre_hist = pre_history(key)
+        pre_now = defaultdict(list)
+        for t in sdb["pre"]["trades"]:
+            pre_now[(t.get("c"), ckey(t["n"]))].append(t["a"])
+        pcache = {}
+
+        def cinfo(t, kapt_l2=kapt_l2, l2_of=l2_of, ccache=ccache, sd=sd, pre_hist=pre_hist, pre_now=pre_now, pcache=pcache):
+            """실거래 카드용 단지 세대수·사용승인일 (K-apt). 분양권은 청약홈 입주예정월·공급세대수 + 분양 이후 누적 거래."""
+            if t.get("src") == "pre":
+                ck = (t.get("c"), ckey(t["n"]), D.area_type(t["a"]) if D.area_type(t["a"]) != "기타" else round(t["a"]))
+                if ck not in pcache:
+                    areas = pre_hist.get(ck[:2], []) + pre_now.get(ck[:2], [])
+                    pc = sum(1 for a in areas if same_type(a, t["a"]))
+                    h = match_house(houses, sd, t)
+                    extra = {"pc": pc}
+                    if h:
+                        sup = sum(n for a, n in h["types"] if same_type(a, t["a"]))
+                        if sup:
+                            extra["sup"] = sup
+                        pcache[ck] = (h["total"] or None, h["mvn"] or None, extra)
+                    else:
+                        pcache[ck] = (None, None, extra)
+                return pcache[ck]
             k2 = l2_of.get(t.get("c"))
             ck = (k2, ckey(t["n"]))
             if ck not in ccache:

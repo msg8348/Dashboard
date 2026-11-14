@@ -6,3 +6,4 @@ store/
 SKIP_DEPLOY
 HIST_STATUS
 hist/
+HIST_STATUS_*

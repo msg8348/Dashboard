@@ -24,12 +24,14 @@ import regions
 
 HIST = os.environ.get("HIST_DIR", "hist")
 START = "200601"            # 국토부 실거래 공개 시작
+STARTS = {"sale": "200601", "pre": "202001"}   # 분양권은 청약홈 분양정보가 있는 2020년부터
+SRC = "sale"
 WORKERS = int(os.environ.get("FETCH_WORKERS", "8"))
 FIRST = ["26", "11", "41", "28"]   # 부산 · 서울 · 경기 · 인천 먼저
 
 
 def path(key):
-    return os.path.join(HIST, f"{key}.json.gz")
+    return os.path.join(HIST, f"{key}.json.gz" if SRC == "sale" else f"{SRC}_{key}.json.gz")
 
 
 def load(key):
@@ -54,7 +56,7 @@ def apt_key(t, code):
 def months_until(end_ym):
     """START ~ end_ym (포함), 최신 달부터."""
     out, y, m = [], int(end_ym[:4]), int(end_ym[4:])
-    while f"{y:04d}{m:02d}" >= START:
+    while f"{y:04d}{m:02d}" >= STARTS[SRC]:
         out.append(f"{y:04d}{m:02d}")
         m -= 1
         if m == 0:
@@ -78,9 +80,12 @@ def add(db, code, ym, trades):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--minutes", type=float, default=280)
+    ap.add_argument("--src", default="sale", choices=["sale", "pre"])
     ap.add_argument("--daily", type=int, default=7000, help="하루(KST) 과거 수집 호출 한도 — 매일 갱신용 한도는 남겨 둠")
     ap.add_argument("--only", default="")
     args = ap.parse_args()
+    global SRC
+    SRC = args.src
     now = datetime.now(D.KST)
     end = D.month_list(now, D.WINDOW_MONTHS)[-1]          # 13개월 창의 가장 오래된 달
     y, m = int(end[:4]), int(end[4:]) - 1
@@ -93,10 +98,10 @@ def main():
     sidos.sort(key=lambda s: (FIRST.index(s["key"]) if s["key"] in FIRST else 99))
     if args.only:
         sidos = [s for s in sidos if s["key"] in args.only.split(",")]
-    print(f"📚 과거 매매 수집: {months[-1]} ~ {months[0]} ({len(months)}개월) · {len(sidos)}개 시도")
+    print(f"📚 과거 {D.SOURCES[SRC][2]} 수집: {months[-1]} ~ {months[0]} ({len(months)}개월) · {len(sidos)}개 시도")
 
     # 하루 호출 예산 (같은 날 여러 번 실행해도 합계가 --daily 를 넘지 않게)
-    bpath = os.path.join(HIST, "_budget.json")
+    bpath = os.path.join(HIST, "_budget.json" if SRC == "sale" else f"_budget_{SRC}.json")
     today = now.strftime("%Y%m%d")
     used = 0
     if os.path.exists(bpath):
@@ -122,7 +127,7 @@ def main():
                     break
                 batch = tasks[i:i + WORKERS * 2]
                 i += len(batch)
-                futs = [(t, ex.submit(D.fetch_month, "sale", t[1], t[0], t[2])) for t in batch]
+                futs = [(t, ex.submit(D.fetch_month, SRC, t[1], t[0], t[2])) for t in batch]
                 for (code, name, ym), fut in futs:
                     calls += 1
                     try:
@@ -156,7 +161,7 @@ def main():
         json.dump({"date": today, "used": used + calls}, f)
     budget_out = used + calls >= args.daily
     print(f"✅ 호출 {calls}회 · {time.time() - started:.0f}초 · {'한도 도달' if quota or budget_out else '진행'}")
-    with open("HIST_STATUS", "w") as f:
+    with open(f"HIST_STATUS_{SRC}", "w") as f:
         f.write("quota" if (quota or budget_out) else ("more" if total_left else "done"))
 
 
