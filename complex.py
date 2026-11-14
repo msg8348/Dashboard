@@ -145,13 +145,33 @@ def merge_split(apts, ckey):
     return alias
 
 
-def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, ckey, site_url, store="store"):
+def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, ckey, site_url, store="store", pre=None):
+    """pre {주택관리번호: (청약홈 단지, 분양권 거래)}: 입주예정월이 지난 분양권 — 같은 시군구·같은 이름의 매매 단지가
+    있으면 그 단지 거래에 분양권 거래를 합친다. 반환: (단지번호 집합, 검색 목록, 주소 목록, {주택관리번호: 단지번호})."""
     """시도 하나의 단지 페이지를 만들고 (단지번호 집합, 검색 목록, 주소 목록) 반환."""
     hist = load_hist(hist_dir, sd["key"])
     if not hist:
-        return set(), [], []
+        return set(), [], [], {}
     apts = collect(hist, sdb["sale"]["trades"], sdb["rent"]["trades"], oldest_ym)
     alias = merge_split(apts, ckey)
+    moved = {}
+    if pre:
+        names = defaultdict(list)
+        for k, a in apts.items():
+            if a["s"]:
+                names[(a["c"], ckey(a["n"]))].append(k)
+        codes = {c: n for c, n in sd["codes"].items()}
+        for hid, (h, rows) in pre.items():
+            gu = next((n for c, n in codes.items() if n.split()[-1] in h["addr"]), "")
+            c = next((c for c, n in codes.items() if n == gu), "")
+            ks = names.get((c, ckey(h["name"])))
+            if not ks:
+                continue
+            k = max(ks, key=lambda x: len(apts[x]["s"]))
+            apts[k]["s"] = sorted(apts[k]["s"] + [[dt, p, f, "", a, "", 1] for dt, p, f, a in rows], key=lambda x: -x[0])
+            moved[hid] = k
+        if moved:
+            print(f"🔁 {sd['short']}: 입주한 분양권 {len(moved)}곳 거래를 매매 단지로 옮김")
     idx = kapt_index(sd["sido"])
     ppath = os.path.join(store, "poi.json")   # 주변 정보 (카카오·TAGO) — 거래 많은 단지부터 조금씩 채움
     pcache = poi.load(ppath)
@@ -200,4 +220,4 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
                         f'<link rel="canonical" href="{to}.html"><script>location.replace("{to}.html")</script>')
             done.add(k)
     print(f"🏢 {sd['short']}: 단지 페이지 {len(done):,}개 (K-apt 정보 연결 포함)")
-    return done, search, urls
+    return done, search, urls, moved

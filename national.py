@@ -457,11 +457,15 @@ def main():
             l2slug[l["key"]] = sl
         os.makedirs(os.path.join(SITE, sdir), exist_ok=True)
         if key in APT_SIDOS:   # 단지 페이지 (과거 실거래가 있는 시도)
-            done, srch, aurls = CX.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, ckey, SITE_URL, STORE)
+            pby = PS.group(sd, sdb, HIST, months[-1], houses, match_house)
+            done, srch, aurls, moved = CX.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, ckey, SITE_URL, STORE,
+                                                pre=PS.moving(pby, houses, now))
             D.APT_PAGES |= done
+            D.PRE_MOVED.update(moved)
             search += srch
             urls += aurls
-            done, srch, aurls = PS.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, houses, match_house, STORE, SITE_URL)
+            done, srch, aurls = PS.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, houses, match_house, STORE, SITE_URL,
+                                         by=pby, moved=moved)
             D.PRE_PAGES |= done
             search += srch
             urls += aurls
@@ -492,6 +496,8 @@ def main():
                     extra = {"pc": pc}
                     if h and h["id"] in D.PRE_PAGES:
                         extra["h"] = f"pre/{h['id']}"   # 분양권 페이지
+                    elif h and h["id"] in D.PRE_MOVED:
+                        extra["h"] = f"apt/{D.PRE_MOVED[h['id']]}"   # 입주 후 매매 단지로 옮겨 간 곳
                     if h:
                         sup = sum(n for a, n, *_ in h["types"] if same_type(a, t["a"]))
                         if sup:

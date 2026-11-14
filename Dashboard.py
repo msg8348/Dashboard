@@ -41,6 +41,7 @@ SOURCES = {
 }
 APT_PAGES = set()   # 단지 페이지가 만들어진 단지번호 (national.py 가 채움)
 PRE_PAGES = set()   # 분양권 페이지가 만들어진 청약홈 주택관리번호
+PRE_MOVED = {}   # 입주 후 매매 단지로 옮겨 간 분양권 {주택관리번호: 단지번호}
 WINDOW_MONTHS = 13   # DB 에 보관할 개월 수 (1년 회전율 계산용)
 REFRESH_MONTHS = 3   # 매일 다시 받아올 최근 개월 수
 LIST_LEN = 15        # 타입별 리스트 최대 건수
