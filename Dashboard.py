@@ -429,6 +429,7 @@ def build_trades(dbs, today):
         "pre_cnt": sum(1 for r in srows if r["pre"]), "high_cnt": sum(1 for r in srows if r["up"]),
         "type_cnt": type_cnt, "type_high": Counter(r["type"] for r in srows if r["up"]),
         "highs": [r for r in srows if r["up"]],   # 신고가 전체 (금액순)
+        "all": srows,   # 신규 매매 전체 (금액순)
         "lists": by_type(srows), "top15": srows[:15],
     }
     rent_ctx = {
@@ -441,6 +442,7 @@ def build_trades(dbs, today):
         "jeonse_top10": [r for r in rrows if not r["monthly"]][:10],
         "jeonse_top15": [r for r in rrows if not r["monthly"]][:15],
         "highs": [r for r in rrows if r["up"]],   # 전세 신고가 전체 (보증금순)
+        "all": rrows,   # 신규 전월세 전체 (환산 보증금순)
     }
     return sale_ctx, rent_ctx, highs_s, highs_r
 
