@@ -824,27 +824,6 @@ function goTrade(k) {   // 요약 카드 → 실거래 탭 (매매/전월세 필
   document.getElementById('tfhi').classList.remove('on');
   tRender(); showPage(2);
 }
-async function shareCard(btn) {   // 카드 1장 이미지 (오른쪽 아래 회색 로고)
-  const el = btn.closest('.tcard'), label = btn.innerHTML;
-  btn.disabled = true;
-  try {
-    if (document.fonts && document.fonts.ready) await document.fonts.ready;
-    const canvas = await html2canvas(el, {
-      scale: 2, backgroundColor: null, useCORS: true, windowWidth: 420, scrollX: 0, scrollY: -window.scrollY,
-      onclone: doc => {
-        const c = doc.querySelector(`.tcard[data-i="${el.dataset.i}"]`);
-        c.closest('.page').hidden = false;
-        c.classList.add('capturing');
-        c.style.width = '390px';
-        c.querySelector('.tshare').style.visibility = 'hidden';
-      }
-    });
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-    const r = TDATA[+el.dataset.i];
-    shareFiles([Object.assign(new File([blob], `${REGION}_${DATE}_${r.n}.png`, { type: 'image/png' }), { en: `apt_${DATE}_card${el.dataset.i}.png` })]);
-  } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); }
-  finally { btn.disabled = false; btn.innerHTML = label; }
-}
 document.getElementById('tout').addEventListener('click', e => {   // 카드·리스트 → 단지 페이지
   if (e.target.closest('button')) return;
   const el = e.target.closest('[data-h]');

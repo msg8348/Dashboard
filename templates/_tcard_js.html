@@ -32,3 +32,26 @@ function tCard(r, i) {
     <div class="c4"><span class="spec">${r.a.toFixed(2)}㎡<i>·</i>${r.py}평<i>·</i>${tFl(r.f)}</span><span class="dt">${tDt(r.dt)} 계약</span></div>
     <div class="c5"><span class="ft">${foot}</span><span class="logo-slot">${GLOGO}옆집얼마</span></div></div>`;
 }
+async function shareCard(btn) {   // 카드 1장 이미지 (오른쪽 아래 회색 로고) — 실거래 탭·관심단지 공통
+  const el = btn.closest('.tcard'), label = btn.innerHTML;
+  btn.disabled = true;
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const canvas = await html2canvas(el, {
+      scale: 2, backgroundColor: null, useCORS: true, windowWidth: 420, scrollX: 0, scrollY: -window.scrollY,
+      onclone: doc => {
+        const c = doc.querySelector(`.tcard[data-i="${el.dataset.i}"]`);
+        const pg = c.closest('.page');
+        if (pg) pg.hidden = false;
+        c.classList.add('capturing');
+        c.style.width = '390px';
+        c.querySelector('.tshare').style.visibility = 'hidden';
+      }
+    });
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const nm = (el.querySelector('.nm') || {}).textContent || 'card';
+    const rg = typeof REGION !== 'undefined' ? REGION : '관심단지';
+    shareFiles([Object.assign(new File([blob], `${rg}_${DATE}_${nm}.png`, { type: 'image/png' }), { en: `apt_${DATE}_card${el.dataset.i}.png` })]);
+  } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); }
+  finally { btn.disabled = false; btn.innerHTML = label; }
+}

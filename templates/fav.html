@@ -7,6 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" href="favicon.ico" sizes="any"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root { --ink:#17202c; --ink-2:#4a5566; --muted:#8a94a3; --line:#e6eaef;
     --blue:#2754d6; --blue-bg:#ebf1ff; --red:#e0472c; --red-bg:#fff1ec; --teal:#0f6b5c; --teal-bg:#e5f4f0;
@@ -25,7 +26,13 @@
   .sub{font-size:12.5px;color:var(--muted);font-weight:700;margin:-6px 2px 12px}
 {% include "_tcard_css.html" %}
   .tcard[data-h]{cursor:pointer}
-  .tshare{display:none}
+  .save-sheet{position:fixed;inset:0;background:rgba(15,20,28,.72);z-index:50;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px}
+  .save-sheet[hidden]{display:none}
+  .save-sheet .msg{color:#fff;font-size:14px;font-weight:600;text-align:center;line-height:1.5}
+  .save-sheet .imgwrap{flex:1;min-height:0;overflow:auto;width:100%;max-width:520px;border-radius:12px;background:#fff}
+  .save-sheet img{width:100%;display:block}
+  .save-sheet .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:520px}
+  .btn{background:#fff;color:#111;border:1.5px solid #cfd6de;border-radius:14px;padding:14px;font:inherit;font-size:15px;font-weight:800;cursor:pointer}
   .empty{text-align:center;color:var(--muted);font-size:14.5px;padding:46px 10px;line-height:1.7;background:#fff;border-radius:22px;border:1px solid #dfe5ea}
   .empty button{margin-top:14px}
   .dim{position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:40}
@@ -58,10 +65,37 @@
   <div class="flist" id="flist"></div>
   <button class="addbtn" type="button" onclick="addFav()">+ 단지 추가</button>
 </div>
+<div class="save-sheet" id="save-sheet" hidden>
+  <div class="msg">이미지를 <b>길게 눌러</b> 저장하거나<br>아래 <b>공유하기</b>를 다시 눌러주세요</div>
+  <div class="imgwrap"><img id="save-img" alt="카드 이미지"></div>
+  <div class="acts"><button class="btn" onclick="shareFiles(pendingFiles, true)">공유하기</button><button class="btn" onclick="closeSheet()">닫기</button></div>
+</div>
 <script src="search.js?v={{ today }}"></script>
 <script>
 const DATE = '{{ today }}', APTB = '';
 {% include "_tcard_js.html" %}
+// 카드 이미지 공유·저장
+function download(blob, name) {
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+let pendingFiles = [];
+async function shareFiles(files, fromSheet) {
+  pendingFiles = files;
+  if (!(navigator.canShare && navigator.canShare({ files }))) return files.forEach(f => download(f, f.en || f.name));
+  try { await navigator.share({ files }); if (fromSheet) closeSheet(); }
+  catch (e) {
+    if (e.name === 'AbortError') return;
+    if (e.name === 'NotAllowedError' && !fromSheet) {
+      document.getElementById('save-img').src = URL.createObjectURL(files[0]);
+      document.getElementById('save-sheet').hidden = false;
+      return;
+    }
+    alert('공유에 실패했습니다: ' + e.message);
+  }
+}
+function closeSheet() { document.getElementById('save-sheet').hidden = true; }
 const F = { k: 'all', hi: false };
 let CARDS = [];
 const favs = () => NDPFav.get();
