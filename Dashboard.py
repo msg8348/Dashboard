@@ -39,6 +39,7 @@ SOURCES = {
     "pre": (f"{API}/RTMSDataSvcSilvTrade/getRTMSDataSvcSilvTrade", "data/presale_db.json", "분양권 전매"),
     "rent": (f"{API}/RTMSDataSvcAptRent/getRTMSDataSvcAptRent", "data/rent_db.json", "아파트 전월세"),
 }
+TYPE_LABEL = None   # (거래) → '84A' 같은 청약홈 약식표기 (national.py 가 시도마다 설정)
 APT_PAGES = set()   # 단지 페이지가 만들어진 단지번호 (national.py 가 채움)
 PRE_PAGES = set()   # 분양권 페이지가 만들어진 청약홈 주택관리번호
 PRE_MOVED = {}   # 입주 후 매매 단지로 옮겨 간 분양권 {주택관리번호: 단지번호}
@@ -406,6 +407,10 @@ def trade_card(t, cnt3, jeon1, cinfo, sale1=None):
          "a": round(t["a"], 2), "py": pyeong(t["a"]), "f": t["f"], "dt": t["dt"], "p": t["p"], "c3": cnt3.get(key, 0)}
     if t.get("m"):
         r["m"] = t["m"]
+    if TYPE_LABEL:
+        tl = TYPE_LABEL(t)
+        if tl:
+            r["tl"] = tl
     if t.get("s") and t["s"] in APT_PAGES:
         r["h"] = f"apt/{t['s']}"   # 단지 페이지 있음
     if t.get("up"):
