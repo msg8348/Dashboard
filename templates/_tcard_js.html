@@ -23,7 +23,7 @@ function tCard(r, i) {
   const foot = r.k === 'rent'
     ? (r.sv ? `최근 1개월 매매가 평균 <b>${tEok(r.sv)}</b> · 갭 <b>${tEok(r.sv - r.p)}</b> (${pct(r.p, r.sv)})` : '최근 1개월 매매 거래 없음')   // 월세는 보증금 기준
     : r.k === 'pre'
-    ? (r.sup ? `${tyLbl} 분양 ${r.sup.toLocaleString()}세대 중 <b>${(r.pc || 0).toLocaleString()}건</b> 거래(${pct(r.pc || 0, r.sup)})` : `분양 이후 <b>${(r.pc || 0).toLocaleString()}건</b> 거래`)
+    ? (r.sup ? `${tyLbl} 분양 ${r.sup.toLocaleString()}세대 중 <b>${(r.pc || 0).toLocaleString()}건</b> 거래 (${pct(r.pc || 0, r.sup)})` : `분양 이후 <b>${(r.pc || 0).toLocaleString()}건</b> 거래`)
     : r.j ? `최근 1개월 전세가 평균 <b>${tEok(r.j)}</b> · 갭 <b>${tEok(r.p - r.j)}</b> (${pct(r.j, r.p)})` : '최근 1개월 전세 거래 없음';
   return `<div class="tcard ${r.up ? 'hi' : ''}" data-i="${i}"${r.h && APTB ? ` data-h="${r.h}"` : ''}>
     <div class="c1"><span class="ty ${tc}">${tl}</span><span class="nm">${r.n}</span>${badge}</div>
