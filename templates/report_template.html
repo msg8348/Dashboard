@@ -128,6 +128,8 @@
   .colA > :last-child > .r,.colB > :last-child > .r,.colB > :last-child > .bf{flex:1}
   .colA,.colB{display:flex;flex-direction:column;gap:14px;min-width:0}
   .q{border-radius:18px;padding:16px 18px 8px;border:1px solid var(--line)}
+  .q.hl{background:#f1f3f6;margin-bottom:14px}
+  .cd.r.go.open::after{content:'⌄';top:8px}
   .q h3{font-size:17px;font-weight:800;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline}
   .q h3 small{font-size:12px;color:var(--muted);font-weight:600}
   .q .nm{font-weight:700}
@@ -391,12 +393,17 @@
   <div class="cards c2">
     {% if kind == 'sale' %}
     <div class="cd b"><div class="l">신규 매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
-    <div class="cd r"><div class="l">신고가 <span>&nbsp;</span></div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
+    <div class="cd r{% if d.high_cnt %} go{% endif %}" {% if d.high_cnt %}role="button" onclick="toggleHighs(this)"{% endif %}><div class="l">신고가 <span>&nbsp;</span></div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
     {% else %}
     <div class="cd t"><div class="l">신규 전월세 <span>전세 {{ d.jeonse }} · 월세 {{ d.wolse }}</span></div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
     <div class="cd r"><div class="l">신고가 <span>&nbsp;</span></div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
     {% endif %}
   </div>
+  {% if kind == 'sale' and d.highs %}
+  <div class="q hl" id="highs-list" hidden><h3>신고가 {{ d.highs|length }}건 <small>금액순 · 분양권 포함</small></h3>
+    {% for r in d.highs %}<div class="r">{{ rk(loop.index0, 'cs') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>{% endfor %}
+  </div>
+  {% endif %}
   {% macro section(k, rows, wide, kind, total, high) %}
   <div class="sec"><h2><span class="chip" style="background:{{ colcolor[k] }}">{{ k }}</span><span class="n">{{ "{:,}".format(total) }}건</span><span class="n hi">신고가 {{ high }}건</span></h2>
     <div class="list {% if wide %}wide{% endif %}">
@@ -566,6 +573,14 @@ function fitFoot() {
 }
 window.addEventListener('load', fitFoot);
 window.addEventListener('resize', fitFoot);
+function toggleHighs(card) {   // 매매 신고가 카드 → 신고가 전체 목록 펼치기/접기
+  const el = document.getElementById('highs-list');
+  if (!el) return;
+  el.hidden = !el.hidden;
+  card.classList.toggle('open', !el.hidden);
+  if (!el.hidden) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
+  cache = {};
+}
 function openMenu() {
   document.getElementById('mdim').hidden = false;
   const d = document.getElementById('drawer'); d.classList.add('open'); d.setAttribute('aria-hidden', 'false');
