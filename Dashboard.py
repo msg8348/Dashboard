@@ -243,6 +243,11 @@ def parse_item(src, item, district, deal_ym):
         if not p:
             return None
         t["p"] = p
+        # 단지 페이지용: 등기일·지번·건축년도 (값이 있을 때만)
+        for k, tags in (("rg", ("rgstDate", "등기일자")), ("j", ("jibun", "지번")), ("by", ("buildYear", "건축년도"))):
+            v = _text(item, *tags)
+            if v:
+                t[k] = v
     return t
 
 

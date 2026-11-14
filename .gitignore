@@ -4,3 +4,5 @@ __pycache__/
 site/
 store/
 SKIP_DEPLOY
+HIST_STATUS
+hist/
