@@ -1,7 +1,7 @@
 // 분양권 페이지: 타입별 분양가·프리미엄 표 · 평형 선택 · 월평균 그래프(분양가 점선) · 거래표
 (function () {
   const D = JSON.parse(document.getElementById('pdata').textContent);
-  const TY = D.ty, T = D.t;                 // TY: [약식표기, 세대수, 최고분양가]  T: [계약일, 금액, 층, 약식표기, 분양가, 상세여부]
+  const TY = D.ty, T = D.t, SCAN = new Set(D.scan || []);                 // TY: [약식표기, 세대수, 최고분양가]  T: [계약일, 금액, 층, 약식표기, 분양가, 상세여부]
   const $ = id => document.getElementById(id);
   const won = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() : '') || '0'; };
   const pm = v => (v >= 0 ? '+' : '-') + (Math.abs(v) >= 10000 ? (Math.abs(v) / 10000).toFixed(2) + '억' : Math.abs(v).toLocaleString() + '만');
@@ -16,17 +16,16 @@
   const grp = l => l.replace(/[A-Za-z]+$/, '');
 
   // 타입별 분양가·프리미엄 표
-  $('pcap').textContent = D.scan ? '층별 분양가 기준' : '최고 분양가 기준';
+  $('pcap').textContent = SCAN.size === TY.length ? '층별 분양가 기준' : SCAN.size ? '층별 · 일부 최고 분양가' : '최고 분양가 기준';
   $('ptab').innerHTML = TY.map(([l, n, top]) => {
     const r = T.filter(t => t[3] === l && t[0] >= d92), m = avg(r.map(t => t[1])), p = avg(r.map(t => t[1] - t[4]));
     const rg = D.rng[l];
-    const sp = rg ? (rg[0] === rg[1] ? eok2(rg[0]) : `${eok2(rg[0])}~${eok2(rg[1])}`) : (top ? won(top) : '-');
+    const sp = rg ? (rg[0] === rg[1] ? eok2(rg[0]) : `${eok2(rg[0])}~${eok2(rg[1])}`) : (top ? '최고 ' + eok2(top) : '-');
     return `<tr><td><b>${l}</b></td><td>${n.toLocaleString()}</td><td>${sp}</td><td>${m ? won(r100(m)) : '-'}</td><td class="pm ${p < 0 ? 'n' : ''}">${r.length ? pm(r100(p)) : '-'}</td></tr>`;
   }).join('');
-  $('pnote').textContent = D.scan
+  $('pnote').textContent = SCAN.size
     ? '프리미엄 = 거래가 − 그 타입·층의 분양가(모집공고문). 분양권 거래에는 동이 없어 같은 층 구간 분양가의 평균으로 계산해요.'
     : '이 단지는 모집공고문의 층별 분양가를 읽지 못해, 프리미엄을 그 타입 최고 분양가(청약홈) 대비로 계산해요. 저층 거래는 실제보다 작게 보일 수 있어요.';
-  $('miss').hidden = D.scan;
 
   const G = [...new Set(TY.map(t => grp(t[0])))].filter(g => T.some(t => grp(t[3]) === g));
   let cur = G.includes('84') ? '84' : G.slice().sort((a, b) => T.filter(t => grp(t[3]) === b).length - T.filter(t => grp(t[3]) === a).length)[0];
@@ -41,7 +40,8 @@
     $('stats').innerHTML = `<div><small>최근 거래</small><b>${won(last[1])}</b><em>${dL(last[0])} · ${last[2]}층 · ${last[3]}</em></div>` +
       `<div><small>최고가</small><b class="r">${won(max[1])}</b><em>${dL(max[0])} · ${max[2]}층 · ${max[3]}</em></div>` +
       `<div><small>분양 이후 거래</small><b class="k">${R.length.toLocaleString()}건</b><em>${cur}타입 분양 ${sup.toLocaleString()}세대 중 ${sup ? Math.round(R.length / sup * 100) : 0}%</em></div>` +
-      `<div><small>평균 프리미엄</small><b class="p ${ap < 0 ? 'n' : ''}">${rec.length ? pm(r100(ap)) : '-'}</b><em>최근 3개월 · ${D.scan ? '층별 분양가 대비' : '최고 분양가 대비'}</em></div>`;
+      `<div><small>평균 프리미엄</small><b class="p ${ap < 0 ? 'n' : ''}">${rec.length ? pm(r100(ap)) : '-'}</b><em>최근 3개월 · ${R.every(t => t[5]) ? '층별 분양가 대비' : '최고 분양가 대비 포함'}</em></div>`;
+    $('miss').hidden = TY.filter(t => grp(t[0]) === cur).every(t => SCAN.has(t[0]));
     chart(R);
     $('rows').innerHTML = R.slice(0, shown).map(t => `<tr><td>${dL(t[0])}</td><td class="p">${won(t[1])}</td><td>${t[2]}층</td><td class="ty">${t[3]}</td><td class="p pm ${t[1] < t[4] ? 'n' : ''}">${pm(t[1] - t[4])}</td></tr>`).join('');
     const mb = $('more');

@@ -174,8 +174,8 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
         year = int(ad[:4]) if ad else (int(a["by"]) if str(a["by"]).isdigit() else 0)
         age = f"{now.year - year + 1}년차" if year and year <= now.year else ("입주예정" if year else "")
         data = {"s": a["s"], "r": a["r"], "by": year, "hh": info.get("hh", 0)}
-        ctx = {"name": a["n"], "loc": loc, "fav": [a["n"], f"{sd['short']} {gu} {a['u']}".strip(), f"{sdir}/{APT_DIR}/{k}.html"], "jibun": a["j"], "road": info.get("road", ""), "info": info,
-               "meta": " · ".join(x for x in (info.get("kind") or "아파트", built, age) if x),
+        ctx = {"name": a["n"], "loc": loc, "loc2": " ".join(x for x in (gu, a["u"]) if x), "poi": None, "fav": [a["n"], f"{sd['short']} {gu} {a['u']}".strip(), f"{sdir}/{APT_DIR}/{k}.html"], "jibun": a["j"], "road": info.get("road", ""), "info": info,
+               "meta": " · ".join(x for x in ("" if (info.get("kind") or "아파트") == "아파트" else info["kind"], built, age) if x),
                "crumbs": crumbs, "root": "../../", "data": data, "today": now.strftime("%Y%m%d"),
                "map_q": f"{sd['short']} {gu} {a['u']} {a['n']}".replace("  ", " "),
                "page_url": f"{site_url}/{sdir}/{APT_DIR}/{k}.html",
