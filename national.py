@@ -381,7 +381,8 @@ def main():
             l2slug[l["key"]] = sl
         os.makedirs(os.path.join(SITE, sdir), exist_ok=True)
         base = {"date_label": now.strftime("%y.%m.%d"), "date_full": now.strftime("%Y%m%d"), "notices": [],
-                "l2_word": l2_word, "home_href": "../index.html", "root": "../", "site_url": SITE_URL}
+                "l2_word": l2_word, "home_href": "../index.html", "root": "../", "site_url": SITE_URL,
+                "l2opts": [(l["name"], f"{l2slug[l['key']]}.html") for l in sd["l2"]] if len(sd["l2"]) > 1 else []}
         if not ready:
             base["notices"].append("이 지역은 실거래 데이터를 수집하고 있습니다. 며칠 안에 채워집니다.")
         # --- 레벨1
