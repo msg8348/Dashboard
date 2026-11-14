@@ -92,6 +92,14 @@
     one(M.length - 1);
   }
 
+  const nm = document.querySelector('.nmap[data-lat]');   // 네이버지도 앱: 단지 위치 핀
+  if (nm && /iPhone|iPad|Android/i.test(navigator.userAgent)) nm.addEventListener('click', e => {
+    e.preventDefault();
+    const web = nm.href, t = Date.now();
+    location.href = `nmap://place?lat=${nm.dataset.lat}&lng=${nm.dataset.lng}&name=${encodeURIComponent(nm.dataset.name)}&appname=nextdoorprice.com`;
+    setTimeout(() => { if (!document.hidden && Date.now() - t < 2500) location.href = web; }, 1500);
+  });
+
   draw();
   let rw = window.innerWidth;
   window.addEventListener('resize', () => { if (window.innerWidth !== rw) { rw = window.innerWidth; draw(); } });

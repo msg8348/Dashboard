@@ -30,7 +30,7 @@
 
 <section class="card">
   <div class="h1row"><h1>{{ name }}<span class="ptag">분양권</span></h1><button class="favb" type="button" data-fav='{{ fav|tojson }}'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></button></div>
-  <div class="addr">{{ addr }} <a class="nmap" href="https://map.naver.com/p/search/{{ map_q|urlencode }}" target="_blank" rel="noopener" aria-label="네이버지도에서 보기"><b>N</b>지도</a></div>
+  <div class="addr">{{ addr }} <a class="nmap" href="https://map.naver.com/p/search/{{ map_q|urlencode }}" target="_blank" rel="noopener" aria-label="네이버지도에서 보기"{% if poi %} data-lat="{{ poi.y }}" data-lng="{{ poi.x }}" data-name="{{ name }}"{% endif %}><b>N</b>지도</a></div>
   <div class="meta">{{ meta }}</div>
   <div class="info">
     <div><small>{{ '총 세대' if info.total else '분양 세대' }}</small><b>{{ "{:,}".format(info.total or info.gen) }}세대</b></div>
@@ -39,6 +39,7 @@
     <div><small>시공사</small><b>{{ info.builder }}</b></div>
     <div><small>일반 분양</small><b>{{ "{:,}".format(info.gen) }}세대</b></div>
     <div><small>분양권 거래</small><b>{{ "{:,}".format(info.n) }}건</b></div>
+    {% if poi %}{% for k, lbl in (('sc', '초등학교'), ('st', '지하철'), ('bus', '버스')) if k != 'bus' or poi.bk %}<div><small>{{ lbl }}</small><b>{% if poi[k] %}{{ '도보' if k == 'bus' else poi[k][0] }} {{ poi[k][1] }}분{% else %}-{% endif %}</b></div>{% endfor %}{% endif %}
   </div>
 </section>
 

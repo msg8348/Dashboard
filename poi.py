@@ -22,7 +22,6 @@ KEEP_DAYS = 180
 MAX_STATION_M = 2000   # 이보다 멀면 지하철 '-'
 MAX_BUS_M = 800
 MAX_SCHOOL_M = 2000
-BUS_RETRY = False   # TAGO 승인 후 True 로 바꾸면 버스만 빠진 단지를 다시 찾음
 
 
 def walk_min(m):
@@ -104,7 +103,7 @@ def update(cache, targets, today, budget=1500, workers=6):
         return 0
     t = today.strftime("%Y%m%d")
     todo = [(k, a, n) for k, (a, n) in targets.items()
-            if k not in cache or (KAKAO and MOLIT and not cache[k].get("bk") and cache[k].get("x") and BUS_RETRY) or (datetime.strptime(t, "%Y%m%d") - datetime.strptime(cache[k].get("d", "20000101"), "%Y%m%d")).days > KEEP_DAYS]
+            if k not in cache or (datetime.strptime(t, "%Y%m%d") - datetime.strptime(cache[k].get("d", "20000101"), "%Y%m%d")).days > KEEP_DAYS]
     todo = todo[:budget]
     done = 0
 
@@ -115,6 +114,23 @@ def update(cache, targets, today, budget=1500, workers=6):
         except RuntimeError as e:
             return k, e
 
+    # 버스 정보가 빠진 단지(TAGO 승인 전에 찾은 곳): 좌표로 버스만 다시
+    nob = [k for k in targets if k in cache and cache[k].get("x") and not cache[k].get("bk")][:budget * 2]
+
+    def bjob(k):
+        return k, bus(cache[k]["x"], cache[k]["y"])
+
+    with ThreadPoolExecutor(workers) as ex:
+        nb = 0
+        for k, b in ex.map(bjob, nob):
+            if b is False:
+                continue
+            cache[k]["bk"] = 1
+            if b:
+                cache[k]["bus"] = [b[0], walk_min(b[1])]
+            nb += 1
+        if nob:
+            print(f"🚌 버스정류장 {nb}/{len(nob)}곳 채움")
     with ThreadPoolExecutor(workers) as ex:
         for k, r in ex.map(job, todo):
             if isinstance(r, RuntimeError):
