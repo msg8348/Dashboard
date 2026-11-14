@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       script:
-        description: '실행할 확인 스크립트 (notice_probe / permit_probe)'
+        description: '실행할 확인 스크립트 (notice_probe / notice_batch / permit_probe)'
         default: 'notice_probe'
       args:
         description: '인자 (notice_probe: 청약홈 주택관리번호, permit_probe: "주소" 번 지)'
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - run: pip install requests pdfplumber
+      - run: pip install -r requirements.txt
       - env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
         run: python tools/${{ inputs.script }}.py ${{ inputs.args }}
