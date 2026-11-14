@@ -1,18 +1,15 @@
 name: PROBE
 
-# API 응답 형식 확인용 (수동 실행)
+# API·공고문 응답 형식 확인용 (수동 실행)
 on:
   workflow_dispatch:
     inputs:
-      addr:
-        description: '법정동 주소 (예: 부산광역시 해운대구 우동)'
-        default: '부산광역시 해운대구 우동'
-      bun:
-        description: '번'
-        default: '1074'
-      ji:
-        description: '지'
-        default: '0'
+      script:
+        description: '실행할 확인 스크립트 (notice_probe / permit_probe)'
+        default: 'notice_probe'
+      args:
+        description: '인자 (notice_probe: 청약홈 주택관리번호, permit_probe: "주소" 번 지)'
+        default: '2025000415'
 
 jobs:
   probe:
@@ -22,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - run: pip install requests
+      - run: pip install requests pdfplumber
       - env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
-        run: python tools/permit_probe.py "${{ inputs.addr }}" "${{ inputs.bun }}" "${{ inputs.ji }}"
+        run: python tools/${{ inputs.script }}.py ${{ inputs.args }}
