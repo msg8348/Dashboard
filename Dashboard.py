@@ -440,6 +440,7 @@ def build_trades(dbs, today):
         "jeonse_top5": [r for r in rrows if not r["monthly"]][:5],
         "jeonse_top10": [r for r in rrows if not r["monthly"]][:10],
         "jeonse_top15": [r for r in rrows if not r["monthly"]][:15],
+        "highs": [r for r in rrows if r["up"]],   # 전세 신고가 전체 (보증금순)
     }
     return sale_ctx, rent_ctx, highs_s, highs_r
 
