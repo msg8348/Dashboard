@@ -37,10 +37,9 @@ def _fl(f):
     return int(f) if str(f).lstrip("-").isdigit() else 0
 
 
-def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, houses, match_house, store, site_url):
-    """시도 하나의 분양권 페이지. (주택관리번호 집합, 검색 목록, 주소 목록) 반환."""
-    by = defaultdict(list)          # 주택관리번호 → [[계약일, 금액, 층, 면적]]
-    hmap = {h["id"]: h for h in houses}
+def group(sd, sdb, hist_dir, oldest_ym, houses, match_house):
+    """분양권 거래 → {주택관리번호: [[계약일, 금액, 층, 면적]]} (최근 13개월 + 과거)."""
+    by = defaultdict(list)
     for t in sdb["pre"]["trades"]:
         h = match_house(houses, sd, t)
         if h:
@@ -50,6 +49,29 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         h = match_house(houses, sd, t)
         if h:
             by[h["id"]] += [[int(x[0]), x[1], _fl(x[2]), x[4]] for x in a["t"] if str(x[0])[:6] < oldest_ym]
+    return by
+
+
+def code_of(sd, house):
+    """청약홈 주소 → 시군구 코드."""
+    gu = next((n for c, n in sd["codes"].items() if n.split()[-1] in house["addr"]), "")
+    return next((c for c, n in sd["codes"].items() if n == gu), "")
+
+
+def moving(by, houses, now):
+    """입주예정월이 지난 분양권 단지 {주택관리번호: (단지 정보, 거래)} — 매매 단지가 생겼으면 그쪽으로 옮김."""
+    ym = now.strftime("%Y%m")
+    hmap = {h["id"]: h for h in houses}
+    return {hid: (hmap[hid], rows) for hid, rows in by.items() if (hmap[hid].get("mvn") or "999999") <= ym}
+
+
+def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, houses, match_house, store, site_url,
+          by=None, moved=None):
+    """시도 하나의 분양권 페이지. moved {주택관리번호: 매매 단지번호}: 입주 후 매매 단지로 옮겨 간 곳 → 주소만 넘김.
+    (주택관리번호 집합, 검색 목록, 주소 목록) 반환."""
+    moved = moved or {}
+    by = by if by is not None else group(sd, sdb, hist_dir, oldest_ym, houses, match_house)
+    hmap = {h["id"]: h for h in houses}
     npath = os.path.join(store, "notice.json")
     cache = notice.load(npath)
     budget = [int(os.environ.get("NOTICE_MAX", "40"))]
@@ -58,7 +80,14 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
     os.makedirs(out_dir, exist_ok=True)
     l2_name = {l["key"]: l["name"] for l in sd["l2"]}
     done, search, urls = set(), [], []
+    for hid, seq in moved.items():   # 예전 분양권 주소 → 매매 단지 페이지
+        with open(os.path.join(out_dir, f"{hid}.html"), "w", encoding="utf-8") as f:
+            to = f"../apt/{seq}.html"
+            f.write(f'<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url={to}">'
+                    f'<link rel="canonical" href="{to}"><script>location.replace("{to}")</script>')
     for hid, rows in sorted(by.items(), key=lambda kv: -len(kv[1])):
+        if hid in moved:
+            continue
         h = hmap[hid]
         types = [t for t in h.get("types", []) if len(t) >= 5]
         if not types:

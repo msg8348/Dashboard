@@ -53,7 +53,7 @@
     }
     chart(T);
     // 표: 신고가 = 그때까지의 최고가를 넘은 거래
-    $('rows').innerHTML = T.length ? T.slice(0, shown).map(t => `<tr><td>${dL(t[0])}</td><td class="p">${HI.has(t) ? '<span class="stk">신고가</span>' : ''}${won(t[1])}</td>` +
+    $('rows').innerHTML = T.length ? T.slice(0, shown).map(t => `<tr><td>${dL(t[0])}</td><td class="p">${t[6] ? '<span class="ptg">분양권</span>' : ''}${HI.has(t) ? '<span class="stk">신고가</span>' : ''}${won(t[1])}</td>` +
       `<td>${dong(t[3])}${t[2]}층</td><td class="ty">${tyL(t)}</td><td class="g">${t[5] ? '<span class="ok">✓</span>' : ''}</td></tr>`).join('')
       : `<tr><td colspan="5" class="none">${curL()} 매매 거래가 없습니다</td></tr>`;
     const mb = $('more');
