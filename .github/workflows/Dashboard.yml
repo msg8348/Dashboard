@@ -2,12 +2,12 @@ name: DASHBOARD
 
 on:
   schedule:
-    # GitHub 예약 실행은 정각에 몰려 지연·누락될 수 있어 정각을 피하고, 누락 대비로 한 번 더 실행
-    # GitHub 예약 실행은 서버 사정으로 늦어지거나 건너뛸 수 있어 하루 세 번 시도 (이미 받은 거래는 중복되지 않음)
-    # 국토부 신규 공개는 새벽이 아닌 오전 중에 반영되므로 오전·점심·저녁에 받음
-    - cron: '47 23 * * *' # KST 08:47
-    - cron: '23 3 * * *'  # KST 12:23
-    - cron: '37 8 * * *'  # KST 17:37
+    # 예약 실행은 '확인 모드': 국토부 새 공개가 있을 때만 전체 수집·배포 (없으면 1분 안에 끝남)
+    # 오전엔 매시간 확인(06:13~11:13), 이후 13:23·17:37 한 번 더. 예약 실행이 가끔 누락돼도 다음 확인이 받아 감
+    - cron: '13 21,22,23 * * *' # KST 06:13 · 07:13 · 08:13
+    - cron: '13 0,1,2 * * *'    # KST 09:13 · 10:13 · 11:13
+    - cron: '23 4 * * *'        # KST 13:23
+    - cron: '37 8 * * *'        # KST 17:37
   workflow_dispatch:
     inputs:
       fetch:
@@ -56,14 +56,16 @@ jobs:
           du -sh store || true
 
       - name: 전국 대시보드 생성 (수집 + 페이지)
+        id: gen
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           STORE_DIR: store
         run: |
-          python national.py --minutes 70 ${{ inputs.fetch == false && '--no-fetch' || '' }}
+          python national.py --minutes 70 ${{ inputs.fetch == false && '--no-fetch' || '' }} ${{ github.event_name == 'schedule' && '--probe' || '' }}
+          if [ -f SKIP_DEPLOY ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
 
       - name: 실거래 저장소 저장 (data 브랜치, 매번 한 커밋으로 교체)
-        if: always()
+        if: always() && steps.gen.outputs.skip != 'true'
         env:
           TOKEN: ${{ github.token }}
         run: |
@@ -78,10 +80,12 @@ jobs:
           git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" data
 
       - name: GitHub Pages 업로드 설정
+        if: steps.gen.outputs.skip != 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: 'site'
 
       - name: GitHub Pages 배포
+        if: steps.gen.outputs.skip != 'true'
         id: deployment
         uses: actions/deploy-pages@v4

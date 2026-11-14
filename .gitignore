@@ -3,3 +3,4 @@ demo.html
 __pycache__/
 site/
 store/
+SKIP_DEPLOY
