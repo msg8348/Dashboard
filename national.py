@@ -386,7 +386,25 @@ def main():
         if not ready:
             base["notices"].append("이 지역은 실거래 데이터를 수집하고 있습니다. 며칠 안에 채워집니다.")
         # --- 레벨1
-        sale_ctx, rent_ctx, highs_s, highs_r = D.build_trades(subset(sdb, set(sd["codes"])), now)
+        kapt_l2 = kapt_rows_by_l2(sd)
+        ccache = {}
+
+        def cinfo(t, kapt_l2=kapt_l2, l2_of=l2_of, ccache=ccache):
+            """실거래 카드용 단지 세대수·사용승인일 (K-apt)."""
+            k2 = l2_of.get(t.get("c"))
+            ck = (k2, ckey(t["n"]))
+            if ck not in ccache:
+                rows = kapt_l2.get(k2, [])
+                same = [r for r in rows if ckey(r["name"]) == ck[1]]
+                if not same:
+                    same = [r for r in rows if ck[1] and (ck[1] in ckey(r["name"]) or ckey(r["name"]) in ck[1])][:1]
+                ccache[ck] = ((sum(r["households"] for r in same) or None),
+                              (min((r.get("approval_date") or "9") for r in same) if same else None)) if same else (None, None)
+                if ccache[ck][1] == "9":
+                    ccache[ck] = (ccache[ck][0], None)
+            return ccache[ck]
+
+        sale_ctx, rent_ctx, highs_s, highs_r = D.build_trades(subset(sdb, set(sd["codes"])), now, cinfo)
         if not fallback:   # 날짜별 기준값도 보관 (최근 3일) — 신규 공개가 없는 날 전날 기준으로 다시 보여줄 때 사용
             for src, h in (("sale", highs_s), ("rent", highs_r)):
                 by = sdb[src].setdefault("highs3_by", {})
@@ -394,7 +412,6 @@ def main():
                 for d in sorted(by)[:-3]:
                     by.pop(d)
             sdb["sale"]["highs3"], sdb["rent"]["highs3"] = highs_s, highs_r
-        kapt_l2 = kapt_rows_by_l2(sd)
         l2_hh = {l2_name[k]: sum(r["households"] for r in rows) for k, rows in kapt_l2.items()}
         if key == BUSAN:
             ind = D.build_indicator(sdb["sale"]["trades"], now, l2_hh, D.INDICATOR_COMPLEXES, "d",
@@ -421,7 +438,7 @@ def main():
         chips = []
         if len(sd["l2"]) > 1:
             for l in sd["l2"]:
-                s2, r2, _, _ = D.build_trades(subset(sdb, set(l["codes"])), now)
+                s2, r2, _, _ = D.build_trades(subset(sdb, set(l["codes"])), now, cinfo)
                 c2 = dict(base, sale=s2, rent=r2, indicator=None, has_ind=False, level=2,
                           region=l["name"], region_full=f"{sd['sido']} {l['name']}",
                           crumbs=[("전국", "../index.html"), (sd["short"], "index.html"), (l["name"], None)],

@@ -388,13 +388,37 @@ def mark_highs(new, history, prior, value=lambda t: t["p"], eligible=lambda t: T
         if not eligible(t):
             continue
         k, v = high_key(t), value(t)
+        t["prev"] = base.get(k)   # 이 거래 직전까지의 최고가 (카드: 신고가 +금액 / 신고가까지 금액)
         if base.get(k) and v > base[k]:
             t["up"] = True
         base[k] = max(base.get(k, 0), v)
     return baseline
 
 
-def build_trades(dbs, today):
+def trade_card(t, cnt3, jeon1, cinfo):
+    """실거래 카드·리스트용 압축 데이터."""
+    key = t.get("s") or t["n"]
+    ty = area_type(t["a"])
+    r = {"k": t["src"], "n": t["n"], "gu": t["d"].split()[-1] if t["src"] else t["d"], "u": t.get("u", ""), "ty": ty,
+         "a": round(t["a"], 2), "py": pyeong(t["a"]), "f": t["f"], "dt": t["dt"], "p": t["p"], "c3": cnt3.get(key, 0)}
+    if t.get("m"):
+        r["m"] = t["m"]
+    if t.get("up"):
+        r["up"] = 1
+    if t.get("prev"):
+        r["b"] = t["prev"]
+    if t["src"] != "rent" and jeon1.get((key, ty)):
+        r["j"] = jeon1[(key, ty)]
+    if cinfo:
+        hh, ad = cinfo(t)
+        if hh:
+            r["hh"] = hh
+        if ad:
+            r["ad"] = ad[:6]
+    return r
+
+
+def build_trades(dbs, today, cinfo=None):
     sale = [dict(t, src="sale") for t in dbs["sale"]["trades"]]
     pre = [dict(t, src="pre") for t in dbs["pre"]["trades"]]
     rent = [dict(t, src="rent") for t in dbs["rent"]["trades"]]
@@ -421,6 +445,18 @@ def build_trades(dbs, today):
 
     srows = sorted((srow(t) for t in new_s), key=lambda r: -r["p"])
     rrows = sorted((rrow(t) for t in new_rent), key=lambda r: -r["conv"])
+
+    # 실거래 카드용: 단지별 최근 3개월 매매 건수, 같은 단지·타입 최근 1개월 전세 평균
+    d3 = (today - timedelta(days=92)).strftime("%Y%m%d")
+    d1 = (today - timedelta(days=31)).strftime("%Y%m%d")
+    cnt3 = Counter((t.get("s") or t["n"]) for t in sale + pre if t["dt"] > d3)
+    jsum = defaultdict(list)
+    for t in rent:
+        if not t.get("m") and t["dt"] > d1:
+            jsum[(t.get("s") or t["n"], area_type(t["a"]))].append(t["p"])
+    jeon1 = {k: round(sum(v) / len(v)) for k, v in jsum.items()}
+    cards = [trade_card(t, cnt3, jeon1, cinfo) for t in sorted(new_s, key=lambda x: -x["p"])]
+    cards += [trade_card(t, cnt3, jeon1, cinfo) for t in sorted(new_rent, key=lambda x: -(x["p"] + (x.get("m") or 0) * 10000 // RENT_PER_EOK))]
 
     def by_type(rows):
         return {k: [r for r in rows if r["type"] == k][:LIST_LEN] for k in TYPES}
@@ -449,6 +485,7 @@ def build_trades(dbs, today):
         "highs": [r for r in rrows if r["up"]],   # 전세 신고가 전체 (보증금순)
         "all": rrows,   # 신규 전월세 전체 (환산 보증금순)
     }
+    sale_ctx["cards"] = cards   # 매매·분양권·전월세 통합 (실거래 탭)
     return sale_ctx, rent_ctx, highs_s, highs_r
 
 

@@ -100,6 +100,43 @@
   .cd .v{font-size:32px;font-weight:800;text-align:right;color:var(--ink);line-height:1.1;white-space:nowrap}
   .cd .v span{font-size:18px;margin-left:1px}
   .cd .h{font-size:12.5px;font-weight:800;color:var(--red);text-align:right;margin-top:3px;white-space:nowrap}
+
+  /* ---- 실거래 탭 ---- */
+  .trd .head{margin-bottom:12px}
+  .tf1{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .tf1 button{font:inherit;font-size:15px;font-weight:800;border:1.5px solid #dfe3ea;background:#fff;border-radius:999px;padding:9px 18px;cursor:pointer}
+  .tf1 .all{color:var(--ink)}.tf1 .sale{color:var(--blue)}.tf1 .rent{color:var(--teal)}.tf1 .hi{color:var(--red)}
+  .tf1 button.on{background:var(--navy);color:#fff;border-color:var(--navy)}.tf1 .hi.on{background:var(--red);border-color:var(--red);color:#fff}
+  .tf2{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
+  .tft{display:flex;gap:2px;flex:none}.tft button{font:inherit;font-size:14.5px;font-weight:800;color:var(--ink-2);border:0;background:none;border-radius:10px;padding:7px 10px;cursor:pointer;white-space:nowrap}
+  .tft button.on{background:#e3e7ef;color:var(--ink)}
+  .tfv{flex:none;display:flex;background:#e6e9ef;border-radius:12px;padding:3px}
+  .tfv button{font:inherit;font-size:13.5px;font-weight:800;color:var(--ink-2);border:0;background:none;border-radius:9px;padding:7px 9px;white-space:nowrap;display:flex;align-items:center;gap:5px;cursor:pointer}
+  .tfv button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(20,30,60,.12)}.tfv svg{width:16px;height:16px}
+  .tcnt{font-size:13px;color:var(--muted);font-weight:700;margin:0 4px 8px}
+  .tcard{background:#fff;border:1.5px solid #c9cfd8;border-radius:22px;padding:16px 18px 12px;margin-bottom:12px}
+  .tcard.hi{border-color:var(--red)}
+  .tcard .c1{display:flex;align-items:center;gap:8px}
+  .tcard .c1 .ty{font-size:13px;padding:3px 8px;border-radius:7px}
+  .tcard .c1 .nm{font-size:18px;font-weight:900;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tbadge{font-size:12.5px;font-weight:800;border-radius:999px;padding:5px 10px;white-space:nowrap;flex:none}
+  .tbadge.hi{background:var(--red);color:#fff}.tbadge.to{background:#eef1f8;color:#3c4a6b}.tbadge.pre{background:#fde4ec;color:#c2185b}
+  .tcard .c2{font-size:12px;color:var(--ink-2);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tcard .c2 b{color:var(--ink)}
+  .tcard .c3{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+  .tcard .price{display:flex;align-items:baseline;gap:6px}
+  .tcard .kl{font-size:14px;font-weight:800}.kl.sale{color:var(--blue)}.kl.pre{color:#c2185b}.kl.jeon{color:var(--teal)}.kl.wol{color:var(--amber)}
+  .tcard .price .v{font-size:30px;font-weight:900;letter-spacing:-.6px}.tcard .price .v small{font-size:17px;font-weight:800;margin:0 2px}
+  .tcard.hi .price .v{color:var(--red)}
+  .tshare{width:36px;height:36px;border:0;background:none;color:#5b6472;display:grid;place-items:center;cursor:pointer}.tshare svg{width:22px;height:22px}
+  .tcard .c4{display:flex;justify-content:space-between;align-items:baseline;margin-top:2px}
+  .tcard .spec{font-size:15px;font-weight:800;color:var(--navy)}.tcard .spec i{font-style:normal;color:#b4bcc8;margin:0 4px}
+  .tcard .dt{font-size:13px;color:var(--muted)}
+  .tcard .c5{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #edf0f4;margin-top:12px;padding-top:10px;font-size:12px;color:var(--ink-2);min-height:32px}
+  .tcard .c5 .ft{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.tcard .c5 b{color:var(--teal)}
+  .logo-slot{display:flex;align-items:center;gap:4px;font-weight:800;font-size:12px;color:#5b6472;opacity:0;flex:none;margin-left:8px}.logo-slot svg{width:19px;height:14px;flex:none}
+  .capturing .logo-slot{opacity:1}
+  .tmore{text-align:center;font-size:14px;font-weight:800;color:var(--muted);padding:10px 0 4px}
+  .tq .pr.j{color:var(--teal)}
   .cd.go{cursor:pointer;position:relative}
   .cd.go:active{transform:scale(.98)}
   .capturing .cd.go::after{display:none}
@@ -353,15 +390,15 @@
 <option value="{{ 'index.html' if level == 2 else '' }}"{% if level == 1 %} selected{% endif %}>{{ L2W }} 전체</option>
 {% for n, h in l2opts %}<option value="{{ h }}"{% if level == 2 and n == region %} selected{% endif %}>{{ n }}</option>{% endfor %}
 </select></label>{% endif %}</nav>{% endif %}
-{% set PAGES = [('요약','sum'),('매매','sale'),('전월세','rent'),('지표단지','ind')] if has_ind else [('요약','sum'),('매매','sale'),('전월세','rent')] %}
+{% set PAGES = [('요약','sum',1),('실거래','sale',2),('지표단지','ind',4)] if has_ind else [('요약','sum',1),('실거래','sale',2)] %}
 
 <!-- ============ 1. 요약 ============ -->
 <div class="report page" id="page1">
   <div class="head"><h1>{{ RG }} 아파트 실거래 요약 <small>{{ date_label }}</small></h1></div>
   {{ notices_box() }}
   <div class="cards c2">
-    <div class="cd b go" role="button" onclick="showPage(2)"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
-    <div class="cd t go" role="button" onclick="showPage(3)"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">전세 신고가 {{ rent.high_cnt }}건</div></div></div>
+    <div class="cd b go" role="button" onclick="goTrade('sale')"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
+    <div class="cd t go" role="button" onclick="goTrade('rent')"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">전세 신고가 {{ rent.high_cnt }}건</div></div></div>
   </div>
   <div class="quad"><div class="colA">
     <div class="q s"><h3>매매 최고가 <small>금액순 · 분양권 포함</small></h3>
@@ -396,55 +433,16 @@
   {% endif %}
 </div>
 
-<!-- ============ 2. 매매 / 3. 전월세 ============ -->
-{% for pg, kind, d in [(2, 'sale', sale), (3, 'rent', rent)] %}
-<div class="report page" id="page{{ pg }}" hidden>
-  <div class="head"><h1>{{ RG }} 아파트 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ date_label }}</small></h1></div>
-  <div class="cards c2">
-    {% if kind == 'sale' %}
-    <div class="cd b{% if d.cnt %} go{% endif %}" {% if d.cnt %}role="button" onclick="openHighs(7)"{% endif %}><div class="l">신규 매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
-    <div class="cd r{% if d.high_cnt %} go{% endif %}" {% if d.high_cnt %}role="button" onclick="openHighs({{ 5 if kind == 'sale' else 6 }})"{% endif %}><div class="l">신고가 <span>&nbsp;</span></div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
-    {% else %}
-    <div class="cd t{% if d.cnt %} go{% endif %}" {% if d.cnt %}role="button" onclick="openHighs(8)"{% endif %}><div class="l">신규 전월세 <span>전세 {{ d.jeonse }} · 월세 {{ d.wolse }}</span></div><div><div class="v">{{ "{:,}".format(d.cnt) }}<span>건</span></div></div></div>
-    <div class="cd r{% if d.high_cnt %} go{% endif %}" {% if d.high_cnt %}role="button" onclick="openHighs(6)"{% endif %}><div class="l">신고가 <span>&nbsp;</span></div><div><div class="v" style="color:var(--red)">{{ d.high_cnt }}<span>건</span></div></div></div>
-    {% endif %}
-  </div>
-  {% macro section(k, rows, wide, kind, total, high) %}
-  <div class="sec"><h2><span class="chip" style="background:{{ colcolor[k] }}">{{ k }}</span><span class="n">{{ "{:,}".format(total) }}건</span><span class="n hi">신고가 {{ high }}건</span></h2>
-    <div class="list {% if wide %}wide{% endif %}">
-    {% for r in rows %}<div class="row">{{ rk(loop.index0, colcls[k]) }}<span class="nm"><span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="fl">{{ r.floor }}</span>
-      {% if kind == 'sale' %}<span class="pr">{{ r.price }}</span>{% else %}<span class="pr {{ 'w' if r.monthly else 'j' }}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span>{% endif %}</div>
-    {% else %}<div class="empty">해당 거래가 없습니다</div>{% endfor %}
-    </div></div>
-  {% endmacro %}
-  <div class="two">{{ section('84타입', d.lists['84타입'], false, kind, d.type_cnt['84타입'], d.type_high['84타입']) }}{{ section('59타입', d.lists['59타입'], false, kind, d.type_cnt['59타입'], d.type_high['59타입']) }}</div>
-  {{ section('기타', d.lists['기타'], true, kind, d.type_cnt['기타'], d.type_high['기타']) }}
+<!-- ============ 2. 실거래 (매매·분양권·전월세 통합) ============ -->
+<div class="report page trd" id="page2" hidden>
+  <div class="head"><h1>{{ RG }} 실거래 <small>{{ date_label }}</small></h1></div>
+  <div class="tf1" id="tf1"><button class="all on" data-k="all">전체</button><button class="sale" data-k="sale">매매</button><button class="rent" data-k="rent">전월세</button><button class="hi" id="tfhi">신고가만</button></div>
+  <div class="tf2"><div class="tft" id="tft"><button class="on" data-t="all">전체</button><button data-t="84타입">84</button><button data-t="59타입">59</button><button data-t="기타">기타</button></div>
+    <div class="tfv" id="tfv"><button class="on" data-v="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="4.5" width="14" height="6" rx="1.6"/><rect x="5" y="13.5" width="14" height="6" rx="1.6"/></svg>카드형</button><button data-v="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>리스트형</button></div></div>
+  <div class="tcnt" id="tcnt"></div>
+  <div id="tout"></div>
 </div>
-{% endfor %}
-
-<!-- ============ 5·6. 신고가 전체 ============ -->
-{% for pg, kind, d, back, label in [(5, 'sale', sale, 2, '매매'), (6, 'rent', rent, 3, '전세')] %}
-<div class="report page" id="page{{ pg }}" hidden>
-  <div class="head"><h1>{{ RG }} {{ label }} 신고가 <small>{{ date_label }}</small></h1></div>
-  <button class="backlink" type="button" onclick="history.length > 1 && history.state && history.state.hp ? history.back() : showPage({{ back }})">‹ {{ '매매' if kind == 'sale' else '전월세' }}로 돌아가기</button>
-  <div class="q hl {{ 's' if kind == 'sale' else 'j' }}"><h3>신고가 {{ d.highs|length }}건 <small>{{ '금액순 · 분양권 포함' if kind == 'sale' else '보증금순 · 전세' }}</small></h3>
-    {% for r in d.highs %}<div class="r">{{ rk(loop.index0, 'cr') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {{ '' if kind == 'sale' else 'j' }}">{{ r.price }}</span></div>
-    {% else %}<div class="empty">신고가 거래가 없습니다</div>{% endfor %}
-  </div>
-</div>
-{% endfor %}
-
-<!-- ============ 7·8. 신규 거래 전체 ============ -->
-{% for pg, kind, d, back in [(7, 'sale', sale, 2), (8, 'rent', rent, 3)] %}
-<div class="report page" id="page{{ pg }}" hidden>
-  <div class="head"><h1>{{ RG }} 신규 {{ '매매' if kind == 'sale' else '전월세' }} <small>{{ date_label }}</small></h1></div>
-  <button class="backlink" type="button" onclick="history.state && history.state.hp ? history.back() : showPage({{ back }})">‹ {{ '매매' if kind == 'sale' else '전월세' }}로 돌아가기</button>
-  <div class="q hl {{ 's' if kind == 'sale' else 'j' }}"><h3>신규 {{ "{:,}".format(d.all|length) }}건 <small>{{ '금액순 · 분양권 포함' if kind == 'sale' else '보증금순 · 월세는 환산 보증금' }}</small></h3>
-    {% for r in d.all %}<div class="r">{{ rk(loop.index0, 'cs' if kind == 'sale' else 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if kind == 'rent' %}{{ 'w' if r.monthly else 'j' }}{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
-    {% else %}<div class="empty">신규 거래가 없습니다</div>{% endfor %}
-  </div>
-</div>
-{% endfor %}
+<script type="application/json" id="tdata">{{ sale.cards|tojson }}</script>
 
 <!-- ============ 4. 지표단지 ============ -->
 {% if has_ind %}
@@ -499,14 +497,14 @@
 
 <nav class="bnav" id="bnav">
   <span class="bpill" id="bpill"></span>
-  {% for t, k in PAGES %}<button class="bt {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }})">{{ t }}</button>{% endfor %}
+  {% for t, k, pn in PAGES %}<button class="bt {% if loop.first %}on{% endif %}" data-page="{{ pn }}" onclick="showPage({{ pn }})">{{ t }}</button>{% endfor %}
 </nav>
 <div class="mdim" id="mdim" hidden onclick="closeMenu()"></div>
 <aside class="drawer" id="drawer" aria-hidden="true">
   <div class="dr-top"><button class="dr-x" type="button" aria-label="닫기" onclick="closeMenu()">{{ ic('x') }}</button></div>
   {% if crumbs %}<div class="dr-crumb">{% for c in crumbs %}{% if c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a><span>›</span>{% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}</div>{% endif %}
   <div class="dr-list">
-    {% for t, k in PAGES %}<button class="dr-it {% if loop.first %}on{% endif %}" data-page="{{ loop.index }}" onclick="showPage({{ loop.index }}); closeMenu(); window.scrollTo(0, 0)">{{ ic(k) }}<span>{{ t }}</span></button>{% endfor %}
+    {% for t, k, pn in PAGES %}<button class="dr-it {% if loop.first %}on{% endif %}" data-page="{{ pn }}" onclick="showPage({{ pn }}); closeMenu(); window.scrollTo(0, 0)">{{ ic(k) }}<span>{{ t }}</span></button>{% endfor %}
   </div>
   <div class="dr-list sub">
     <a class="dr-it" href="{{ home_href|default('./') }}">{{ ic('map') }}<span>지역 선택</span></a>
@@ -534,7 +532,7 @@ function showPage(n) {
   if (n !== currentPage) window.scrollTo(0, 0);   // 탭을 바꾸면 페이지 맨 위로
   currentPage = n;
   document.querySelectorAll('.page').forEach(el => { el.hidden = el.id !== 'page' + n; });
-  const tab = (n === 5 || n === 7) ? 2 : (n === 6 || n === 8) ? 3 : n;   // 신고가 페이지는 매매·전월세 탭 표시
+  const tab = n;
   document.querySelectorAll('[data-page]').forEach(t => t.classList.toggle('on', t.dataset.page == tab));
   movePill();
   fitFoot();
@@ -603,11 +601,6 @@ function fitFoot() {
 }
 window.addEventListener('load', fitFoot);
 window.addEventListener('resize', fitFoot);
-function openHighs(n) {   // 신고가 전체 페이지로 이동 (휴대폰 뒤로가기로 돌아옴)
-  try { history.pushState({ hp: n }, ''); } catch (e) {}
-  showPage(n);
-}
-window.addEventListener('popstate', () => { if (currentPage === 5 || currentPage === 7) showPage(2); else if (currentPage === 6 || currentPage === 8) showPage(3); });
 function openMenu() {
   document.getElementById('mdim').hidden = false;
   const d = document.getElementById('drawer'); d.classList.add('open'); d.setAttribute('aria-hidden', 'false');
@@ -630,19 +623,14 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu();
 })();
 
 const DATE = '{{ date_full }}';
-const REGION = '{{ RG }}', MAXPAGE = {{ 4 if has_ind else 3 }};
+const REGION = '{{ RG }}', MAXPAGE = {{ 4 if has_ind else 2 }};
 // 페이지별 저장 이미지 (지표단지는 2장: 1년·3개월 / 상세)
 const SHOTS = {
   1: [{ ko: '1_요약', en: '1_summary' }],
-  2: [{ ko: '2_매매', en: '2_sale' }],
-  3: [{ ko: '3_전월세', en: '3_rent' }],
+  2: [{ ko: '2_실거래', en: '2_trades', width: 560, trim: 40 }],
   4: [{ ko: '4_지표단지_3개월1년', en: '4_indicator_summary', hide: '.tbl', stack: true },
       { ko: '4_지표단지_상세', en: '4_indicator_detail', hide: '.ind-two, .tbl.gu' },
       { ko: '4_구별거래량', en: '4_district', hide: '.ind-two, .tbl:not(.gu)' }],
-  5: [{ ko: '5_매매신고가', en: '5_sale_highs', hide: '.backlink', width: 560 }],
-  6: [{ ko: '6_전세신고가', en: '6_jeonse_highs', hide: '.backlink', width: 560 }],
-  7: [{ ko: '7_신규매매', en: '7_sale_all', hide: '.backlink', width: 560 }],
-  8: [{ ko: '8_신규전월세', en: '8_rent_all', hide: '.backlink', width: 560 }],
 };
 const CAPTURE_WIDTH = 1200;   // 저장 이미지는 화면 크기와 관계없이 PC(가로형) 배치로 만듦
 
@@ -659,7 +647,19 @@ function renderOne(n, shot) {
         page.hidden = false;
         page.classList.add('capturing');
         const br = doc.querySelector('.topbar .brand');   // 저장 이미지 좌측 상단 로고
-        if (br) { const c = br.cloneNode(true); c.classList.add('cap-brand'); page.insertBefore(c, page.firstChild); }
+        const cardView = n === 2 && TR.v === 'card';   // 실거래 카드형은 카드마다 회색 로고 → 상단 로고 생략
+        if (br && !cardView) { const c = br.cloneNode(true); c.classList.add('cap-brand'); page.insertBefore(c, page.firstChild); }
+        if (shot.trim) {   // 거래가 많으면 이미지가 너무 길어지므로 앞쪽만 담고 '외 N건' 표시
+          page.querySelectorAll('#tout, #tout .q').forEach(box => {
+            const items = [...box.children].filter(e => e.classList.contains('tcard') || e.classList.contains('r'));
+            if (items.length > shot.trim) {
+              items.slice(shot.trim).forEach(e => e.remove());
+              const more = doc.createElement('div'); more.className = 'tmore'; more.textContent = `외 ${(items.length - shot.trim).toLocaleString()}건`;
+              box.appendChild(more);
+            }
+          });
+          page.querySelectorAll('.pshare, .tshare').forEach(e => e.remove());
+        }
         if (shot.hide) page.querySelectorAll(shot.hide).forEach(e => { e.style.display = 'none'; });
         if (shot.width) page.style.width = shot.width + 'px';   // 목록 페이지는 휴대폰 폭으로 (단지명·금액 간격 좁게)
         if (shot.stack) {   // 1년·3개월 세로 배치 (폭을 줄여 세로형 이미지로)
@@ -680,9 +680,9 @@ function render(n) {
   return cache[n];
 }
 let prerenderTimer;
-function prerender() { clearTimeout(prerenderTimer); prerenderTimer = setTimeout(() => render(currentPage).catch(() => {}), 400); }
+function prerender() { clearTimeout(prerenderTimer); if (currentPage === 2) return; prerenderTimer = setTimeout(() => render(currentPage).catch(() => {}), 400); }   // 실거래는 거래가 많아 누를 때만 만듦
 window.addEventListener('load', prerender);
-try { const saved = +localStorage.getItem('busanPage2'); if (saved >= 2 && saved <= MAXPAGE) showPage(saved); } catch (e) {}
+try { const saved = +localStorage.getItem('busanPage2'); if (saved >= 2 && saved <= MAXPAGE && document.getElementById('page' + saved)) showPage(saved); } catch (e) {}
 
 function busy(id, on, text) {
   const b = document.getElementById(id);
@@ -802,6 +802,96 @@ function download(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 function closeSheet() { document.getElementById('save-sheet').hidden = true; }
+
+// ---------------- 실거래 (카드형·리스트형) ----------------
+const TDATA = JSON.parse(document.getElementById('tdata').textContent || '[]');
+const TR = { k: 'all', hi: false, t: 'all', v: 'card' };
+const GLOGO = '<svg viewBox="0 0 60 44"><path d="M3 19 L17 5 L31 19 V41 H3 Z" fill="#5b6472" stroke="#5b6472" stroke-width="4" stroke-linejoin="round"/><rect x="9" y="22" width="7" height="7" rx="1.5" fill="#fff"/><path d="M25 26 L40 12 L55 26 V41 H25 Z" fill="#fff" stroke="#fff" stroke-width="8" stroke-linejoin="round"/><path d="M25 26 L40 12 L55 26 V41 H25 Z" fill="#5b6472" stroke="#5b6472" stroke-width="4" stroke-linejoin="round"/><rect x="36" y="27" width="8" height="8" rx="1.5" fill="#fff"/></svg>';
+const SHARE_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>';
+const tMan = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() + '만' : '') || '0'; };
+const tShort = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() : '') || '0'; };
+const tBig = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? `${e}<small>억</small>` : '') + (r ? ` ${r.toLocaleString()}<small>만</small>` : '') || '0'; };
+const tEok = v => (Math.round(v / 1000) / 10).toFixed(1).replace(/\.0$/, '') + '억';
+const tTy = t => t === '84타입' ? ['ty84', '84'] : t === '59타입' ? ['ty59', '59'] : ['tyx', '기타'];
+const tDt = s => `${s.slice(2, 4)}.${s.slice(4, 6)}.${s.slice(6)}`;
+const tFl = f => /^-?\d+$/.test(String(f)) ? f + '층' : (f || '-');
+const tConv = r => r.p + (r.m || 0) * 250;
+function tRows() {
+  return TDATA.filter(r => (TR.k === 'all' || (TR.k === 'sale' ? r.k !== 'rent' : r.k === 'rent')) && (!TR.hi || r.up) && (TR.t === 'all' || r.ty === TR.t));
+}
+function tCard(r, i) {
+  const [tc, tl] = tTy(r.ty), now = +DATE.slice(0, 4);
+  const kl = r.k === 'sale' ? ['sale', '매매'] : r.k === 'pre' ? ['pre', '분양권'] : r.m ? ['wol', '월세'] : ['jeon', '전세'];
+  const badge = r.up ? `<span class="tbadge hi">신고가 +${tMan(r.p - (r.b || r.p))}</span>`
+    : r.k === 'pre' ? '<span class="tbadge pre">분양권</span>'
+    : r.b && !r.m ? `<span class="tbadge to">신고가까지 ${tMan(r.b - r.p)}</span>` : '';
+  const yr = r.ad ? (+r.ad.slice(0, 4) > now ? `${r.ad.slice(2, 4)}년 입주 예정` : `${r.ad.slice(2, 4)}년 입주(${now - +r.ad.slice(0, 4) + 1}년차)`) : '';
+  const meta = [`${r.gu} ${r.u}`.trim(), yr, r.hh ? `${r.hh.toLocaleString()}세대` : '', `3M 거래 <b>${r.c3}</b>건`].filter(Boolean).join(' · ');
+  const price = r.m ? `${r.p ? tBig(r.p) : '0'}<small>/</small>${r.m.toLocaleString()}<small>만</small>` : tBig(r.p);
+  const foot = r.k === 'rent' ? '' : r.j ? `최근 1M 전세가 평균 <b>${tEok(r.j)}</b> · 갭 <b>${tEok(r.p - r.j)}</b>` : '최근 1M 전세 거래 없음';
+  return `<div class="tcard ${r.up ? 'hi' : ''}" data-i="${i}">
+    <div class="c1"><span class="ty ${tc}">${tl}</span><span class="nm">${r.n}</span>${badge}</div>
+    <div class="c2">${meta}</div>
+    <div class="c3"><div class="price"><span class="kl ${kl[0]}">${kl[1]}</span><span class="v">${price}</span></div><button class="tshare" type="button" aria-label="공유" onclick="shareCard(this)">${SHARE_I}</button></div>
+    <div class="c4"><span class="spec">${r.a.toFixed(2)}㎡<i>·</i>${r.py}평<i>·</i>${tFl(r.f)}</span><span class="dt">${tDt(r.dt)} 계약</span></div>
+    <div class="c5"><span class="ft">${foot}</span><span class="logo-slot">${GLOGO}옆집얼마</span></div></div>`;
+}
+function tList(title, cls, rs, sub, rc) {
+  return `<div class="q ${cls} tq" data-part="tl-${cls}"><h3>${title} ${rs.length.toLocaleString()}건 <small>${sub}</small></h3>` + (rs.length ? rs.map((r, i) => {
+    const [tc, tl] = tTy(r.ty);
+    const pr = r.m ? `<span class="pr w"><span class="wtag">월</span>${r.p ? tShort(r.p) : '0'}/${r.m.toLocaleString()}</span>` : `<span class="pr${r.k === 'rent' ? ' j' : ''}">${tShort(r.p)}</span>`;
+    return `<div class="r"><span class="rkc ${rc} ${i >= 3 ? 'lt' : ''}">${i + 1}</span><span class="nm"><span class="ty ${tc}">${tl}</span><span class="nt">${r.n}</span>${r.ty === '기타' && r.py ? `<span class="pyg">${r.py}평</span>` : ''}${r.k === 'pre' ? '<span class="ptag">분양권</span>' : ''}${r.up ? '<span class="stk">신고가</span>' : ''}</span><span class="sub">${tFl(r.f)}</span>${pr}</div>`;
+  }).join('') : '<div class="empty">해당 거래가 없습니다</div>') +
+    `<div class="pshare"><button type="button" onclick="sharePart(this.closest('.q'), this)">${SHARE_I}공유</button></div></div>`;
+}
+function tRender() {
+  const rs = tRows(), out = document.getElementById('tout');
+  document.getElementById('tcnt').textContent = `${rs.length.toLocaleString()}건 · ${TR.k === 'rent' ? '보증금순' : '금액순'}`;
+  if (TR.v === 'card') out.innerHTML = rs.length ? rs.map(r => tCard(r, TDATA.indexOf(r))).join('') : '<div class="empty">해당 거래가 없습니다</div>';
+  else {
+    const s = rs.filter(r => r.k !== 'rent'), t = rs.filter(r => r.k === 'rent').sort((a, b) => tConv(b) - tConv(a));
+    out.innerHTML = (TR.k !== 'rent' ? tList('매매', 's', s, '금액순 · 분양권 포함', 'cs') : '') + (TR.k !== 'sale' ? tList('전월세', 'j', t, '보증금순', 'cj') : '');
+  }
+  delete cache[2];
+  partCache.clear && partCache.clear();
+}
+function tSet(sel, attr, key) {
+  document.querySelectorAll(sel).forEach(b => b.onclick = () => {
+    TR[key] = b.dataset[attr];
+    document.querySelectorAll(sel).forEach(x => x.classList.toggle('on', x === b));
+    tRender();
+  });
+}
+tSet('#tf1 [data-k]', 'k', 'k'); tSet('#tft [data-t]', 't', 't'); tSet('#tfv [data-v]', 'v', 'v');
+document.getElementById('tfhi').onclick = e => { TR.hi = !TR.hi; e.currentTarget.classList.toggle('on', TR.hi); tRender(); };
+function goTrade(k) {   // 요약 카드 → 실거래 탭 (매매/전월세 필터)
+  TR.k = k; TR.hi = false;
+  document.querySelectorAll('#tf1 [data-k]').forEach(x => x.classList.toggle('on', x.dataset.k === k));
+  document.getElementById('tfhi').classList.remove('on');
+  tRender(); showPage(2);
+}
+async function shareCard(btn) {   // 카드 1장 이미지 (오른쪽 아래 회색 로고)
+  const el = btn.closest('.tcard'), label = btn.innerHTML;
+  btn.disabled = true;
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const canvas = await html2canvas(el, {
+      scale: 2, backgroundColor: null, useCORS: true, windowWidth: 420, scrollX: 0, scrollY: -window.scrollY,
+      onclone: doc => {
+        const c = doc.querySelector(`.tcard[data-i="${el.dataset.i}"]`);
+        c.closest('.page').hidden = false;
+        c.classList.add('capturing');
+        c.style.width = '390px';
+        c.querySelector('.tshare').style.visibility = 'hidden';
+      }
+    });
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const r = TDATA[+el.dataset.i];
+    shareFiles([Object.assign(new File([blob], `${REGION}_${DATE}_${r.n}.png`, { type: 'image/png' }), { en: `apt_${DATE}_card${el.dataset.i}.png` })]);
+  } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); }
+  finally { btn.disabled = false; btn.innerHTML = label; }
+}
+tRender();
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "abacec54a0cc4c2a9c18d8b390e67068"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
