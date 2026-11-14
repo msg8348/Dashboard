@@ -117,12 +117,40 @@ def collect(hist, sale, rent, oldest_ym):
     return apts
 
 
+NUM = re.compile(r"(제?\d+단지|\d+차)\)?$")
+
+
+def merge_split(apts, ckey):
+    """국토부가 한 단지를 'OO아파트'(입주 초기)와 'OO1단지'로 따로 등록한 경우: 번호 없는 쪽을 같은 법정동의
+    같은 이름 번호 단지 중 거래가 가장 많은 곳에 합친다. {합쳐진 단지번호: 대표 단지번호} 반환."""
+    groups = defaultdict(list)
+    for k, a in apts.items():
+        groups[(a["c"], a["u"], ckey(a["n"]))].append(k)
+    alias = {}
+    for ks in groups.values():
+        if len(ks) < 2:
+            continue
+        numbered = [k for k in ks if NUM.search(apts[k]["n"].replace(" ", ""))]
+        plain = [k for k in ks if k not in numbered]
+        if not numbered or not plain:
+            continue
+        to = max(numbered, key=lambda k: len(apts[k]["s"]) + len(apts[k]["r"]))
+        for k in plain:
+            a, b = apts.pop(k), apts[to]
+            b["s"] = sorted(b["s"] + a["s"], key=lambda x: -x[0])
+            b["r"] = sorted(b["r"] + a["r"], key=lambda x: -x[0])
+            b["by"] = b["by"] or a["by"]
+            alias[k] = to
+    return alias
+
+
 def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, ckey, site_url):
     """시도 하나의 단지 페이지를 만들고 (단지번호 집합, 검색 목록, 주소 목록) 반환."""
     hist = load_hist(hist_dir, sd["key"])
     if not hist:
         return set(), [], []
     apts = collect(hist, sdb["sale"]["trades"], sdb["rent"]["trades"], oldest_ym)
+    alias = merge_split(apts, ckey)
     idx = kapt_index(sd["sido"])
     tpl = env.get_template("apt.html")
     out_dir = os.path.join(site, sdir, APT_DIR)
@@ -158,5 +186,11 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
         done.add(k)
         search.append([a["n"], f"{sd['short']} {gu} {a['u']}".strip(), f"{sdir}/{APT_DIR}/{k}.html", len(a["s"])])
         urls.append(ctx["page_url"])
+    for k, to in alias.items():   # 합친 단지번호 → 대표 단지 페이지로 이동
+        if to in done:
+            with open(os.path.join(out_dir, f"{k}.html"), "w", encoding="utf-8") as f:
+                f.write(f'<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url={to}.html">'
+                        f'<link rel="canonical" href="{to}.html"><script>location.replace("{to}.html")</script>')
+            done.add(k)
     print(f"🏢 {sd['short']}: 단지 페이지 {len(done):,}개 (K-apt 정보 연결 포함)")
     return done, search, urls
