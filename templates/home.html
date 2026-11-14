@@ -106,7 +106,7 @@
 <template id="sh{{ loop.index0 }}">
   <div class="grab"></div>
   <h2><span>{{ s.sido }}{% if s.chips %}<small>{{ s.chips|length }}개 {{ s.l2_word }}</small>{% endif %}</span><button class="x" onclick="closeSheet()">✕</button></h2>
-  <a class="all" href="{{ s.href }}"><b>{{ s.sido }} 전체 보기</b><span>신규 {{ "{:,}".format(s.cnt) }}건 · 신고가 {{ s.high }}건 · 지표단지 포함 ›</span></a>
+  <a class="all" href="{{ s.href }}"><b>{{ s.sido }} 전체 보기</b><span>신규 {{ "{:,}".format(s.cnt) }}건 · 신고가 {{ s.high }}건 ›</span></a>
   {% if s.chips %}<div class="lv2">{% for c in s.chips %}<a class="chip" href="{{ c.href }}"><b>{{ c.name }}</b><span>{{ c.cnt }}건{% if c.high %}<em>▲{{ c.high }}</em>{% endif %}</span></a>{% endfor %}</div>{% endif %}
 </template>
 {% endfor %}
