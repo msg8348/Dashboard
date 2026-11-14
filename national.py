@@ -268,6 +268,28 @@ def subset(dbs, codes):
             for src, db in dbs.items()}
 
 
+def subset_asof(dbs, codes, day):
+    """그날(day, YYYYMMDD)까지 공개된 거래만 + 그날의 신고가 기준값 — 지난 날짜 화면용."""
+    out = {}
+    for src, db in dbs.items():
+        out[src] = {"trades": [t for t in db["trades"] if t.get("c") in codes and (t.get("seen") or "") <= day],
+                    "highs3": (db.get("highs3_by") or {}).get(day, {})}
+    return out
+
+
+def date_opts(days, cur, fname, archived):
+    """날짜 선택 목록 [(라벨, 주소, 선택)] — 오늘 페이지는 ./, 지난 날짜는 ./d{날짜}/ 폴더."""
+    out = []
+    for i, d in enumerate(days):
+        lbl = f"{d[2:4]}.{d[4:6]}.{d[6:]}"
+        if i == 0:
+            href = f"../{fname}" if archived else fname
+        else:
+            href = f"../d{d}/{fname}" if archived else f"d{d}/{fname}"
+        out.append((lbl, href, d == cur))
+    return out
+
+
 def avg84(sale, today, days=30):
     d0 = (today - timedelta(days=days)).strftime("%Y%m%d")
     p = [t["p"] for t in sale if t["dt"] > d0 and 78 <= t["a"] <= 88]
@@ -353,6 +375,19 @@ def main():
                     with open(D.SOURCES[src][1], encoding="utf-8") as f:
                         prev = json.load(f).get("highs3")
                 db["highs3"] = prev or {}
+    # 부산 11.13 신고가 기준값: 날짜별 보관 이전이라 예전 부산 전용 DB 값 사용
+    for src in ("sale", "rent"):
+        db = dbs[src].get(BUSAN)
+        if db is not None and "20261113" not in (db.get("highs3_by") or {}) and os.path.exists(D.SOURCES[src][1]):
+            with open(D.SOURCES[src][1], encoding="utf-8") as f:
+                legacy = json.load(f).get("highs3")
+            if legacy:
+                db.setdefault("highs3_by", {})["20261113"] = legacy
+    today_s = now.strftime("%Y%m%d")
+    d7 = (now - timedelta(days=6)).strftime("%Y%m%d")
+    seen_days = {t.get("seen") for src in ("sale", "rent") for db in dbs[src].values() for t in db["trades"]}
+    days = [today_s] + sorted((d for d in seen_days if d and d7 <= d < today_s), reverse=True)
+    print(f"🗓️ 날짜 선택: {', '.join(days)}")
     env = Environment(loader=FileSystemLoader("templates"), autoescape=True)
     tpl = env.get_template("report_template.html")
     shutil.rmtree(SITE, ignore_errors=True)
@@ -382,7 +417,8 @@ def main():
         os.makedirs(os.path.join(SITE, sdir), exist_ok=True)
         base = {"date_label": now.strftime("%y.%m.%d"), "date_full": now.strftime("%Y%m%d"), "notices": [],
                 "l2_word": l2_word, "home_href": "../index.html", "root": "../", "site_url": SITE_URL,
-                "l2opts": sorted([(l["name"], f"{l2slug[l['key']]}.html") for l in sd["l2"]]) if len(sd["l2"]) > 1 else []}   # 가나다순
+                "l2opts": sorted([(l["name"], f"{l2slug[l['key']]}.html") for l in sd["l2"]]) if len(sd["l2"]) > 1 else [],   # 가나다순
+                "dates": date_opts(days, today_s, "index.html", False)}
         if not ready:
             base["notices"].append("이 지역은 실거래 데이터를 수집하고 있습니다. 며칠 안에 채워집니다.")
         # --- 레벨1
@@ -409,13 +445,13 @@ def main():
             for src, h in (("sale", highs_s), ("rent", highs_r)):
                 by = sdb[src].setdefault("highs3_by", {})
                 by[now.strftime("%Y%m%d")] = h
-                for d in sorted(by)[:-3]:
+                for d in sorted(by)[:-8]:
                     by.pop(d)
             sdb["sale"]["highs3"], sdb["rent"]["highs3"] = highs_s, highs_r
         l2_hh = {l2_name[k]: sum(r["households"] for r in rows) for k, rows in kapt_l2.items()}
         if key == BUSAN:
-            ind = D.build_indicator(sdb["sale"]["trades"], now, l2_hh, D.INDICATOR_COMPLEXES, "d",
-                                    [l["name"] for l in sd["l2"]])
+            ind_args = (l2_hh, D.INDICATOR_COMPLEXES, "d", [l["name"] for l in sd["l2"]])
+            ind = D.build_indicator(sdb["sale"]["trades"], now, *ind_args)
             rule = "부산 지표단지 21곳 (직접 지정)"
         else:
             complete = {l["key"] for l in sd["l2"] if all(f"{c}|{ym}" in fetched for c in l["codes"] for ym in months)}
@@ -423,7 +459,8 @@ def main():
             cx = {l2_name[k]: [{"name": p["name"], "households": p["households"],
                                 "keywords": p.get("names") or [p["name"]], "exact": True, "avg84": D.fmt_short(p["avg84"]) if p["avg84"] else "",
                                 "rule": p.get("rule", "")}] for k, p in picks.items()}
-            ind = D.build_indicator(sdb["sale"]["trades"], now, l2_hh, cx, "l2", [l["name"] for l in sd["l2"]])
+            ind_args = (l2_hh, cx, "l2", [l["name"] for l in sd["l2"]])
+            ind = D.build_indicator(sdb["sale"]["trades"], now, *ind_args)
             rule = f"{l2_word}별 최근 1년 84타입 평균거래가 상위 5위 안에서 거래량 최다 단지 · 84타입 거래가 없으면 거래 최다 단지 · {quarter(now)} 고정"
         ctx = dict(base, sale=sale_ctx, rent=rent_ctx, indicator=ind, has_ind=bool(ind["count"]), level=1,
                    region=sd["short"], region_full=sd["sido"], ind_rule=rule,
@@ -440,6 +477,7 @@ def main():
             for l in sd["l2"]:
                 s2, r2, _, _ = D.build_trades(subset(sdb, set(l["codes"])), now, cinfo)
                 c2 = dict(base, sale=s2, rent=r2, indicator=None, has_ind=False, level=2,
+                          dates=date_opts(days, today_s, f"{l2slug[l['key']]}.html", False),
                           region=l["name"], region_full=f"{sd['sido']} {l['name']}",
                           crumbs=[("전국", "../index.html"), (sd["short"], "index.html"), (l["name"], None)],
                           page_url=f"{SITE_URL}/{sdir}/{l2slug[l['key']]}.html",
@@ -451,6 +489,32 @@ def main():
                     f.write(tpl.render(c2))
                 chips.append({"name": l["name"], "href": f"{sdir}/{l2slug[l['key']]}.html", "cnt": s2["cnt"], "high": s2["high_cnt"]})
         chips.sort(key=lambda c: c["name"])   # 지역 선택 시트도 가나다순
+        # --- 지난 날짜 (최근 7일 중 신규 공개가 있었던 날) — /{시도}/d{날짜}/
+        for dd in days[1:]:
+            day = now.replace(year=int(dd[:4]), month=int(dd[4:6]), day=int(dd[6:]))
+            ddir = os.path.join(SITE, sdir, f"d{dd}")
+            os.makedirs(ddir, exist_ok=True)
+            arch = dict(base, date_label=day.strftime("%y.%m.%d"), date_full=dd, home_href="../../index.html", root="../../",
+                        archive=True, page_url=None)
+            s1, r1, _, _ = D.build_trades(subset_asof(sdb, set(sd["codes"]), dd), day, cinfo)
+            ind_d = D.build_indicator([t for t in sdb["sale"]["trades"] if (t.get("seen") or "") <= dd], day, *ind_args)
+            cd = dict(arch, sale=s1, rent=r1, indicator=ind_d, has_ind=bool(ind_d["count"]), level=1,
+                      region=sd["short"], region_full=sd["sido"], ind_rule=rule,
+                      crumbs=[("전국", "../../index.html"), (sd["short"], None)],
+                      dates=date_opts(days, dd, "index.html", True), seo_title=ctx["seo_title"], seo_desc=ctx["seo_desc"])
+            with open(os.path.join(ddir, "index.html"), "w", encoding="utf-8") as f:
+                f.write(tpl.render(cd))
+            if len(sd["l2"]) > 1:
+                for l in sd["l2"]:
+                    sl = l2slug[l["key"]]
+                    s2, r2, _, _ = D.build_trades(subset_asof(sdb, set(l["codes"]), dd), day, cinfo)
+                    c2 = dict(arch, sale=s2, rent=r2, indicator=None, has_ind=False, level=2,
+                              region=l["name"], region_full=f"{sd['sido']} {l['name']}",
+                              crumbs=[("전국", "../../index.html"), (sd["short"], "index.html"), (l["name"], None)],
+                              dates=date_opts(days, dd, f"{sl}.html", True),
+                              seo_title=f"{sd['short']} {l['name']} 아파트 실거래가·신고가 | 옆집얼마", seo_desc="")
+                    with open(os.path.join(ddir, f"{sl}.html"), "w", encoding="utf-8") as f:
+                        f.write(tpl.render(c2))
         home.append({"key": key, "short": sd["short"], "sido": sd["sido"], "href": f"{sdir}/index.html",
                      "ready": ready, "cnt": sale_ctx["cnt"], "high": sale_ctx["high_cnt"], "rent": rent_ctx["cnt"],
                      "avg84": avg84(sdb["sale"]["trades"], now), "l2_word": l2_word, "chips": chips})
