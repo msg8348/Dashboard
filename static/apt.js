@@ -22,17 +22,22 @@
   const TYPES = Object.keys(cnt).sort((a, b) => a - b);
   let cur = cnt['84'] ? '84' : TYPES.slice().sort((a, b) => cnt[b] - cnt[a])[0];
   let shown = 10, rshown = 10;
+  const isCur = t => cur === 'all' || grp(t[4]) === cur;
+  const curL = () => cur === 'all' ? '전체 평형' : cur + '㎡';
+  // 신고가 = 같은 평형에서 그때까지의 최고가를 넘은 거래 (전체 보기에서도 평형별로 판단)
+  const HI = new Set(), AREAS = {};
+  { const best = {}; S.slice().reverse().forEach(t => { const g = grp(t[4]); if (t[1] > (best[g] || 0)) { if (best[g]) HI.add(t); best[g] = t[1]; } }); }
+  S.concat(R).forEach(t => (AREAS[grp(t[4])] = AREAS[grp(t[4])] || new Set()).add(t[4]));
 
   function drawTypes() {
-    $('types').innerHTML = TYPES.length > 1 ? TYPES.map(k => `<button type="button" class="${k === cur ? 'on' : ''}" data-k="${k}">${k}㎡</button>`).join('') : '';
+    $('types').innerHTML = TYPES.length > 1 ? ['all', ...TYPES].map(k => `<button type="button" class="${k === cur ? 'on' : ''}" data-k="${k}">${k === 'all' ? '전체' : k + '㎡'}</button>`).join('') : '';
     $('types').querySelectorAll('button').forEach(b => b.onclick = () => { cur = b.dataset.k; shown = rshown = 10; draw(); });
   }
 
   function draw() {
     drawTypes();
-    const T = S.filter(t => grp(t[4]) === cur);              // 최신순
-    const areas = new Set(T.map(t => t[4]));
-    const tyL = t => (D.by >= 2020 && areas.size > 1) ? `${t[4]}㎡` : cur;   // 2020년 이후 단지에서 면적이 여러 개면 면적 그대로
+    const T = S.filter(isCur);              // 최신순 (전체 = 모든 평형)
+    const tyL = t => (D.by >= 2020 && AREAS[grp(t[4])].size > 1) ? `${t[4]}㎡` : grp(t[4]);   // 2020년 이후 단지에서 면적이 여러 개면 면적 그대로
     // 통계
     if (T.length) {
       const last = T[0], max = T.reduce((a, b) => b[1] > a[1] ? b : a), y1 = T.filter(t => t[0] >= d365).length;
@@ -48,11 +53,9 @@
     }
     chart(T);
     // 표: 신고가 = 그때까지의 최고가를 넘은 거래
-    const hi = new Set(); let best = 0;
-    T.slice().reverse().forEach(t => { if (t[1] > best) { if (best) hi.add(t); best = t[1]; } });
-    $('rows').innerHTML = T.length ? T.slice(0, shown).map(t => `<tr><td>${dL(t[0])}</td><td class="p">${hi.has(t) ? '<span class="stk">신고가</span>' : ''}${won(t[1])}</td>` +
+    $('rows').innerHTML = T.length ? T.slice(0, shown).map(t => `<tr><td>${dL(t[0])}</td><td class="p">${HI.has(t) ? '<span class="stk">신고가</span>' : ''}${won(t[1])}</td>` +
       `<td>${dong(t[3])}${t[2]}층</td><td class="ty">${tyL(t)}</td><td class="g">${t[5] ? '<span class="ok">✓</span>' : ''}</td></tr>`).join('')
-      : `<tr><td colspan="5" class="none">${cur}㎡ 매매 거래가 없습니다</td></tr>`;
+      : `<tr><td colspan="5" class="none">${curL()} 매매 거래가 없습니다</td></tr>`;
     const mb = $('more');
     mb.style.display = shown < T.length ? '' : 'none';
     mb.textContent = `더보기 (${(T.length - shown).toLocaleString()}건 남음)`;
@@ -62,8 +65,8 @@
 
   // ---- 전월세 (최근 13개월, 선택 평형)
   function rent(T) {
-    const RT = R.filter(t => grp(t[4]) === cur), J = RT.filter(t => !t[2]);
-    $('rtype').textContent = cur + '㎡';
+    const RT = R.filter(isCur), J = RT.filter(t => !t[2]);
+    $('rtype').textContent = curL();
     const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
     let ja = avg(J.filter(t => t[0] >= d92).map(t => t[1])), sa = avg(T.filter(t => t[0] >= d92).map(t => t[1]));
     if (!ja || !sa) { ja = avg(J.map(t => t[1])); sa = avg(T.filter(t => t[0] >= d365).map(t => t[1])); }
@@ -76,7 +79,7 @@
       `<div><small>1년 거래</small><b class="k">${y1.length}건</b><em>전세 ${y1.filter(t => !t[2]).length} · 월세 ${y1.filter(t => t[2]).length}</em></div>`) : '';
     $('rrows').innerHTML = RT.length ? RT.slice(0, rshown).map(t => `<tr><td>${dL(t[0])}</td><td>${t[3]}층</td>` +
       (t[2] ? `<td class="p w">월 ${won(t[1])}/${t[2].toLocaleString()}</td>` : `<td class="p">${won(t[1])}</td>`) + '</tr>').join('')
-      : `<tr><td colspan="3" class="none">최근 13개월 ${cur}㎡ 전월세 거래가 없습니다</td></tr>`;
+      : `<tr><td colspan="3" class="none">최근 13개월 ${curL()} 전월세 거래가 없습니다</td></tr>`;
     const mb = $('rmore');
     mb.style.display = rshown < RT.length ? '' : 'none';
     mb.textContent = `더보기 (${(RT.length - rshown).toLocaleString()}건 남음)`;

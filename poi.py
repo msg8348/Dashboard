@@ -22,6 +22,7 @@ KEEP_DAYS = 180
 MAX_STATION_M = 2000   # 이보다 멀면 지하철 '-'
 MAX_BUS_M = 800
 MAX_SCHOOL_M = 2000
+BUS_RETRY = False   # TAGO 승인 후 True 로 바꾸면 버스만 빠진 단지를 다시 찾음
 
 
 def walk_min(m):
@@ -57,7 +58,7 @@ def bus(x, y):
         it = (it or {}).get("item") or []
         it = it if isinstance(it, list) else [it]
     except Exception:
-        return None
+        return False                      # 서비스 미승인·오류 → 버스 칸 숨김
     best = None
     for s in it:
         d = _dist(x, y, s.get("gpslong"), s.get("gpslati"))
@@ -90,6 +91,8 @@ def find(addr, name):
     if best:
         out["st"] = [best[0], walk_min(best[1])]
     b = bus(x, y)
+    if b is not False:
+        out["bk"] = 1                     # 버스 정보 확인됨 (없으면 '-')
     if b:
         out["bus"] = [b[0], walk_min(b[1])]
     return out
@@ -101,7 +104,7 @@ def update(cache, targets, today, budget=1500, workers=6):
         return 0
     t = today.strftime("%Y%m%d")
     todo = [(k, a, n) for k, (a, n) in targets.items()
-            if k not in cache or (datetime.strptime(t, "%Y%m%d") - datetime.strptime(cache[k].get("d", "20000101"), "%Y%m%d")).days > KEEP_DAYS]
+            if k not in cache or (KAKAO and MOLIT and not cache[k].get("bk") and cache[k].get("x") and BUS_RETRY) or (datetime.strptime(t, "%Y%m%d") - datetime.strptime(cache[k].get("d", "20000101"), "%Y%m%d")).days > KEEP_DAYS]
     todo = todo[:budget]
     done = 0
 

@@ -25,7 +25,7 @@
     <div><b>{% if info.hh %}{{ "{:,}".format(info.hh) }}세대{% else %}-{% endif %}</b></div>
     <div><b>{% if info.bd %}{{ info.bd }}개동{% endif %}{% if info.bd and info.mf %} · {% endif %}{% if info.mf %}{{ info.mf }}층{% endif %}{% if not info.bd and not info.mf %}-{% endif %}</b></div>
     <div><b>{% if info.pk %}주차 {{ info.pk }}대{% else %}주차 -{% endif %}</b></div>
-    {% if poi %}{% for k, lbl in (('sc', '초등학교'), ('st', '지하철'), ('bus', '버스')) %}<div><b>{% if poi[k] %}{{ '버스' if k == 'bus' else poi[k][0] }} {{ poi[k][1] }}분{% else %}{{ lbl }} -{% endif %}</b></div>{% endfor %}{% endif %}
+    {% if poi %}{% for k, lbl in (('sc', '초등학교'), ('st', '지하철'), ('bus', '버스')) if k != 'bus' or poi.bk %}<div><b>{% if poi[k] %}{{ '버스' if k == 'bus' else poi[k][0] }} {{ poi[k][1] }}분{% else %}{{ lbl }} -{% endif %}</b></div>{% endfor %}{% endif %}
   </div>{% endif %}
 </section>
 
