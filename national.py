@@ -457,7 +457,7 @@ def main():
             l2slug[l["key"]] = sl
         os.makedirs(os.path.join(SITE, sdir), exist_ok=True)
         if key in APT_SIDOS:   # 단지 페이지 (과거 실거래가 있는 시도)
-            done, srch, aurls = CX.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, ckey, SITE_URL)
+            done, srch, aurls = CX.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, ckey, SITE_URL, STORE)
             D.APT_PAGES |= done
             search += srch
             urls += aurls
