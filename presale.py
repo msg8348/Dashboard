@@ -125,14 +125,18 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         gen = sum(t[1] for t in types)
         total = nt.get("total") if nt.get("total", 0) >= gen else 0
         hh = f"총 {total:,}세대 (일반분양 {h.get('total') or gen:,})" if total and total != (h.get("total") or gen) else f"분양 {h.get('total') or gen:,}세대"
-        meta = " · ".join(x for x in ("분양권", f"{mv[:4]}년 {int(mv[4:6])}월 입주예정" if len(mv) == 6 else "", hh) if x)
-        data = {"ty": [[t[2], t[1], t[3]] for t in types], "t": trades, "scan": sorted(prices),
+        gen_n = h.get("total") or gen
+        meta = f"{mv[2:4]}년 {int(mv[4:6])}월 입주예정" if len(mv) == 6 else ""
+        hh_all = total or gen_n
+        pk = round(nt["pk"] / hh_all, 1) if nt.get("pk") and hh_all and 0.3 <= nt["pk"] / hh_all <= 4 else 0
+        data = {"ty": [[t[2], t[1], t[3]] for t in types], "t": trades, "scan": sorted(prices), "hh": hh_all,
                 "rng": {l: [min(r[2] for r in v), max(r[2] for r in v)] for l, v in (prices or {}).items()}}
         pp = pcache.get(f"pre:{hid}") or {}
-        ctx = {"poi": pp if pp.get("x") else None, "name": h["name"], "fav": [h["name"], f"{sd['short']} {gu} · 분양권", f"{sdir}/{PRE_DIR}/{hid}.html"], "addr": h["addr"].replace(sd["sido"], sd["short"]), "meta": meta, "crumbs": crumbs,
+        ctx = {"poi": pp if pp.get("x") else None, "name": h["name"], "fav": [h["name"], f"{sd['short']} {gu} · 분양권", f"{sdir}/{PRE_DIR}/{hid}.html"], "addr": h["addr"].replace(sd["sido"], sd["short"]), "loc2": gu + (" " + next((w for w in h["addr"].split() if w[-1] in "동리가읍면" and not w[0].isdigit()), "") if gu else ""), "meta": meta, "crumbs": crumbs,
                "root": "../../", "today": now.strftime("%Y%m%d"), "data": data, "map_q": f"{h['addr']} {h['name']}",
                "info": {"gen": h.get("total") or gen, "total": total, "mv": f"{mv[:4]}.{mv[4:]}" if len(mv) == 6 else "-",
-                        "pbl": (h.get("pbl") or "")[:7].replace("-", "."), "builder": h.get("builder") or "-", "n": len(trades)},
+                        "pbl": (h.get("pbl") or "")[:7].replace("-", "."), "builder": h.get("builder") or "-", "n": len(trades),
+                        "hh": hh_all, "bd": nt.get("bd", 0), "mf": nt.get("fl", 0), "pk": pk},
                "page_url": f"{site_url}/{sdir}/{PRE_DIR}/{hid}.html",
                "seo_title": f"{h['name']} 분양권 실거래가·프리미엄 ({sd['short']} {gu}) | 옆집얼마",
                "seo_desc": f"{h['name']} 분양권 실거래가와 타입·층별 분양가 대비 프리미엄, 입주예정 {mv[:4]}년 — 옆집얼마"}
