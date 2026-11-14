@@ -53,10 +53,10 @@ jobs:
             git --work-tree=store checkout FETCH_HEAD -- .
             git reset -q
           fi
-          mkdir -p hist   # 과거 분양권(분양 이후 누적 거래 수) — history 브랜치의 pre_*.json.gz
+          mkdir -p hist   # 과거 분양권(pre_*) + 단지 페이지용 과거 매매(26 = 부산) — history 브랜치
           if git ls-remote --exit-code --heads origin history >/dev/null; then
             git fetch --depth 1 origin history
-            files=$(git ls-tree --name-only FETCH_HEAD | grep '^pre_' || true)
+            files=$(git ls-tree --name-only FETCH_HEAD | grep -E '^(pre_|26\.json\.gz$)' || true)
             [ -n "$files" ] && git --work-tree=hist checkout FETCH_HEAD -- $files && git reset -q
           fi
           du -sh store hist || true

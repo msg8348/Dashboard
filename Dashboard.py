@@ -39,6 +39,7 @@ SOURCES = {
     "pre": (f"{API}/RTMSDataSvcSilvTrade/getRTMSDataSvcSilvTrade", "data/presale_db.json", "분양권 전매"),
     "rent": (f"{API}/RTMSDataSvcAptRent/getRTMSDataSvcAptRent", "data/rent_db.json", "아파트 전월세"),
 }
+APT_PAGES = set()   # 단지 페이지가 만들어진 단지번호 (national.py 가 채움)
 WINDOW_MONTHS = 13   # DB 에 보관할 개월 수 (1년 회전율 계산용)
 REFRESH_MONTHS = 3   # 매일 다시 받아올 최근 개월 수
 LIST_LEN = 15        # 타입별 리스트 최대 건수
@@ -403,6 +404,8 @@ def trade_card(t, cnt3, jeon1, cinfo, sale1=None):
          "a": round(t["a"], 2), "py": pyeong(t["a"]), "f": t["f"], "dt": t["dt"], "p": t["p"], "c3": cnt3.get(key, 0)}
     if t.get("m"):
         r["m"] = t["m"]
+    if t.get("s") and t["s"] in APT_PAGES:
+        r["h"] = t["s"]   # 단지 페이지 있음
     if t.get("up"):
         r["up"] = 1
     if t.get("prev"):

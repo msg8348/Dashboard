@@ -55,6 +55,8 @@
   .topbar{position:sticky;top:0;z-index:15;margin-top:-20px;padding-top:calc(20px - 8px);padding-bottom:8px;background:rgba(238,241,244,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 0 0 100vmax rgba(238,241,244,.94);clip-path:inset(0 -100vmax)}
   .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}
   .menu-btn .ic{width:22px;height:22px}
+  .tbtns{display:flex;gap:8px}
+  .tcard[data-h],.q .r[data-h]{cursor:pointer}
   body{padding-bottom:92px}
   .bnav{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(560px,calc(100% - 28px));display:flex;padding:5px;border-radius:999px;z-index:20;transition:transform .3s ease;
     background:#fff;border:1px solid #dfe5ea;box-shadow:0 8px 30px rgba(20,30,60,.16)}
@@ -390,7 +392,7 @@
 {% set colcolor = {'84타입': 'var(--blue)', '59타입': 'var(--teal)', '기타': '#6b7686'} %}
 
 <div class="wrap">
-<div class="topbar">{{ brand(home_href|default('./')) }}<button class="menu-btn" type="button" aria-label="메뉴" onclick="openMenu()">{{ ic('menu') }}</button></div>
+<div class="topbar">{{ brand(home_href|default('./')) }}<span class="tbtns"><button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button class="menu-btn" type="button" aria-label="메뉴" onclick="openMenu()">{{ ic('menu') }}</button></span></div>
 {% if crumbs %}<nav class="crumb">{% for c in crumbs %}{% if loop.last and l2opts and level == 2 %}{% elif c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a><span class="sep">›</span>{% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}
 {%- if l2opts %}{% if level == 1 %}<span class="sep">›</span>{% endif %}<label class="l2sel"><select aria-label="{{ L2W }} 선택" onchange="if (this.value) location.href = this.value">
 <option value="{{ 'index.html' if level == 2 else '' }}"{% if level == 1 %} selected{% endif %}>{{ L2W }} 전체</option>
@@ -629,6 +631,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu();
 })();
 
 const DATE = '{{ date_full }}';
+const APTB = '{{ apt_base|default('') }}';
 const REGION = '{{ RG }}', MAXPAGE = {{ 4 if has_ind else 2 }};
 // 페이지별 저장 이미지 (지표단지는 2장: 1년·3개월 / 상세)
 const SHOTS = {
@@ -842,7 +845,7 @@ function tCard(r, i) {
     : r.k === 'pre'
     ? (r.sup ? `${tyLbl} ${r.sup.toLocaleString()}세대 중 <b>${(r.pc || 0).toLocaleString()}건</b>(${pct(r.pc || 0, r.sup)}) 거래` : `분양 이후 <b>${(r.pc || 0).toLocaleString()}건</b> 거래`)
     : r.j ? `최근 1개월 전세가 평균 <b>${tEok(r.j)}</b> · 갭 <b>${tEok(r.p - r.j)}</b> (${pct(r.j, r.p)})` : '최근 1개월 전세 거래 없음';
-  return `<div class="tcard ${r.up ? 'hi' : ''}" data-i="${i}">
+  return `<div class="tcard ${r.up ? 'hi' : ''}" data-i="${i}"${r.h && APTB ? ` data-h="${r.h}"` : ''}>
     <div class="c1"><span class="ty ${tc}">${tl}</span><span class="nm">${r.n}</span>${badge}</div>
     <div class="c2">${meta}</div>
     <div class="c3"><div class="price"><span class="kl ${kl[0]}">${kl[1]}</span><span class="v">${price}</span></div><button class="tshare" type="button" aria-label="공유" onclick="shareCard(this)">${SHARE_I}</button></div>
@@ -853,7 +856,7 @@ function tList(title, cls, rs, sub, rc) {
   return `<div class="q ${cls} tq" data-part="tl-${cls}"><h3>${title} ${rs.length.toLocaleString()}건 <small>${sub}</small></h3>` + (rs.length ? rs.map((r, i) => {
     const [tc, tl] = tTy(r.ty);
     const pr = r.m ? `<span class="pr w"><span class="wtag">월</span>${r.p ? tShort(r.p) : '0'}/${r.m.toLocaleString()}</span>` : `<span class="pr${r.k === 'rent' ? ' j' : ''}">${tShort(r.p)}</span>`;
-    return `<div class="r"><span class="rkc ${rc} ${i >= 3 ? 'lt' : ''}">${i + 1}</span><span class="nm"><span class="ty ${tc}">${tl}</span><span class="nt">${r.n}</span>${r.ty === '기타' && r.py ? `<span class="pyg">${r.py}평</span>` : ''}${r.k === 'pre' ? '<span class="ptag">분양권</span>' : ''}${r.up ? '<span class="stk">신고가</span>' : ''}</span><span class="sub">${tFl(r.f)}</span>${pr}</div>`;
+    return `<div class="r"${r.h && APTB ? ` data-h="${r.h}"` : ''}><span class="rkc ${rc} ${i >= 3 ? 'lt' : ''}">${i + 1}</span><span class="nm"><span class="ty ${tc}">${tl}</span><span class="nt">${r.n}</span>${r.ty === '기타' && r.py ? `<span class="pyg">${r.py}평</span>` : ''}${r.k === 'pre' ? '<span class="ptag">분양권</span>' : ''}${r.up ? '<span class="stk">신고가</span>' : ''}</span><span class="sub">${tFl(r.f)}</span>${pr}</div>`;
   }).join('') : '<div class="empty">해당 거래가 없습니다</div>') +
     `<div class="pshare"><button type="button" onclick="sharePart(this.closest('.q'), this)">${SHARE_I}공유</button></div></div>`;
 }
@@ -904,8 +907,14 @@ async function shareCard(btn) {   // 카드 1장 이미지 (오른쪽 아래 회
   } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); }
   finally { btn.disabled = false; btn.innerHTML = label; }
 }
+document.getElementById('tout').addEventListener('click', e => {   // 카드·리스트 → 단지 페이지
+  if (e.target.closest('button')) return;
+  const el = e.target.closest('[data-h]');
+  if (el) location.href = APTB + el.dataset.h + '.html';
+});
 tRender();
 </script>
+<script src="{{ root|default('') }}search.js?v={{ date_full }}"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "abacec54a0cc4c2a9c18d8b390e67068"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
