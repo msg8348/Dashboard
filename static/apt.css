@@ -57,3 +57,4 @@ table{width:100%;border-collapse:collapse}
 .favb{width:40px;height:40px;flex:none;border:0;background:none;display:grid;place-items:center;color:#b4bcc8;cursor:pointer;margin:-4px -8px 0 0;padding:0}
 .favb svg{width:28px;height:28px}.favb.on{color:#f5b301}.favb.on svg{fill:#f5b301}
 .card>.addr{display:flex;align-items:center;gap:2px}.card>.addr .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.card>.addr .nmap{flex:none}
+.badge{white-space:nowrap}

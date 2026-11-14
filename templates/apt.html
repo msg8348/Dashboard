@@ -29,6 +29,11 @@
   </div>{% endif %}
 </section>
 
+<section class="card" id="act">
+  <div class="sec-t"><h2>거래 활발도</h2><small>매매 · 전체 타입</small></div>
+  <div class="act" id="actb"></div>
+</section>
+
 <section class="card" id="sale">
   <div class="sec-t"><h2>매매 실거래</h2><small id="srange"></small></div>
   <div class="types" id="types"></div>
@@ -45,10 +50,6 @@
   <button class="more" id="rmore" type="button">더보기</button>
 </section>
 
-<section class="card" id="act">
-  <div class="sec-t"><h2>거래 활발도</h2><small>매매 · 전체 타입</small></div>
-  <div class="act" id="actb"></div>
-</section>
 <p class="foot">국토교통부 실거래가 공개시스템 · K-apt 공동주택관리정보 기준 · 계약 해제 거래 제외</p>
 </div>
 <script type="application/json" id="adata">{{ data|tojson }}</script>
