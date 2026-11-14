@@ -382,7 +382,7 @@ def main():
         os.makedirs(os.path.join(SITE, sdir), exist_ok=True)
         base = {"date_label": now.strftime("%y.%m.%d"), "date_full": now.strftime("%Y%m%d"), "notices": [],
                 "l2_word": l2_word, "home_href": "../index.html", "root": "../", "site_url": SITE_URL,
-                "l2opts": [(l["name"], f"{l2slug[l['key']]}.html") for l in sd["l2"]] if len(sd["l2"]) > 1 else []}
+                "l2opts": sorted([(l["name"], f"{l2slug[l['key']]}.html") for l in sd["l2"]]) if len(sd["l2"]) > 1 else []}   # 가나다순
         if not ready:
             base["notices"].append("이 지역은 실거래 데이터를 수집하고 있습니다. 며칠 안에 채워집니다.")
         # --- 레벨1
@@ -433,6 +433,7 @@ def main():
                 with open(os.path.join(SITE, sdir, f"{l2slug[l['key']]}.html"), "w", encoding="utf-8") as f:
                     f.write(tpl.render(c2))
                 chips.append({"name": l["name"], "href": f"{sdir}/{l2slug[l['key']]}.html", "cnt": s2["cnt"], "high": s2["high_cnt"]})
+        chips.sort(key=lambda c: c["name"])   # 지역 선택 시트도 가나다순
         home.append({"key": key, "short": sd["short"], "sido": sd["sido"], "href": f"{sdir}/index.html",
                      "ready": ready, "cnt": sale_ctx["cnt"], "high": sale_ctx["high_cnt"], "rent": rent_ctx["cnt"],
                      "avg84": avg84(sdb["sale"]["trades"], now), "l2_word": l2_word, "chips": chips})
