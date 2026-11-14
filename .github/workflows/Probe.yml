@@ -22,4 +22,5 @@ jobs:
       - run: pip install -r requirements.txt
       - env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          KAKAO_API_KEY: ${{ secrets.KAKAO_API_KEY }}
         run: python tools/${{ inputs.script }}.py ${{ inputs.args }}

@@ -65,6 +65,7 @@ jobs:
         id: gen
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          KAKAO_API_KEY: ${{ secrets.KAKAO_API_KEY }}
           STORE_DIR: store
           HIST_DIR: hist
         run: |
