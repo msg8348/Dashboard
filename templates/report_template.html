@@ -764,6 +764,11 @@ async function sharePart(el, btn) {
           if (pr) head.lastElementChild.style.fontSize = doc.defaultView.getComputedStyle(pr).fontSize;
           if (c.classList.contains('qx')) head.style.padding = '12px 18px 26px';
           if (c.classList.contains('hl')) c.style.width = '520px';
+          if (c.classList.contains('sumind') || c.classList.contains('tbl')) {   // 지표단지·구별 표 단독 저장: 세로 1열 (휴대폰 폭)
+            c.style.width = '600px';
+            c.querySelectorAll('.bfgrid').forEach(g => { g.style.gridTemplateColumns = '1fr'; g.style.gridTemplateRows = 'none'; g.style.gridAutoFlow = 'row'; });
+            c.querySelectorAll('.bf').forEach(b => { b.style.borderRight = '0'; b.style.gridTemplateColumns = '26px 170px 1fr 2px 1fr'; });
+          }
           if (c.classList.contains('ind-two')) {
             Object.assign(c.style, { display: 'grid', gridTemplateColumns: '1fr', width: '640px', padding: '18px', background: '#fff', borderRadius: '22px' });
             head.style.gridColumn = '1 / -1';
