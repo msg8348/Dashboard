@@ -1,0 +1,68 @@
+{% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ seo_title }}</title>
+<meta name="description" content="{{ seo_desc }}">
+<link rel="canonical" href="{{ page_url }}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="옆집얼마">
+<meta property="og:title" content="{{ seo_title }}"><meta property="og:description" content="{{ seo_desc }}">
+<meta property="og:url" content="{{ page_url }}"><meta property="og:image" content="https://nextdoorprice.com/og.png">
+<link rel="icon" href="{{ root }}favicon.ico" sizes="any"><link rel="apple-touch-icon" href="{{ root }}apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="{{ root }}apt.css?v={{ today }}">
+<style>{{ brand_css() }}
+.ptag{display:inline-block;font-size:12px;font-weight:800;color:#c2185b;background:#fde7f0;border-radius:7px;padding:3px 8px;vertical-align:5px;margin-left:6px}
+.info small{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:2px}
+.pt th,.pt td{text-align:right}.pt th:first-child,.pt td:first-child{text-align:left}
+.pm{color:var(--red);font-weight:800}.pm.n{color:#2a4f8f}.tt th.pm{color:var(--muted);font-weight:700}
+.note{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5}
+.miss{font-size:11.5px;color:var(--muted);margin:12px 2px -4px}
+.stats b.p{color:var(--red)}.stats b.p.n{color:#2a4f8f}
+.lg{display:flex;gap:12px;font-size:11.5px;color:var(--ink-2);font-weight:700;margin:6px 2px 0}.lg i{display:inline-block;width:14px;height:0;border-top:2px solid #2754d6;vertical-align:3px;margin-right:4px}.lg i.d{border-top:2px dashed #c2185b}
+</style>
+</head>
+<body><div class="wrap">
+<div class="topbar">{{ brand(root ~ 'index.html') }}<span class="tbtns"><button class="sbtn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></span></div>
+<nav class="crumb">{% for c in crumbs %}{% if c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a><span class="sep">›</span>{% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}</nav>
+
+<section class="card">
+  <h1>{{ name }}<span class="ptag">분양권</span></h1>
+  <div class="addr">{{ addr }} <a class="nmap" href="https://map.naver.com/p/search/{{ map_q|urlencode }}" target="_blank" rel="noopener" aria-label="네이버지도에서 보기">N</a></div>
+  <div class="meta">{{ meta }}</div>
+  <div class="info">
+    <div><small>{{ '총 세대' if info.total else '분양 세대' }}</small><b>{{ "{:,}".format(info.total or info.gen) }}세대</b></div>
+    <div><small>입주 예정</small><b>{{ info.mv }}</b></div>
+    <div><small>모집 공고</small><b>{{ info.pbl or '-' }}</b></div>
+    <div><small>시공사</small><b>{{ info.builder }}</b></div>
+    <div><small>일반 분양</small><b>{{ "{:,}".format(info.gen) }}세대</b></div>
+    <div><small>분양권 거래</small><b>{{ "{:,}".format(info.n) }}건</b></div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="sec-t"><h2>타입별 분양가 · 프리미엄</h2><small id="pcap"></small></div>
+  <table class="tt pt"><thead><tr><th>타입</th><th>분양 세대</th><th>분양가</th><th>최근 3개월 평균</th><th>프리미엄</th></tr></thead><tbody id="ptab"></tbody></table>
+  <p class="note" id="pnote"></p>
+</section>
+
+<section class="card">
+  <div class="sec-t"><h2>분양권 실거래</h2><small>분양 이후 누적</small></div>
+  <div class="types" id="types"></div>
+  <div class="stats" id="stats"></div>
+  <div class="chart" id="chart"><svg id="svg"></svg><div class="tip" id="tip"></div></div>
+  <div class="lg"><span><i></i>월평균 거래가</span><span><i class="d"></i>분양가 평균</span></div>
+  <p class="miss" id="miss" hidden>상세 분양가 미스캔으로 최고 분양가 기준</p>
+  <table class="tt"><thead><tr><th>계약일</th><th class="p">금액</th><th>층</th><th>타입</th><th class="p pm">프리미엄</th></tr></thead><tbody id="rows"></tbody></table>
+  <button class="more" id="more" type="button">더보기</button>
+</section>
+<p class="foot">국토교통부 분양권 실거래 · 청약홈 분양정보·입주자모집공고 기준 · 프리미엄 = 거래가 − 분양가</p>
+</div>
+<script type="application/json" id="pdata">{{ data|tojson }}</script>
+<script>const TODAY = '{{ today }}';</script>
+<script src="{{ root }}pre.js?v={{ today }}"></script>
+<script src="{{ root }}search.js?v={{ today }}"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "abacec54a0cc4c2a9c18d8b390e67068"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

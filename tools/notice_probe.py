@@ -73,22 +73,16 @@ if not pdfs:
     sys.exit("PDF 를 찾지 못함")
 import pdfplumber
 
-for u, data in pdfs[:2]:
+for u, data in pdfs[:1]:
     print(f"\n======== PDF {u} ({len(data):,}B)")
     with pdfplumber.open(io.BytesIO(data)) as pdf:
         print("쪽수", len(pdf.pages))
-        shown = 0
-        for i, pg in enumerate(pdf.pages):
-            t = pg.extract_text() or ""
-            if not re.search(r"공급금액|분양가|분양금액", t):
-                continue
-            print(f"\n--- {i + 1}쪽 글자 (앞 2500자)\n{t[:2500]}")
-            for tb in pg.extract_tables()[:3]:
+        start = next((i for i, pg in enumerate(pdf.pages) if "공급대상 및 공급금액" in (pg.extract_text() or "")), 0)
+        for i in range(start, min(start + 4, len(pdf.pages))):
+            pg = pdf.pages[i]
+            for tb in pg.extract_tables():
+                if not any(re.search(r"층|공급금액|분양가", " ".join(c or "" for c in row)) for row in tb[:4]):
+                    continue
                 print(f"\n--- {i + 1}쪽 표 {len(tb)}행")
-                for row in tb[:40]:
+                for row in tb[:70]:
                     print(" | ".join((c or "").replace("\n", " ") for c in row))
-            shown += 1
-            if shown >= 3:
-                break
-        if not shown:
-            print("분양가 글자를 찾지 못함 (이미지 PDF 가능성) · 첫 쪽 글자:", (pdf.pages[0].extract_text() or "")[:500])

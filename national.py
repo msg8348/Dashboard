@@ -27,6 +27,7 @@ from jinja2 import Environment, FileSystemLoader
 import Dashboard as D
 import applyhome
 import complex as CX
+import presale as PS
 import kapt
 import regions
 
@@ -460,10 +461,14 @@ def main():
             D.APT_PAGES |= done
             search += srch
             urls += aurls
+            done, srch, aurls = PS.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, houses, match_house, STORE, SITE_URL)
+            D.PRE_PAGES |= done
+            search += srch
+            urls += aurls
         base = {"date_label": now.strftime("%y.%m.%d"), "date_full": now.strftime("%Y%m%d"), "notices": [],
                 "l2_word": l2_word, "home_href": "../index.html", "root": "../", "site_url": SITE_URL,
                 "l2opts": sorted([(l["name"], f"{l2slug[l['key']]}.html") for l in sd["l2"]]) if len(sd["l2"]) > 1 else [],   # 가나다순
-                "dates": date_opts(days, today_s, "index.html", False), "apt_base": f"../{sdir}/apt/"}
+                "dates": date_opts(days, today_s, "index.html", False), "apt_base": f"../{sdir}/"}
         if not ready:
             base["notices"].append("이 지역은 실거래 데이터를 수집하고 있습니다. 며칠 안에 채워집니다.")
         # --- 레벨1
@@ -485,8 +490,10 @@ def main():
                     pc = sum(1 for a in areas if same_type(a, t["a"]))
                     h = match_house(houses, sd, t)
                     extra = {"pc": pc}
+                    if h and h["id"] in D.PRE_PAGES:
+                        extra["h"] = f"pre/{h['id']}"   # 분양권 페이지
                     if h:
-                        sup = sum(n for a, n in h["types"] if same_type(a, t["a"]))
+                        sup = sum(n for a, n, *_ in h["types"] if same_type(a, t["a"]))
                         if sup:
                             extra["sup"] = sup
                         pcache[ck] = (h["total"] or None, h["mvn"] or None, extra)
@@ -560,7 +567,7 @@ def main():
             day = now.replace(year=int(dd[:4]), month=int(dd[4:6]), day=int(dd[6:]))
             ddir = os.path.join(SITE, sdir, f"d{dd}")
             os.makedirs(ddir, exist_ok=True)
-            arch = dict(base, date_label=day.strftime("%y.%m.%d"), date_full=dd, home_href="../../index.html", root="../../", apt_base=f"../../{sdir}/apt/",
+            arch = dict(base, date_label=day.strftime("%y.%m.%d"), date_full=dd, home_href="../../index.html", root="../../", apt_base=f"../../{sdir}/",
                         archive=True, page_url=None)
             s1, r1, _, _ = D.build_trades(subset_asof(sdb, set(sd["codes"]), dd), day, cinfo)
             ind_d = D.build_indicator([t for t in sdb["sale"]["trades"] if (t.get("seen") or "") <= dd], day, *ind_args)

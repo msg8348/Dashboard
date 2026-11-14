@@ -4,7 +4,8 @@
     APT 분양정보 상세  : /getAPTLttotPblancDetail  (HOUSE_MANAGE_NO, HOUSE_NM, HSSPLY_ADRES, TOT_SUPLY_HSHLDCO, MVN_PREARNGE_YM …)
     APT 주택형별 상세  : /getAPTLttotPblancMdl     (HOUSE_MANAGE_NO, HOUSE_TY '084.9779A', SUPLY_HSHLDCO, SPSPLY_HSHLDCO …)
 
-load(path, key) → [{id, name, addr, total, mvn, types: [[전용면적, 세대수], ...]}]  (7일마다 다시 받음, 실패하면 저장본)
+load(path, key) → [{id, name, addr, total, mvn, url(공고 페이지), builder, pbl(모집공고일),
+                     types: [[전용면적, 세대수, 약식표기, 최고 분양가(만원), 전용면적(정밀)], ...]}]  (7일마다 다시 받음, 실패하면 저장본)
 """
 import json
 import os
@@ -62,7 +63,10 @@ def fetch(key):
         if not hid or not mt:
             continue
         n = _num(m.get("SUPLY_HSHLDCO")) + _num(m.get("SPSPLY_HSHLDCO"))   # 일반공급 + 특별공급
-        types.setdefault(hid, []).append([round(float(mt.group(1)), 2), n])
+        letter = re.sub(r"[^A-Za-z]", "", ty[mt.end():])
+        # [전용면적, 세대수, 약식표기(84A · 글자가 없으면 99), 최고 분양가(만원), 전용면적(소수 넷째 자리)]
+        types.setdefault(hid, []).append([round(float(mt.group(1)), 2), n, f"{int(float(mt.group(1)))}{letter.upper()}",
+                                          _num(m.get("LTTOT_TOP_AMOUNT")), float(mt.group(1))])
     out = []
     for d in det:
         hid = str(d.get("HOUSE_MANAGE_NO") or "")
@@ -70,7 +74,8 @@ def fetch(key):
             continue
         out.append({"id": hid, "name": str(d.get("HOUSE_NM") or ""), "addr": str(d.get("HSSPLY_ADRES") or ""),
                     "total": _num(d.get("TOT_SUPLY_HSHLDCO")), "mvn": re.sub(r"\D", "", str(d.get("MVN_PREARNGE_YM") or ""))[:6],
-                    "types": types.get(hid, [])})
+                    "types": types.get(hid, []), "url": str(d.get("PBLANC_URL") or ""),
+                    "builder": str(d.get("CNSTRCT_ENTRPS_NM") or "").strip(), "pbl": str(d.get("RCRIT_PBLANC_DE") or "")})
     return out
 
 
@@ -80,12 +85,12 @@ def load(path, key, today=None):
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             st = json.load(f)
-    fresh = st and (today.date() - datetime.strptime(st["date"], "%Y%m%d").date()).days < REFRESH_DAYS
+    fresh = st and st.get("v") == 2 and (today.date() - datetime.strptime(st["date"], "%Y%m%d").date()).days < REFRESH_DAYS
     if key and not fresh:
         try:
             rows = fetch(key)
             if rows:
-                st = {"date": today.strftime("%Y%m%d"), "houses": rows}
+                st = {"v": 2, "date": today.strftime("%Y%m%d"), "houses": rows}
                 os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
                 with open(path, "w", encoding="utf-8") as f:
                     json.dump(st, f, ensure_ascii=False, separators=(",", ":"))
