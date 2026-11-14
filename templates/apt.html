@@ -1,0 +1,63 @@
+{% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ seo_title }}</title>
+<meta name="description" content="{{ seo_desc }}">
+<link rel="canonical" href="{{ page_url }}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="옆집얼마">
+<meta property="og:title" content="{{ seo_title }}"><meta property="og:description" content="{{ seo_desc }}">
+<meta property="og:url" content="{{ page_url }}"><meta property="og:image" content="https://nextdoorprice.com/og.png">
+<link rel="icon" href="{{ root }}favicon.ico" sizes="any"><link rel="apple-touch-icon" href="{{ root }}apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="{{ root }}apt.css?v={{ today }}">
+<style>{{ brand_css() }}</style>
+</head>
+<body><div class="wrap">
+<div class="topbar">{{ brand(root ~ 'index.html') }}<span class="tbtns"><button class="sbtn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></span></div>
+<nav class="crumb">{% for c in crumbs %}{% if c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a><span class="sep">›</span>{% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}</nav>
+
+<section class="card">
+  <h1>{{ name }}</h1>
+  <div class="addr">{{ loc }}{% if jibun %} {{ jibun }}{% endif %}{% if road %} · {{ road }}{% endif %} <a class="nmap" href="https://map.naver.com/p/search/{{ map_q|urlencode }}" target="_blank" rel="noopener" aria-label="네이버지도에서 보기">N</a></div>
+  {% if meta %}<div class="meta">{{ meta }}</div>{% endif %}
+  {% if info %}<div class="info">
+    <div><b>{{ "{:,}".format(info.hh) }}세대</b></div>
+    <div><b>{% if info.bd %}{{ info.bd }}개동{% endif %}{% if info.bd and info.mf %} · {% endif %}{% if info.mf %}{{ info.mf }}층{% endif %}{% if not info.bd and not info.mf %}-{% endif %}</b></div>
+    <div><b>{{ info.bl or '-' }}</b></div>
+    <div><b>{% if info.pk %}세대당 {{ info.pk }}대{% else %}-{% endif %}</b></div>
+    <div><b>{{ info.ht or '-' }}</b></div>
+    <div><b>{{ info.cr or '-' }}</b></div>
+  </div>{% endif %}
+</section>
+
+<section class="card" id="sale">
+  <div class="sec-t"><h2>매매 실거래</h2><small id="srange"></small></div>
+  <div class="types" id="types"></div>
+  <div class="stats" id="stats"></div>
+  <div class="chart" id="chart"><div class="rng" id="rng"></div><svg id="svg"></svg><div class="tip" id="tip"></div></div>
+  <table class="tt"><thead><tr><th>계약일</th><th class="p">금액</th><th>동 · 층</th><th>타입</th><th class="g">등기</th></tr></thead><tbody id="rows"></tbody></table>
+  <button class="more" id="more" type="button">더보기</button>
+</section>
+
+<section class="card rent" id="rent">
+  <div class="sec-t"><h2>전월세 실거래</h2><small>최근 13개월 · <span id="rtype"></span></small></div>
+  <div class="stats" id="rstats"></div>
+  <table class="tt"><thead><tr><th>계약일</th><th>층</th><th class="p">보증금/월세</th></tr></thead><tbody id="rrows"></tbody></table>
+  <button class="more" id="rmore" type="button">더보기</button>
+</section>
+
+<section class="card" id="act">
+  <div class="sec-t"><h2>거래 활발도</h2><small>매매 · 전체 타입</small></div>
+  <div class="act" id="actb"></div>
+</section>
+<p class="foot">국토교통부 실거래가 공개시스템 · K-apt 공동주택관리정보 기준 · 계약 해제 거래 제외</p>
+</div>
+<script type="application/json" id="adata">{{ data|tojson }}</script>
+<script>const TODAY = '{{ today }}';</script>
+<script src="{{ root }}apt.js?v={{ today }}"></script>
+<script src="{{ root }}search.js?v={{ today }}"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "abacec54a0cc4c2a9c18d8b390e67068"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

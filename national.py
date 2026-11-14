@@ -26,6 +26,7 @@ from jinja2 import Environment, FileSystemLoader
 
 import Dashboard as D
 import applyhome
+import complex as CX
 import kapt
 import regions
 
@@ -37,6 +38,7 @@ IND_PATH = os.path.join(STORE, "indicators.json")
 HIST = os.environ.get("HIST_DIR", "hist")
 BUSAN = "26"
 WORKERS = int(os.environ.get("FETCH_WORKERS", "8"))   # 동시 요청 수
+APT_SIDOS = {"26"}   # 단지 페이지를 먼저 여는 시도 (부산)
 
 
 # ---------------------------------------------------------------- 저장소
@@ -433,6 +435,7 @@ def main():
     months = D.month_list(now, D.WINDOW_MONTHS)
     urls = []
     home = []
+    search = []
     for sd in sidos:
         key = sd["key"]
         sdb = {src: dbs[src][key] for src in D.SOURCES}
@@ -452,10 +455,15 @@ def main():
             used.add(sl)
             l2slug[l["key"]] = sl
         os.makedirs(os.path.join(SITE, sdir), exist_ok=True)
+        if key in APT_SIDOS:   # 단지 페이지 (과거 실거래가 있는 시도)
+            done, srch, aurls = CX.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, ckey, SITE_URL)
+            D.APT_PAGES |= done
+            search += srch
+            urls += aurls
         base = {"date_label": now.strftime("%y.%m.%d"), "date_full": now.strftime("%Y%m%d"), "notices": [],
                 "l2_word": l2_word, "home_href": "../index.html", "root": "../", "site_url": SITE_URL,
                 "l2opts": sorted([(l["name"], f"{l2slug[l['key']]}.html") for l in sd["l2"]]) if len(sd["l2"]) > 1 else [],   # 가나다순
-                "dates": date_opts(days, today_s, "index.html", False)}
+                "dates": date_opts(days, today_s, "index.html", False), "apt_base": f"../{sdir}/apt/"}
         if not ready:
             base["notices"].append("이 지역은 실거래 데이터를 수집하고 있습니다. 며칠 안에 채워집니다.")
         # --- 레벨1
@@ -552,7 +560,7 @@ def main():
             day = now.replace(year=int(dd[:4]), month=int(dd[4:6]), day=int(dd[6:]))
             ddir = os.path.join(SITE, sdir, f"d{dd}")
             os.makedirs(ddir, exist_ok=True)
-            arch = dict(base, date_label=day.strftime("%y.%m.%d"), date_full=dd, home_href="../../index.html", root="../../",
+            arch = dict(base, date_label=day.strftime("%y.%m.%d"), date_full=dd, home_href="../../index.html", root="../../", apt_base=f"../../{sdir}/apt/",
                         archive=True, page_url=None)
             s1, r1, _, _ = D.build_trades(subset_asof(sdb, set(sd["codes"]), dd), day, cinfo)
             ind_d = D.build_indicator([t for t in sdb["sale"]["trades"] if (t.get("seen") or "") <= dd], day, *ind_args)
@@ -583,6 +591,8 @@ def main():
           "max_cnt": max([h["cnt"] for h in home] + [1])}
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
         f.write(env.get_template("home.html").render(hc))
+    with open(os.path.join(SITE, "search.json"), "w", encoding="utf-8") as f:   # 단지 검색 목록 [이름, 위치, 주소, 거래수]
+        json.dump(sorted(search, key=lambda a: -a[3]), f, ensure_ascii=False, separators=(",", ":"))
     # 검색엔진용: 사이트맵 · robots.txt
     today_iso = now.strftime("%Y-%m-%d")
     with open(os.path.join(SITE, "sitemap.xml"), "w", encoding="utf-8") as f:
