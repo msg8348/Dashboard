@@ -3,8 +3,10 @@ name: DASHBOARD
 on:
   schedule:
     # GitHub 예약 실행은 정각에 몰려 지연·누락될 수 있어 정각을 피하고, 누락 대비로 한 번 더 실행
+    # GitHub 예약 실행은 서버 사정으로 늦어지거나 건너뛸 수 있어 하루 세 번 시도 (이미 받은 거래는 중복되지 않음)
     - cron: '17 19 * * *' # KST 04:17
-    - cron: '47 20 * * *' # KST 05:47 (앞 실행이 누락됐을 때 대비, 중복 실행해도 결과 동일)
+    - cron: '43 22 * * *' # KST 07:43
+    - cron: '23 3 * * *'  # KST 12:23 (국토부 오전 공개분 반영)
   workflow_dispatch:
     inputs:
       fetch:

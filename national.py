@@ -292,17 +292,26 @@ def main():
     print(f"🗺️ {len(sidos)}개 시도 · {sum(len(s['codes']) for s in sidos)}개 시군구")
 
     dbs = {src: {sd["key"]: load_db(src, sd["key"]) for sd in sidos} for src in D.SOURCES}
-    if args.no_fetch:   # 수집 없이 화면만 만들 때는 마지막으로 신규 거래가 잡힌 날 기준으로 표시 (자정 이후 0건 방지)
-        last = max((t.get("seen") or "" for db in dbs["sale"].values() for t in db["trades"]), default="")
-        if last and last < now.strftime("%Y%m%d"):
-            now = now.replace(year=int(last[:4]), month=int(last[4:6]), day=int(last[6:]))
-            print(f"🗓️ 마지막 수집일 {last} 기준으로 표시")
     if D.MOLIT_API_KEY and not args.no_fetch:
         for src in D.SOURCES:
             update(src, dbs[src], sidos, now, args.max_calls, args.minutes)
     elif not D.MOLIT_API_KEY:
         print("⚠️ MOLIT_API_KEY 가 없어 저장된 데이터로만 만듭니다.")
 
+    # 오늘 새로 공개된 거래가 아직 없으면(국토부 공개 전 새벽 등) 마지막으로 신규 거래가 잡힌 날 기준으로 표시
+    fallback = False
+    last = max((t.get("seen") or "" for src in ("sale", "rent") for db in dbs[src].values() for t in db["trades"]), default="")
+    if last and last < now.strftime("%Y%m%d"):
+        now = now.replace(year=int(last[:4]), month=int(last[4:6]), day=int(last[6:]))
+        fallback = True
+        print(f"🗓️ 오늘 신규 공개 거래가 아직 없어 {last} 기준으로 표시")
+        for src in ("sale", "rent"):   # 그날 기준으로 저장해 둔 신고가 기준값 사용
+            for key, db in dbs[src].items():
+                prev = (db.get("highs3_by") or {}).get(last)
+                if prev is None and key == BUSAN and os.path.exists(D.SOURCES[src][1]):   # 예전 부산 전용 DB(11.13 기준)
+                    with open(D.SOURCES[src][1], encoding="utf-8") as f:
+                        prev = json.load(f).get("highs3")
+                db["highs3"] = prev or {}
     env = Environment(loader=FileSystemLoader("templates"), autoescape=True)
     tpl = env.get_template("report_template.html")
     shutil.rmtree(SITE, ignore_errors=True)
@@ -336,7 +345,13 @@ def main():
             base["notices"].append("이 지역은 실거래 데이터를 수집하고 있습니다. 며칠 안에 채워집니다.")
         # --- 레벨1
         sale_ctx, rent_ctx, highs_s, highs_r = D.build_trades(subset(sdb, set(sd["codes"])), now)
-        sdb["sale"]["highs3"], sdb["rent"]["highs3"] = highs_s, highs_r
+        if not fallback:   # 날짜별 기준값도 보관 (최근 3일) — 신규 공개가 없는 날 전날 기준으로 다시 보여줄 때 사용
+            for src, h in (("sale", highs_s), ("rent", highs_r)):
+                by = sdb[src].setdefault("highs3_by", {})
+                by[now.strftime("%Y%m%d")] = h
+                for d in sorted(by)[:-3]:
+                    by.pop(d)
+            sdb["sale"]["highs3"], sdb["rent"]["highs3"] = highs_s, highs_r
         kapt_l2 = kapt_rows_by_l2(sd)
         l2_hh = {l2_name[k]: sum(r["households"] for r in rows) for k, rows in kapt_l2.items()}
         if key == BUSAN:
