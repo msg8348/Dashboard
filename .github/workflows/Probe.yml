@@ -1,0 +1,28 @@
+name: PROBE
+
+# API 응답 형식 확인용 (수동 실행)
+on:
+  workflow_dispatch:
+    inputs:
+      addr:
+        description: '법정동 주소 (예: 부산광역시 해운대구 우동)'
+        default: '부산광역시 해운대구 우동'
+      bun:
+        description: '번'
+        default: '1074'
+      ji:
+        description: '지'
+        default: '0'
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install requests
+      - env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+        run: python tools/permit_probe.py "${{ inputs.addr }}" "${{ inputs.bun }}" "${{ inputs.ji }}"
