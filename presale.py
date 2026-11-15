@@ -145,7 +145,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         meta = f"{mv[2:4]}년 {int(mv[4:6])}월 입주예정" if len(mv) == 6 else ""
         hh_all = total or gen_n
         pk = round(nt["pk"] / hh_all, 1) if nt.get("pk") and hh_all and 0.3 <= nt["pk"] / hh_all <= 4 else 0
-        data = {"ty": [[t[2], t[1], t[3]] for t in types], "t": trades, "scan": sorted(prices), "est": est, "hh": hh_all,
+        data = {"ty": [[t[2], t[1], t[3]] for t in types], "t": trades, "scan": sorted(prices), "est": est, "hh": hh_all, "gen": gen_n,
                 "rng": {l: [min(r[2] for r in v), max(r[2] for r in v)] for l, v in (prices or {}).items()}}
         pp = pcache.get(f"pre:{hid}") or {}
         ctx = {"poi": pp if pp.get("x") else None, "name": h["name"], "fav": [h["name"], f"{sd['short']} {gu} · 분양권", f"{sdir}/{PRE_DIR}/{hid}.html"], "addr": h["addr"].replace(sd["sido"], sd["short"]), "loc2": gu + (" " + next((w for w in h["addr"].split() if w[-1] in "동리가읍면" and not w[0].isdigit()), "") if gu else ""), "meta": meta, "crumbs": crumbs,

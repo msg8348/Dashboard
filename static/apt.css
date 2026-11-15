@@ -69,3 +69,4 @@ table{width:100%;border-collapse:collapse}
 .rty.t84{background:#ebf1ff;color:var(--blue)}.rty.t59{background:#e5f4f0;color:var(--teal)}.rty.t74{background:#eef1f5;color:var(--ink-2)}
 .rkn{position:relative;font-size:15px;font-weight:900;color:var(--ink)}
 .crown{position:absolute;top:-11px;right:-13px;transform:rotate(25deg);width:16px;height:16px}
+.asof{text-align:right;font-size:11.5px;color:var(--muted);margin:-4px 4px 12px}
