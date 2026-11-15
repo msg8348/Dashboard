@@ -96,6 +96,16 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
             to = f"../apt/{seq}.html"
             f.write(f'<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url={to}">'
                     f'<link rel="canonical" href="{to}"><script>location.replace("{to}")</script>')
+    # 평균 분양가 ÷ 최고 분양가 비율 (공고문을 읽은 타입들의 중간값) — 못 읽은 타입은 최고 분양가 × 이 비율로 평균 추정
+    ratios = []
+    for hh in houses:
+        pr = (cache.get(hh["id"]) or {}).get("prices") or {}
+        for t in hh.get("types", []):
+            if len(t) >= 4 and t[3] and pr.get(t[2]):
+                ratios.append(sum(r[2] for r in pr[t[2]]) / len(pr[t[2]]) / t[3])
+    ratios.sort()
+    g_ratio = ratios[len(ratios) // 2] if ratios else 0.95
+
     for hid, rows in sorted(by.items(), key=lambda kv: -len(kv[1])):
         if hid in moved:
             continue
@@ -104,14 +114,18 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         if not types:
             continue
         nt = notice.get(h, cache, now.replace(tzinfo=None), budget) or {}
-        prices = nt.get("prices") or {}   # 읽은 타입만 층별, 나머지는 최고 분양가
+        prices = nt.get("prices") or {}   # 읽은 타입만 층별, 나머지는 추정 평균 분양가
+        own = [sum(r[2] for r in prices[t[2]]) / len(prices[t[2]]) / t[3] for t in h.get("types", [])
+               if len(t) >= 4 and t[3] and prices.get(t[2])]
+        ratio = sorted(own)[len(own) // 2] if own else g_ratio
+        est = {t[2]: round(t[3] * ratio / 10) * 10 for t in h.get("types", []) if len(t) >= 4 and t[3]}
         trades = []
         for dt, p, f, a in sorted(rows, key=lambda r: -r[0]):
             t = label_of(types, a)
             if not t:
                 continue
             base = notice.price_at(prices, t[2], f) if prices else 0
-            trades.append([dt, p, f, t[2], base or t[3], 1 if base else 0])
+            trades.append([dt, p, f, t[2], base or est.get(t[2]) or t[3], 1 if base else 0])
         if not trades:
             continue
         gu = next((n for c, n in sd["codes"].items() if n.split()[-1] in h["addr"]), "")
@@ -129,7 +143,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         meta = f"{mv[2:4]}년 {int(mv[4:6])}월 입주예정" if len(mv) == 6 else ""
         hh_all = total or gen_n
         pk = round(nt["pk"] / hh_all, 1) if nt.get("pk") and hh_all and 0.3 <= nt["pk"] / hh_all <= 4 else 0
-        data = {"ty": [[t[2], t[1], t[3]] for t in types], "t": trades, "scan": sorted(prices), "hh": hh_all,
+        data = {"ty": [[t[2], t[1], t[3]] for t in types], "t": trades, "scan": sorted(prices), "est": est, "hh": hh_all,
                 "rng": {l: [min(r[2] for r in v), max(r[2] for r in v)] for l, v in (prices or {}).items()}}
         pp = pcache.get(f"pre:{hid}") or {}
         ctx = {"poi": pp if pp.get("x") else None, "name": h["name"], "fav": [h["name"], f"{sd['short']} {gu} · 분양권", f"{sdir}/{PRE_DIR}/{hid}.html"], "addr": h["addr"].replace(sd["sido"], sd["short"]), "loc2": gu + (" " + next((w for w in h["addr"].split() if w[-1] in "동리가읍면" and not w[0].isdigit()), "") if gu else ""), "meta": meta, "crumbs": crumbs,
