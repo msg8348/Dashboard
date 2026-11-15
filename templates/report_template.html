@@ -647,6 +647,7 @@ function renderOne(n, shot) {
           page.style.width = '640px';
           page.querySelectorAll('.ind-two').forEach(e => { e.style.gridTemplateColumns = '1fr'; });
         }
+        siteMark(doc, page);
       }
     });
     const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
@@ -754,6 +755,7 @@ async function sharePart(el, btn) {
             Object.assign(c.style, { display: 'grid', gridTemplateColumns: '1fr', width: '640px', padding: '18px', background: '#fff', borderRadius: '22px' });
             head.style.gridColumn = '1 / -1';
           }
+          siteMark(doc, c);
         }
       });
       const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
