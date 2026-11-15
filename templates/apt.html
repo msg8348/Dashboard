@@ -18,6 +18,7 @@
 <div class="topbar">{{ brand(root ~ 'index.html') }}<span class="tbtns"><a class="sbtn" href="{{ root }}fav.html" aria-label="관심단지"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></a><button class="sbtn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></span></div>
 <nav class="crumb">{% for c in crumbs %}{% if c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a><span class="sep">›</span>{% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}</nav>
 
+<div id="summary">
 <section class="card">
   <div class="h1row"><h1>{{ name }}</h1><button class="favb" type="button" data-fav='{{ fav|tojson }}'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></button></div>
   <div class="addr"><span class="t">{{ loc2 }}{% if meta %} · {{ meta }}{% endif %}</span><a class="nmap" href="https://map.naver.com/p/search/{{ map_q|urlencode }}" target="_blank" rel="noopener" aria-label="네이버지도에서 보기"{% if poi %} data-lat="{{ poi.y }}" data-lng="{{ poi.x }}" data-name="{{ name }}"{% endif %}><b>N</b>지도</a></div>
@@ -29,10 +30,20 @@
   </div>{% endif %}
 </section>
 
+{% if ranks %}<section class="card" id="rank">
+  <div class="sec-t"><h2>매매가 순위</h2><small>{{ sido_short }} 지역 · 최근 1년 평균가</small></div>
+  <div class="rk">{% for g, r, avg, n, tot in ranks %}
+    <div class="rki"><span class="rty">{{ g }}㎡</span><span class="rkn">{{ sido_short }} <b>{{ r }}위</b><small> / {{ "{:,}".format(tot) }}곳</small></span><span class="rkd">평균 {{ avg }} · {{ n }}건</span></div>{% endfor %}
+  </div>
+  <p class="rkc">최근 1년 해당 타입 거래가 3건 이상인 {{ sido_short }} 단지끼리 평균 매매가 비교</p>
+</section>{% endif %}
+
 <section class="card" id="act">
   <div class="sec-t"><h2>거래 활발도</h2><small>매매 · 전체 타입</small></div>
   <div class="act" id="actb"></div>
 </section>
+</div>
+<button class="sharebtn" id="sumshare" type="button" onclick="shareSummary(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>단지 정보 이미지로 공유</button>
 
 <section class="card" id="sale">
   <div class="sec-t"><h2>매매 실거래</h2><small id="srange"></small></div>
@@ -54,6 +65,7 @@
 </div>
 <script type="application/json" id="adata">{{ data|tojson }}</script>
 <script>const TODAY = '{{ today }}';</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="{{ root }}apt.js?v={{ today }}"></script>
 <script src="{{ root }}search.js?v={{ today }}"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "abacec54a0cc4c2a9c18d8b390e67068"}'></script><!-- End Cloudflare Web Analytics -->

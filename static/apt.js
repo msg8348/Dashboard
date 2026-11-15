@@ -173,3 +173,34 @@
   let rw = window.innerWidth;
   window.addEventListener('resize', () => { if (window.innerWidth !== rw) { rw = window.innerWidth; draw(); } });
 })();
+
+// 단지 정보(기본정보·매매가 순위·거래 활발도)를 한 장 이미지로 공유
+async function shareSummary(btn) {
+  const label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = '이미지 준비 중…';
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const el = document.getElementById('summary');
+    const canvas = await html2canvas(el, {
+      scale: 2, backgroundColor: '#eef1f4', useCORS: true, windowWidth: 420, scrollX: 0, scrollY: -window.scrollY,
+      onclone: doc => {
+        const c = doc.getElementById('summary');
+        c.style.width = '400px'; c.style.padding = '16px';
+        const br = doc.querySelector('.topbar .brand');
+        if (br) { const b = br.cloneNode(true); b.classList.add('cap-brand'); c.insertBefore(b, c.firstChild); }
+        c.querySelectorAll('.favb, .nmap').forEach(x => x.style.display = 'none');
+      }
+    });
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const name = (document.querySelector('h1') || {}).textContent || '단지';
+    const file = new File([blob], `${name.trim()}_${TODAY}.png`, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); }
+      catch (e) { if (e.name !== 'AbortError') window.open(URL.createObjectURL(blob), '_blank'); }
+    } else {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+  } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); }
+  finally { btn.disabled = false; btn.innerHTML = label; }
+}

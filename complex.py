@@ -146,6 +146,33 @@ def merge_split(apts, ckey):
     return alias
 
 
+RANK_TYPES = ("59", "74", "84")
+RANK_MIN = 3   # 최근 1년 거래가 이보다 적은 단지는 순위에서 제외 (한두 건 거래로 순위가 흔들리지 않게)
+
+
+def price_ranks(apts, now):
+    """59·74·84 타입별 시도 내 매매가 순위 (최근 1년 평균, 10위까지). {단지번호: [[타입, 순위, '13.2억', 거래수, 비교 단지 수]]}"""
+    from datetime import timedelta
+    d365 = int((now - timedelta(days=365)).strftime("%Y%m%d"))
+    pool = {g: [] for g in RANK_TYPES}
+    for k, a in apts.items():
+        by = defaultdict(list)
+        for t in a["s"]:
+            if t[0] >= d365 and not (len(t) > 6 and t[6]):   # 분양권(입주 후 합친 거래)은 제외
+                g = str(int(t[4]))
+                if g in pool:
+                    by[g].append(t[1])
+        for g, ps in by.items():
+            if len(ps) >= RANK_MIN:
+                pool[g].append((sum(ps) / len(ps), k, len(ps)))
+    out = defaultdict(list)
+    for g in RANK_TYPES:
+        lst = sorted(pool[g], reverse=True)
+        for i, (avg, k, n) in enumerate(lst[:10]):
+            out[k].append([g, i + 1, f"{avg / 10000:.1f}억", n, len(lst)])
+    return out
+
+
 def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, ckey, site_url, store="store", pre=None):
     """pre {주택관리번호: (청약홈 단지, 분양권 거래)}: 입주예정월이 지난 분양권 — 같은 시군구·같은 이름의 매매 단지가
     있으면 그 단지 거래에 분양권 거래를 합친다. 반환: (단지번호 집합, 검색 목록, 주소 목록, {주택관리번호: 단지번호})."""
@@ -182,6 +209,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
     zones = schoolzone.load(store, sd["key"], now.replace(tzinfo=None))   # 배정 초등학교 (통학구역)
     poi.assign(pcache, order, zones, "z1")
     poi.save(ppath, pcache)
+    ranks = price_ranks(apts, now)
     tpl = env.get_template("apt.html")
     out_dir = os.path.join(site, sdir, APT_DIR)
     os.makedirs(out_dir, exist_ok=True)
@@ -204,7 +232,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
         year = int(ad[:4]) if ad else (int(a["by"]) if str(a["by"]).isdigit() else 0)
         age = f"{now.year - year + 1}년차" if year and year <= now.year else ("입주예정" if year else "")
         data = {"s": a["s"], "r": a["r"], "by": year, "hh": info.get("hh", 0)}
-        ctx = {"name": a["n"], "loc": loc, "loc2": " ".join(x for x in (gu, a["u"]) if x), "poi": pcache.get(k) if (pcache.get(k) or {}).get("x") else None, "fav": [a["n"], f"{sd['short']} {gu} {a['u']}".strip(), f"{sdir}/{APT_DIR}/{k}.html"], "jibun": a["j"], "road": info.get("road", ""), "info": info,
+        ctx = {"ranks": ranks.get(k, []), "sido_short": sd["short"], "name": a["n"], "loc": loc, "loc2": " ".join(x for x in (gu, a["u"]) if x), "poi": pcache.get(k) if (pcache.get(k) or {}).get("x") else None, "fav": [a["n"], f"{sd['short']} {gu} {a['u']}".strip(), f"{sdir}/{APT_DIR}/{k}.html"], "jibun": a["j"], "road": info.get("road", ""), "info": info,
                "meta": " · ".join(x for x in ("" if (info.get("kind") or "아파트") == "아파트" else info["kind"], built, age) if x),
                "crumbs": crumbs, "root": "../../", "data": data, "today": now.strftime("%Y%m%d"),
                "map_q": f"{sd['short']} {gu} {a['u']} {a['n']}".replace("  ", " "),
