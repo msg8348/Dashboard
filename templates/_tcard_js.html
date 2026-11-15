@@ -45,7 +45,7 @@ async function shareCard(btn) {   // 카드 1장 이미지 — 실거래 탭·�
   catch (e) { alert('이미지를 만들지 못했습니다: ' + e); }
   finally { btn.disabled = false; btn.innerHTML = label; }
 }
-async function cardFile(el) {   // 카드 1장 → PNG 파일 (카드 밖 오른쪽 아래 회색 주소)
+async function cardFile(el) {   // 카드 1장 → PNG 파일. 카드 테두리가 이미지 끝에 딱 붙고 모서리 곡률은 카톡 사진 말풍선에 맞춤
   {
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const canvas = await html2canvas(el, {
@@ -56,18 +56,16 @@ async function cardFile(el) {   // 카드 1장 → PNG 파일 (카드 밖 오른
         if (pg) pg.hidden = false;
         c.classList.add('capturing');
         c.style.width = '390px';
+        c.style.borderRadius = '20px';   // 카톡 사진 모서리 (아이폰 기준 이미지 폭의 약 5.3%)
+        c.style.borderWidth = '2px';
         c.querySelector('.tshare').style.visibility = 'hidden';
+        const m = doc.createElement('div');   // 주소는 카드 안 오른쪽 아래 (테두리가 이미지 전체를 감싸도록)
+        m.textContent = 'nextdoorprice.com';
+        Object.assign(m.style, { textAlign: 'right', fontSize: '9.5px', color: '#a3abb7', fontWeight: '400', letterSpacing: '.6px', margin: '3px -6px -4px 0', lineHeight: '1.2' });
+        c.appendChild(m);
       }
     });
-    // 카드 바깥 오른쪽 아래에 작은 회색 주소 (카드 아래로 여백을 붙여서)
-    const out = document.createElement('canvas'), pad = 34;
-    out.width = canvas.width; out.height = canvas.height + pad;
-    const g = out.getContext('2d');
-    g.drawImage(canvas, 0, 0);
-    g.font = "400 19px Pretendard, 'Apple SD Gothic Neo', sans-serif";
-    if ('letterSpacing' in g) g.letterSpacing = '1.2px';
-    g.fillStyle = '#a3abb7'; g.textAlign = 'right'; g.textBaseline = 'bottom';
-    g.fillText('nextdoorprice.com', out.width - 20, out.height - 6);
+    const out = canvas;
     const blob = await new Promise(r => out.toBlob(r, 'image/png'));
     const nm = (el.querySelector('.nm') || {}).textContent || 'card';
     const rg = typeof REGION !== 'undefined' ? REGION : '관심단지';
