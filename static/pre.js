@@ -133,6 +133,7 @@ async function shareSummary(btn) {
         const br = doc.querySelector('.topbar .brand');
         if (br) { const b = br.cloneNode(true); b.classList.add('cap-brand'); c.insertBefore(b, c.firstChild); }
         c.querySelectorAll('.favb, .nmap, .pshr').forEach(x => x.style.display = 'none');
+        siteMark(doc, c);
       }
     });
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
@@ -147,4 +148,11 @@ async function shareSummary(btn) {
     }
   } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); }
   finally { btn.disabled = false; btn.innerHTML = label; }
+}
+
+function siteMark(doc, el) {   // 저장 이미지 맨 아래 가운데 작은 회색 주소
+  const m = doc.createElement('div');
+  m.textContent = 'nextdoorprice.com';
+  Object.assign(m.style, { textAlign: 'center', fontSize: '10px', color: '#a3abb7', fontWeight: '600', padding: '8px 0 2px', letterSpacing: '.2px', gridColumn: '1 / -1', width: '100%' });
+  el.appendChild(m);
 }

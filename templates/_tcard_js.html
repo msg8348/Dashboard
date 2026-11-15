@@ -1,4 +1,10 @@
 // 실거래 카드 공통 (report_template · fav) — DATE(YYYYMMDD) 필요
+function siteMark(doc, el) {   // 저장 이미지 맨 아래 가운데 작은 회색 주소
+  const m = doc.createElement('div');
+  m.textContent = 'nextdoorprice.com';
+  Object.assign(m.style, { textAlign: 'center', fontSize: '10px', color: '#a3abb7', fontWeight: '600', padding: '8px 0 2px', letterSpacing: '.2px', gridColumn: '1 / -1', width: '100%' });
+  el.appendChild(m);
+}
 const GLOGO = '<svg viewBox="0 0 60 44"><path d="M3 19 L17 5 L31 19 V41 H3 Z" fill="#5b6472" stroke="#5b6472" stroke-width="4" stroke-linejoin="round"/><rect x="9" y="22" width="7" height="7" rx="1.5" fill="#fff"/><path d="M25 26 L40 12 L55 26 V41 H25 Z" fill="#fff" stroke="#fff" stroke-width="8" stroke-linejoin="round"/><path d="M25 26 L40 12 L55 26 V41 H25 Z" fill="#5b6472" stroke="#5b6472" stroke-width="4" stroke-linejoin="round"/><rect x="36" y="27" width="8" height="8" rx="1.5" fill="#fff"/></svg>';
 const SHARE_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>';
 const tMan = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() + '만' : '') || '0'; };
@@ -46,6 +52,7 @@ async function shareCard(btn) {   // 카드 1장 이미지 (오른쪽 아래 회
         c.classList.add('capturing');
         c.style.width = '390px';
         c.querySelector('.tshare').style.visibility = 'hidden';
+        siteMark(doc, c);
       }
     });
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
