@@ -66,12 +66,19 @@
   /* 메뉴 박스 (즐겨찾기 · 단지 검색 · 최고가 · 거래활발도) */
   .menu{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
   .mb{background:#fff;border:1px solid #dfe5ea;border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px;height:62px;min-width:0;font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
-  .mb:hover{border-color:var(--navy)}
+  .mb:hover{filter:brightness(.98)}
   .mb .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none}.mb .ic svg{width:20px;height:20px}
   .mb .tx{min-width:0}.mb b{font-size:16px;font-weight:800;display:block;white-space:nowrap}
   .mb small{font-size:11.5px;color:var(--muted);font-weight:600;display:block;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .mb .go{margin-left:auto;color:#c3c9d2;font-size:18px;font-weight:700}
-  .i-fav{background:#fff6d9;color:#f2ac00}.i-sch{background:#e8eefc;color:var(--blue)}.i-hi{background:#fdecea;color:var(--red)}.i-act{background:#e3f3ee;color:#127a64}
+  /* 사이트 공통 색: 남색(기본) · 파랑(매매) · 초록(전세·1년) · 주황(3개월) */
+  .mb .ic{background:#fff}
+  .mb.c-fav{background:#fdf3e2;border-color:#f3e0bd}.mb.c-fav .ic,.mb.c-fav b{color:#b86e0a}
+  .mb.c-sch{background:#eceef5;border-color:#d6dbe8}.mb.c-sch .ic,.mb.c-sch b{color:#2b3a67}
+  .mb.c-hi{background:#ebf1ff;border-color:#d3defa}.mb.c-hi .ic,.mb.c-hi b{color:#2754d6}
+  .mb.c-act{background:#e5f4f0;border-color:#c8e6dd}.mb.c-act .ic,.mb.c-act b{color:#0f6b5c}
+  .mb small{color:#6f7a89}
+  .mb .go{color:inherit;opacity:.35}
   .rtitle{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800;margin:18px 4px 10px}.rtitle svg{width:22px;height:22px;color:var(--navy)}
   .grid .card .row{white-space:nowrap}
   .foot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
@@ -109,10 +116,10 @@
     <div><div class="k">신고가</div><div class="v r">{{ "{:,}".format(tot.high) }}<span>건</span></div></div>
     <div><div class="k">신규 전월세</div><div class="v">{{ "{:,}".format(tot.rent) }}<span>건</span></div></div></div>
   <div class="menu">
-    <a class="mb" href="fav.html"><span class="ic i-fav"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9L3.5 9.7l5.9-.8z"/></svg></span><span class="tx"><b>즐겨찾기</b><small>관심단지</small></span><span class="go">›</span></a>
-    <button class="mb" type="button" onclick="openSearch()"><span class="ic i-sch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span><span class="tx"><b>단지 검색</b><small>아파트 이름으로</small></span><span class="go">›</span></button>
-    <button class="mb" type="button" onclick="soon()"><span class="ic i-hi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-6 4 3 7-9"/><path d="M15 6h5v5"/></svg></span><span class="tx"><b>최고가</b><small>지역별 최고 거래</small></span><span class="go">›</span></button>
-    <button class="mb" type="button" onclick="soon()"><span class="ic i-act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 20V12M12 20V5M18 20v-9"/></svg></span><span class="tx"><b>거래활발도</b><small>지역 · 지표단지</small></span><span class="go">›</span></button>
+    <a class="mb c-fav" href="fav.html"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9L3.5 9.7l5.9-.8z"/></svg></span><span class="tx"><b>즐겨찾기</b><small>관심단지</small></span><span class="go">›</span></a>
+    <button class="mb c-sch" type="button" onclick="openSearch()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span><span class="tx"><b>단지 검색</b><small>아파트 이름으로</small></span><span class="go">›</span></button>
+    <button class="mb c-hi" type="button" onclick="soon()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-6 4 3 7-9"/><path d="M15 6h5v5"/></svg></span><span class="tx"><b>최고가</b><small>지역별 최고 거래</small></span><span class="go">›</span></button>
+    <button class="mb c-act" type="button" onclick="soon()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 20V12M12 20V5M18 20v-9"/></svg></span><span class="tx"><b>거래활발도</b><small>지역 · 지표단지</small></span><span class="go">›</span></button>
   </div>
   <div class="rtitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>지역 선택</div>
   <div class="grid">
