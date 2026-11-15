@@ -61,7 +61,7 @@
 
 <p class="foot">국토교통부 실거래가 공개시스템 · K-apt 공동주택관리정보 기준 · 계약 해제 거래 제외</p>
 </div>
-<script type="application/json" id="adata">{{ data|tojson }}</script>
+{% if data_url %}<script>const DATA_URL = '{{ data_url }}';</script>{% else %}<script type="application/json" id="adata">{{ data|tojson }}</script>{% endif %}
 <script>const TODAY = '{{ today }}';</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="{{ root }}apt.js?v={{ today }}"></script>

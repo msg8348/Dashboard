@@ -68,9 +68,20 @@ jobs:
           KAKAO_API_KEY: ${{ secrets.KAKAO_API_KEY }}
           STORE_DIR: store
           HIST_DIR: hist
+          R2_OUT: ${{ secrets.R2_ACCESS_KEY_ID != '' && 'r2out' || '' }}
         run: |
           python national.py --minutes 70 ${{ inputs.fetch == false && '--no-fetch' || '' }} ${{ (github.event_name == 'schedule' || inputs.probe) && '--probe' || '' }}
           if [ -f SKIP_DEPLOY ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: 단지 거래 데이터 R2 업로드 (바뀐 파일만)
+        if: steps.gen.outputs.skip != 'true'
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          [ -d r2out ] || { echo "R2 사용 안 함"; exit 0; }
+          python tools/r2_upload.py r2out store/r2_manifest.json
 
       - name: 실거래 저장소 저장 (data 브랜치, 매번 한 커밋으로 교체)
         if: always() && steps.gen.outputs.skip != 'true'

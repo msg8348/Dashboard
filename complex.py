@@ -240,6 +240,14 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
                "page_url": f"{site_url}/{sdir}/{APT_DIR}/{k}.html",
                "seo_title": f"{a['n']} 실거래가 ({sd['short']} {gu} {a['u']}) | 옆집얼마",
                "seo_desc": f"{sd['short']} {gu} {a['u']} {a['n']} 아파트 매매·전월세 실거래가와 시세 흐름 — 2006년부터 평형별 거래 내역, 신고가, 거래량 | 옆집얼마"}
+        r2 = os.environ.get("R2_OUT")   # R2 를 쓰면 거래 데이터는 따로 JSON 으로 (페이지는 가볍게)
+        if r2:
+            jd = os.path.join(r2, sdir, APT_DIR)
+            os.makedirs(jd, exist_ok=True)
+            with open(os.path.join(jd, f"{k}.json"), "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+            ctx["data"] = None
+            ctx["data_url"] = f"{os.environ.get('R2_PUBLIC', 'https://data.nextdoorprice.com')}/{sdir}/{APT_DIR}/{k}.json?v={ctx['today']}"
         with open(os.path.join(out_dir, f"{k}.html"), "w", encoding="utf-8") as f:
             f.write(tpl.render(ctx))
         done.add(k)
