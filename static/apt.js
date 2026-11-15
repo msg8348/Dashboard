@@ -1,6 +1,13 @@
 // 단지 페이지: 평형 선택 · 월평균 그래프(한 손가락=그 달, 두 손가락/끌기=기간 수익률) · 매매/전월세 표 · 거래 활발도
-(function () {
-  const D = JSON.parse(document.getElementById('adata').textContent);
+(async function () {
+  let D;
+  try {   // 거래 데이터: R2(data.nextdoorprice.com) 또는 페이지 안
+    D = typeof DATA_URL !== 'undefined' ? await fetch(DATA_URL).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      : JSON.parse(document.getElementById('adata').textContent);
+  } catch (e) {
+    document.querySelectorAll('#stats, #actb').forEach(x => x.innerHTML = '<div class="none">거래 정보를 불러오지 못했어요. 잠시 후 다시 열어 주세요.</div>');
+    return;
+  }
   const S = D.s || [], R = D.r || [];                      // S: [계약일, 금액, 층, 동, 면적, 등기]  R: [계약일, 보증금, 월세, 층, 면적]
   const $ = id => document.getElementById(id);
   const won = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() : '') || '0'; };

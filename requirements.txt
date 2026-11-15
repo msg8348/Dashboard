@@ -4,3 +4,4 @@ jinja2
 pdfplumber
 pyshp
 pyproj
+boto3
