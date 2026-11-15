@@ -459,7 +459,7 @@ def main():
         if key in APT_SIDOS:   # 단지 페이지 (과거 실거래가 있는 시도)
             pby = PS.group(sd, sdb, HIST, months[-1], houses, match_house)
             done, srch, aurls, moved = CX.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, ckey, SITE_URL, STORE,
-                                                pre=PS.moving(pby, houses, now))
+                                                pre=PS.moving(pby, houses, now), houses=houses)
             D.APT_PAGES |= done
             D.PRE_MOVED.update(moved)
             search += srch
