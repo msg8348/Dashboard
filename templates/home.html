@@ -84,6 +84,21 @@
   .fb svg{width:19px;height:19px}
   .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(23,32,44,.92);color:#fff;font-size:14px;font-weight:700;padding:10px 16px;border-radius:999px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none}
   .toast.on{opacity:1}
+  /* 홈 화면에 추가 안내 */
+  .ah-dim{position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:50}
+  .ah{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;background:#fff;border-radius:24px 24px 0 0;z-index:51;padding:12px 22px calc(24px + env(safe-area-inset-bottom))}
+  .ah .grab{width:44px;height:5px;background:#d9dee6;border-radius:3px;margin:0 auto 14px}
+  .ah h3{font-size:19px;font-weight:800;display:flex;align-items:center;gap:10px}
+  .ah h3 img{width:40px;height:40px;border-radius:10px}
+  .ah p.d{font-size:13.5px;color:var(--ink-2);margin:8px 0 14px;line-height:1.5}
+  .ah ol{list-style:none;display:grid;gap:10px}
+  .ah li{display:flex;align-items:center;gap:12px;background:#f4f6f9;border-radius:14px;padding:12px 14px;font-size:15px;font-weight:600;line-height:1.4}
+  .ah li .n{width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;font-weight:800;display:grid;place-items:center;flex:none}
+  .ah li b{font-weight:800}
+  .ah li svg{width:20px;height:20px;vertical-align:-4px;color:#2f7cf6;margin:0 2px}
+  .ah .row2{display:flex;gap:8px;margin-top:14px}
+  .ah .row2 button{flex:1;height:48px;border-radius:14px;border:0;font:inherit;font-size:15px;font-weight:800;cursor:pointer;background:#eef1f5;color:var(--ink)}
+  .ah .row2 button.p{background:var(--navy);color:#fff}
   .dim{position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:10}
   .sheet{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(1080px,100%);max-height:82vh;overflow:auto;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 40px rgba(20,30,60,.25);padding:14px 26px 28px;z-index:11}
   .sheet .grab{width:48px;height:5px;background:#d9dee6;border-radius:3px;margin:0 auto 12px}
@@ -129,11 +144,13 @@
     {% endfor %}
   </div>
   <div class="foot">
-    <button class="fb" type="button" onclick="soon()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 8.5v6M9 11.5h6"/></svg>홈 화면에 추가</button>
+    <button class="fb" type="button" id="addHome" onclick="addHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 8.5v6M9 11.5h6"/></svg>홈 화면에 추가</button>
     <button class="fb" type="button" onclick="soon()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16V11a6 6 0 0 0-12 0v5l-1.5 2h15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>알림 설정</button>
   </div>
 </div>
 <div class="toast" id="toast">준비 중이에요</div>
+<div class="ah-dim" id="ahDim" hidden onclick="closeAH()"></div>
+<div class="ah" id="ah" hidden></div>
 
 {% for s in sidos %}
 <template id="sh{{ loop.index0 }}">
@@ -160,9 +177,51 @@ function openSheet(i) {
 function openMenu() { document.getElementById('mdim').hidden = false; document.getElementById('drawer').classList.add('open'); }
 function closeMenu() { document.getElementById('mdim').hidden = true; document.getElementById('drawer').classList.remove('open'); }
 let toastT;
-function soon() { const t = document.getElementById('toast'); t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1600); }   // 아직 개발 전 메뉴
+// ── 홈 화면에 추가 ──
+// 안드로이드·PC 크롬/엣지: 브라우저 설치 창(beforeinstallprompt). 아이폰·카카오톡 등은 따라 하기 안내.
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; });
+window.addEventListener('appinstalled', () => { installEvt = null; toast('홈 화면에 추가했어요'); });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+const UA = navigator.userAgent;
+const isIOS = /iPhone|iPad|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/.test(UA);
+const inApp = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp|BAND\//i.test(UA);
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const SHARE_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>';
+const ADD_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+const DOTS_I = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>';
+function showAH(desc, steps, extra) {
+  const el = document.getElementById('ah');
+  el.innerHTML = `<div class="grab"></div><h3><img src="apple-touch-icon.png" alt="">홈 화면에 옆집얼마 추가</h3><p class="d">${desc}</p>`
+    + `<ol>${steps.map((t, i) => `<li><span class="n">${i + 1}</span><span>${t}</span></li>`).join('')}</ol>`
+    + `<div class="row2">${extra || ''}<button type="button" class="p" onclick="closeAH()">확인</button></div>`;
+  el.hidden = false; document.getElementById('ahDim').hidden = false;
+}
+function closeAH() { document.getElementById('ah').hidden = true; document.getElementById('ahDim').hidden = true; }
+function copyLink() { (navigator.clipboard ? navigator.clipboard.writeText(location.origin + '/') : Promise.reject()).then(() => toast('주소를 복사했어요'), () => toast(location.origin)); }
+async function addHome() {
+  if (standalone()) return toast('이미 홈 화면 앱으로 보고 있어요');
+  if (installEvt) {   // 브라우저 설치 창
+    installEvt.prompt();
+    const r = await installEvt.userChoice.catch(() => ({}));
+    if (r.outcome === 'accepted') toast('홈 화면에 추가했어요');
+    installEvt = null;
+    return;
+  }
+  const D = '앱처럼 바로 열 수 있고, 매일 올라오는 실거래를 빠르게 확인할 수 있어요.';
+  if (inApp) return showAH('지금 보고 있는 앱 안의 브라우저에서는 추가할 수 없어요. ' + (isIOS ? 'Safari' : 'Chrome') + '에서 열어 주세요.',
+    [`오른쪽 위(또는 아래) ${DOTS_I} 메뉴를 누르기`, `<b>${isIOS ? 'Safari로 열기' : '다른 브라우저로 열기'}</b> 선택`, '열린 화면에서 다시 <b>홈 화면에 추가</b> 누르기'],
+    '<button type="button" onclick="copyLink()">주소 복사</button>');
+  if (isIOS) return showAH(D, [`화면 아래(또는 위)의 공유 버튼 ${SHARE_I} 누르기`, `목록을 올려 <b>홈 화면에 추가</b> ${ADD_I} 누르기`, '오른쪽 위 <b>추가</b> 누르기']);
+  if (isAndroid) return showAH(D, [`브라우저 오른쪽 위(또는 아래) ${DOTS_I} 메뉴 누르기`, '<b>홈 화면에 추가</b> 또는 <b>앱 설치</b> 누르기', '<b>추가</b>(설치) 누르기']);
+  showAH('PC에서는 크롬·엣지에서 앱으로 설치할 수 있어요.', ['주소창 오른쪽의 <b>설치</b> 아이콘 누르기 (또는 메뉴 ⋮ → <b>옆집얼마 설치</b>)', '<b>설치</b> 누르기']);
+}
+if (standalone()) { const b = document.getElementById('addHome'); if (b) b.lastChild.textContent = '홈 화면에 추가됨'; }
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1800); }
+function soon() { toast('준비 중이에요'); }   // 아직 개발 전 메뉴
 function closeSheet() { document.getElementById('sheet').hidden = true; document.getElementById('dim').hidden = true; }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheet(); closeMenu(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheet(); closeMenu(); closeAH(); } });
 </script>
 <script src="search.js?v={{ date_label|replace('.', '') }}"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "abacec54a0cc4c2a9c18d8b390e67068"}'></script><!-- End Cloudflare Web Analytics -->
