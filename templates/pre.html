@@ -16,7 +16,7 @@
 .ptag{display:inline-block;font-size:12px;font-weight:800;color:#c2185b;background:#fde7f0;border-radius:7px;padding:3px 8px;vertical-align:5px;margin-left:6px}
 .info small{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:2px}
 .pt th,.pt td{text-align:right}.pt th:first-child,.pt td:first-child{text-align:left}
-.pm{color:var(--red);font-weight:800}.pm.n{color:#2a4f8f}.tt th.pm{color:var(--muted);font-weight:700}
+.pm,.tt td.p.pm{color:var(--red);font-weight:800}.pm.n,.tt td.p.pm.n{color:#2a4f8f}.tt th.pm{color:var(--muted);font-weight:700}
 .note{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.5}
 .miss{font-size:11.5px;color:var(--muted);margin:12px 2px -4px}
 .stats em b.pct{font-size:inherit;font-weight:800;color:var(--blue)}
@@ -56,7 +56,7 @@
   <div class="stats" id="stats"></div>
   <div class="chart" id="chart"><svg id="svg"></svg><div class="tip" id="tip"></div></div>
   <div class="lg"><span><i></i>월평균 거래가</span><span><i class="d"></i>분양가 평균</span></div>
-  <p class="miss" id="miss" hidden>상세 분양가 미스캔으로 최고 분양가 기준</p>
+  <p class="miss" id="miss" hidden>상세 분양가 미스캔으로 평균 분양가(추정) 기준</p>
   <table class="tt"><thead><tr><th>계약일</th><th class="p">금액</th><th>층</th><th>타입</th><th class="p pm">프리미엄</th></tr></thead><tbody id="rows"></tbody></table>
   <button class="more" id="more" type="button">더보기</button>
 </section>
