@@ -1,0 +1,12 @@
+# 옆집얼마 알림 서버 — .github/workflows/Push.yml 이 배포 (KV id 는 배포 때 채움)
+name = "nextdoorprice-push"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "SUBS"
+id = "__KV_ID__"
+
+[triggers]
+crons = ["*/5 * * * *"]

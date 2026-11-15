@@ -29,13 +29,42 @@
   const FKEY = 'ndp_fav';
   const Fav = {
     get() { try { return JSON.parse(localStorage.getItem(FKEY)) || []; } catch (e) { return []; } },
-    set(a) { try { localStorage.setItem(FKEY, JSON.stringify(a)); } catch (e) {} },
+    set(a) { try { localStorage.setItem(FKEY, JSON.stringify(a)); } catch (e) {} Push.later(); },
     has(p) { return Fav.get().some(x => x[2] === p); },
     add(it) { if (!Fav.has(it[2])) Fav.set([it, ...Fav.get()]); },
     remove(p) { Fav.set(Fav.get().filter(x => x[2] !== p)); },
     toggle(it) { if (Fav.has(it[2])) { Fav.remove(it[2]); return false; } Fav.add(it); return true; },
   };
   window.NDPFav = Fav;
+  // ---- 알림: 이 기기의 선택(ndp_notify)과 관심단지를 알림 서버에 저장 (cloudflare/push)
+  const PUSH_API = 'https://nextdoorprice-push.newreds22.workers.dev';
+  const nGet = () => { try { return JSON.parse(localStorage.getItem('ndp_notify')) || {}; } catch (e) { return {}; } };
+  const u8 = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); const b = atob(s + '='.repeat((4 - s.length % 4) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+  let pushT;
+  const Push = {
+    later() { clearTimeout(pushT); pushT = setTimeout(() => Push.sync().catch(() => {}), 800); },   // 관심단지가 바뀌면 서버에도 반영
+    async sync(create) {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'unsupported';
+      const v = nGet(), on = v.fav || v.daily;
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) return 'no-sw';
+      let sub = await reg.pushManager.getSubscription();
+      if (!on) {   // 알림 끔 → 서버에서 지우고 구독 해제
+        if (sub) { await fetch(PUSH_API + '/unsub', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => {}); await sub.unsubscribe().catch(() => {}); }
+        return 'off';
+      }
+      if (Notification.permission !== 'granted') return 'denied';
+      if (!sub) {
+        if (!create) return 'none';
+        const { key } = await (await fetch(PUSH_API + '/vapid')).json();
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: u8(key) });
+      }
+      const r = await fetch(PUSH_API + '/sub', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sub: sub.toJSON(), favOn: !!v.fav, fav: Fav.get().map(x => x[2]), daily: !!v.daily, region: v.region || '', rname: v.rname || '' }) });
+      return r.ok ? 'ok' : 'server';
+    },
+  };
+  window.NDPPush = Push;
   window.NDPRoot = ROOT;
   // 단지·분양권 페이지의 별 버튼 (data-fav='[이름, 위치, 주소]')
   document.querySelectorAll('[data-fav]').forEach(b => {
