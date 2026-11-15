@@ -13,6 +13,7 @@ from collections import defaultdict
 
 import kapt
 import poi
+import schoolzone
 
 APT_DIR = "apt"
 
@@ -178,6 +179,8 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
     order = sorted(apts, key=lambda k: -(len(apts[k]["s"]) + len(apts[k]["r"])))
     poi.update(pcache, {k: (f"{sd['short']} {sd['codes'].get(apts[k]['c'], '')} {apts[k]['u']} {apts[k]['j']}".strip(), apts[k]["n"])
                         for k in order if apts[k]["j"]}, now, budget=int(os.environ.get("POI_MAX", "1500")))
+    zones = schoolzone.load(store, sd["key"], now.replace(tzinfo=None))   # 배정 초등학교 (통학구역)
+    poi.assign(pcache, order, zones, "z1")
     poi.save(ppath, pcache)
     tpl = env.get_template("apt.html")
     out_dir = os.path.join(site, sdir, APT_DIR)

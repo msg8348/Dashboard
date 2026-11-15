@@ -82,6 +82,8 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         return " ".join(a.split())
     poi.update(pcache, {f"pre:{hid}": (clean(hmap[hid]["addr"]), hmap[hid]["name"]) for hid in by if hid not in moved},
                now, budget=300)
+    import schoolzone
+    poi.assign(pcache, [f"pre:{hid}" for hid in by], schoolzone.load(store, sd["key"], now.replace(tzinfo=None)), "z1")
     poi.save(ppath, pcache)
     npath = os.path.join(store, "notice.json")
     cache = notice.load(npath)
