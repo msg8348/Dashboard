@@ -519,6 +519,21 @@ def main():
                     ccache[ck] = (ccache[ck][0], None)
             return ccache[ck]
 
+        tlc = {}
+
+        def tlabel(t, sd=sd, tlc=tlc):
+            """청약홈 단지(같은 시군구·같은 이름)의 주택형 전용면적과 거래 면적이 같으면 약식표기 (84A …)."""
+            k = (t.get("c"), t["n"])
+            if k not in tlc:
+                h = match_house(houses, sd, t)
+                if h and t.get("src") != "pre" and ckey(h["name"]) != ckey(t["n"]):
+                    h = None   # 매매·전월세는 이름이 정확히 같을 때만 (같은 이름의 옛 단지 오인 방지)
+                tlc[k] = [x for x in (h or {}).get("types", []) if len(x) >= 5]
+            for x in tlc[k]:
+                if abs(x[4] - t["a"]) < 0.006:
+                    return x[2] if x[2][-1].isalpha() else ""
+            return ""
+        D.TYPE_LABEL = tlabel
         sale_ctx, rent_ctx, highs_s, highs_r = D.build_trades(subset(sdb, set(sd["codes"])), now, cinfo)
         favc = [c for c in sale_ctx["cards"] if c.get("h")]   # 관심단지 화면용 (최근 7일, 단지 페이지 있는 거래)
         if not fallback:   # 날짜별 기준값도 보관 (최근 3일) — 신규 공개가 없는 날 전날 기준으로 다시 보여줄 때 사용

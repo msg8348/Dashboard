@@ -29,7 +29,7 @@ function tCard(r, i) {
     <div class="c1"><span class="ty ${tc}">${tl}</span><span class="nm">${r.n}</span>${badge}</div>
     <div class="c2">${meta}</div>
     <div class="c3"><div class="price"><span class="kl ${kl[0]}">${kl[1]}</span><span class="v">${price}</span></div><button class="tshare" type="button" aria-label="공유" onclick="shareCard(this)">${SHARE_I}</button></div>
-    <div class="c4"><span class="spec">${r.a.toFixed(2)}㎡<i>·</i>${r.py}평<i>·</i>${tFl(r.f)}</span><span class="dt">${tDt(r.dt)} 계약</span></div>
+    <div class="c4"><span class="spec">${r.tl || r.a.toFixed(2) + '㎡'}<i>·</i>${r.py}평<i>·</i>${tFl(r.f)}</span><span class="dt">${tDt(r.dt)} 계약</span></div>
     <div class="c5"><span class="ft">${foot}</span><span class="logo-slot">${GLOGO}옆집얼마</span></div></div>`;
 }
 async function shareCard(btn) {   // 카드 1장 이미지 (오른쪽 아래 회색 로고) — 실거래 탭·관심단지 공통
