@@ -55,7 +55,15 @@
   const dim = wrap.querySelector('.sdim'), sheet = wrap.querySelector('.ssheet'), inp = wrap.querySelector('input'),
     clr = wrap.querySelector('.sclr'), res = wrap.querySelector('.sres');
   let LIST = null, hits = [];
-  const norm = s => s.replace(/[\s()\-·.,]/g, '').toLowerCase();
+  // 영문·한글 브랜드 표기를 하나로 (SK뷰 = 에스케이뷰, e편한세상 = 이편한세상 …) — 단지명·검색어 모두에 적용
+  const ALIAS = [['에스케이', 'sk'], ['이편한', 'e편한'], ['아이파크', 'ipark'], ['지에스', 'gs'], ['엘에이치', 'lh'], ['케이씨씨', 'kcc'],
+    ['더샵', 'thesharp'], ['자이', 'xi'], ['힐스테이트', 'hillstate'], ['푸르지오', 'prugio'], ['래미안', 'raemian'],
+    ['롯데캐슬', 'lottecastle'], ['뷰', 'view'], ['파크', 'park'], ['시티', 'city'], ['타워', 'tower']];
+  const norm = s => {
+    let t = s.replace(/[\s()\-·.,_]/g, '').toLowerCase();
+    for (const [ko, en] of ALIAS) t = t.split(en).join(ko);
+    return t;
+  };
   const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const getRecent = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } };
   const setRecent = a => { try { localStorage.setItem(KEY, JSON.stringify(a.slice(0, 10))); } catch (e) {} };
