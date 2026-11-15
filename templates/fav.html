@@ -23,6 +23,17 @@
   .head{display:flex;justify-content:space-between;align-items:center;margin:8px 2px 12px}
   .head h1{font-size:24px;font-weight:900;letter-spacing:-.4px}.head h1 small{font-size:13px;color:var(--muted);font-weight:700;margin-left:6px}
   .setbtn{font:inherit;font-size:13.5px;font-weight:800;border:1.5px solid #d6dce4;background:#fff;border-radius:999px;padding:7px 13px;color:var(--ink);cursor:pointer;white-space:nowrap}
+  .vseg{display:flex;background:#e6e9ef;border-radius:12px;padding:3px;margin:0 0 14px}
+  .vseg button{flex:1;font:inherit;font-size:14.5px;font-weight:800;color:var(--ink-2);border:0;background:none;border-radius:9px;padding:9px 6px;cursor:pointer}
+  .vseg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(20,30,60,.12)}
+  .fl{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #dfe5ea;border-radius:18px;padding:14px 16px;margin-bottom:10px;text-decoration:none;color:inherit}
+  .fl .st{color:#f5b301;font-size:20px;flex:none}
+  .fl .t{flex:1;min-width:0}
+  .fl b{display:block;font-size:17px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fl b .pt{font-size:11px;font-weight:800;color:#c2185b;background:#fde4ec;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+  .fl small{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+  .fl .n{display:block;font-size:13px;color:var(--ink-2);font-weight:700;margin-top:5px}.fl .n em{font-style:normal;color:var(--blue)}.fl .n .hi{color:var(--red)}
+  .fl .go{color:#b4bcc8;font-size:22px;flex:none}
   .sub{font-size:12.5px;color:var(--muted);font-weight:700;margin:-6px 2px 12px}
 {% include "_tcard_css.html" %}
   .tcard[data-h]{cursor:pointer}
@@ -53,10 +64,14 @@
 <body><div class="wrap">
 <div class="topbar">{{ brand('index.html') }}<span class="tbtns"><a class="menu-btn on" href="fav.html" aria-label="관심단지"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></a><button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></span></div>
 <div class="head"><h1>관심단지<small id="fcnt"></small></h1><button class="setbtn" type="button" onclick="openSet()">관심단지 설정</button></div>
+<div class="vseg" id="vseg"><button type="button" class="on" data-v="list">관심단지 목록</button><button type="button" data-v="card">최근 7일 실거래</button></div>
+<div id="vlist"></div>
+<div id="vcard" hidden>
 <div class="sub">최근 7일 신규 공개 실거래 · 금액순</div>
 <div class="tf1" id="ff"><button class="all on" data-k="all">전체</button><button class="sale" data-k="sale">매매</button><button class="rent" data-k="jeon">전세</button><button class="rent" data-k="wol">월세</button><button class="hi" id="ffhi" type="button">신고가</button></div>
 <div class="tcnt" id="tcnt"></div>
 <div id="tout"></div>
+</div>
 </div>
 <div class="dim" id="dim" hidden onclick="closeSet()"></div>
 <div class="fsheet" id="fsheet" hidden>
@@ -107,7 +122,25 @@ async function loadCards() {
   CARDS = all.flat().filter(c => want.has(c.path));
   render();
 }
+let VIEW = 'list';
+document.querySelectorAll('#vseg [data-v]').forEach(b => b.onclick = () => {
+  VIEW = b.dataset.v;
+  document.querySelectorAll('#vseg [data-v]').forEach(x => x.classList.toggle('on', x === b));
+  document.getElementById('vlist').hidden = VIEW !== 'list';
+  document.getElementById('vcard').hidden = VIEW !== 'card';
+});
+function renderList() {   // 관심단지 목록: 단지마다 최근 7일 신규 거래 요약
+  const l = favs(), box = document.getElementById('vlist');
+  if (!l.length) { box.innerHTML = '<div class="empty">아직 관심단지가 없어요<br>단지 페이지의 ☆ 를 누르거나 아래에서 추가하세요<br><button class="setbtn" type="button" onclick="addFav()">+ 단지 추가</button></div>'; return; }
+  box.innerHTML = l.map(f => {
+    const cs = CARDS.filter(c => c.path === f[2]), sale = cs.filter(c => c.k !== 'rent').sort((a, b) => b.dt.localeCompare(a.dt))[0];
+    const hi = cs.filter(c => c.up).length;
+    const n = cs.length ? `최근 7일 신규 <em>${cs.length}건</em>${hi ? ` · <span class="hi">신고가 ${hi}건</span>` : ''}${sale ? ` · ${sale.k === 'pre' ? '분양권' : '매매'} ${tShort(sale.p)}` : ''}` : '최근 7일 신규 거래 없음';
+    return `<a class="fl" href="${esc(f[2])}"><span class="st">★</span><span class="t"><b>${esc(f[0])}${f[2].includes('/pre/') ? '<span class="pt">분양권</span>' : ''}</b><small>${esc(f[1].replace(' · 분양권', ''))}</small><span class="n">${n}</span></span><span class="go">›</span></a>`;
+  }).join('');
+}
 function render() {
+  renderList();
   const n = favs().length;
   document.getElementById('fcnt').textContent = n ? `${n}곳` : '';
   const out = document.getElementById('tout');
