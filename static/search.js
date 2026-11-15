@@ -122,3 +122,30 @@
   inp.addEventListener('input', render);
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') close(); });
 })();
+
+// 맨 위로 버튼: 아래로 내려가 있다가 위로 스크롤하면 오른쪽 아래에 나타남. 모든 페이지 공용.
+(function () {
+  const st = document.createElement('style');
+  st.textContent = `
+.totop{position:fixed;right:16px;bottom:calc(20px + env(safe-area-inset-bottom));width:48px;height:48px;border-radius:14px;border:1px solid #d6dbe2;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#5b6472;display:grid;place-items:center;padding:0;cursor:pointer;z-index:19;box-shadow:0 2px 10px rgba(20,30,60,.08);opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .2s,transform .2s,bottom .3s ease}
+.totop.show{opacity:1;transform:none;pointer-events:auto}
+.totop svg{width:24px;height:24px}
+.totop.nav{bottom:calc(84px + env(safe-area-inset-bottom))}`;
+  document.head.appendChild(st);
+  const b = document.createElement('button');
+  b.className = 'totop'; b.type = 'button'; b.setAttribute('aria-label', '맨 위로');
+  b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4"/><path d="M5 11l7-7 7 7"/></svg>';
+  b.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  const add = () => document.body.appendChild(b);
+  document.body ? add() : document.addEventListener('DOMContentLoaded', add);
+  let last = window.scrollY, hideT;
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY, nav = document.getElementById('bnav');
+    b.classList.toggle('nav', !!nav && !nav.classList.contains('hide'));   // 아래 탭 막대가 보이면 그 위로
+    if (y < 300) b.classList.remove('show');
+    else if (y < last - 4) b.classList.add('show');     // 위로 스크롤
+    else if (y > last + 4) b.classList.remove('show');  // 아래로 스크롤
+    if (Math.abs(y - last) > 4) last = y;
+    clearTimeout(hideT); hideT = setTimeout(() => b.classList.remove('show'), 3000);   // 멈추고 3초 지나면 숨김
+  }, { passive: true });
+})();
