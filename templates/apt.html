@@ -32,7 +32,7 @@
 
 {% if ranks %}<section class="card" id="rank">
   <div class="sec-t"><h2>매매가 순위</h2><small>{{ sido_short }} 지역 · 최근 1년 거래가 기준</small></div>
-  <div class="rk">{% for g, r, avg, n, tot in ranks %}<div class="rki">{% if r <= 3 %}<svg class="crown" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l1.5-10-5.5 4-5-7-5 7-5.5-4z" fill="#f5b301" stroke="#c98a00" stroke-width="1.2" stroke-linejoin="round"/></svg>{% endif %}<span class="rty t{{ g }}">{{ g }}타입</span><b class="rkn">{{ r }}위</b></div>{% endfor %}</div>
+  <div class="rk">{% for g, r, avg, n, tot in ranks %}<div class="rki"><span class="rty t{{ g }}">{{ g }}타입</span><b class="rkn">{{ r }}위{% if r <= 3 %}<svg class="crown" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l1.5-10-5.5 4-5-7-5 7-5.5-4z" fill="#f5b301" stroke="#c98a00" stroke-width="1.2" stroke-linejoin="round"/></svg>{% endif %}</b></div>{% endfor %}</div>
 </section>{% endif %}
 
 <section class="card" id="act">
