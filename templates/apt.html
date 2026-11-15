@@ -32,10 +32,7 @@
 
 {% if ranks %}<section class="card" id="rank">
   <div class="sec-t"><h2>매매가 순위</h2><small>{{ sido_short }} 지역 · 최근 1년 평균가</small></div>
-  <div class="rk">{% for g, r, avg, n, tot in ranks %}
-    <div class="rki"><span class="rty">{{ g }}㎡</span><span class="rkn">{{ sido_short }} <b>{{ r }}위</b><small> / {{ "{:,}".format(tot) }}곳</small></span><span class="rkd">평균 {{ avg }} · {{ n }}건</span></div>{% endfor %}
-  </div>
-  <p class="rkc">최근 1년 해당 타입 거래가 3건 이상인 {{ sido_short }} 단지끼리 평균 매매가 비교</p>
+  <div class="rk">{% for g, r, avg, n, tot in ranks %}<div class="rki">{% if r <= 3 %}<svg class="crown" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l1.5-10-5.5 4-5-7-5 7-5.5-4z" fill="#f5b301" stroke="#c98a00" stroke-width="1.2" stroke-linejoin="round"/></svg>{% endif %}<span class="rty t{{ g }}">{{ g }}</span><b class="rkn">{{ r }}위</b></div>{% endfor %}</div>
 </section>{% endif %}
 
 <section class="card" id="act">

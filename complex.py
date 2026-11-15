@@ -147,11 +147,11 @@ def merge_split(apts, ckey):
 
 
 RANK_TYPES = ("59", "74", "84")
-RANK_MIN = 3   # 최근 1년 거래가 이보다 적은 단지는 순위에서 제외 (한두 건 거래로 순위가 흔들리지 않게)
+RANK_MIN = 1   # 최근 1년 해당 타입 거래 1건 이상이면 순위에 포함
 
 
 def price_ranks(apts, now):
-    """59·74·84 타입별 시도 내 매매가 순위 (최근 1년 평균, 10위까지). {단지번호: [[타입, 순위, '13.2억', 거래수, 비교 단지 수]]}"""
+    """59·74(70~77㎡)·84 타입별 시도 내 매매가 순위 (최근 1년 평균, 10위까지). {단지번호: [[타입, 순위, '13.2억', 거래수, 비교 단지 수]]}"""
     from datetime import timedelta
     d365 = int((now - timedelta(days=365)).strftime("%Y%m%d"))
     pool = {g: [] for g in RANK_TYPES}
@@ -159,7 +159,8 @@ def price_ranks(apts, now):
         by = defaultdict(list)
         for t in a["s"]:
             if t[0] >= d365 and not (len(t) > 6 and t[6]):   # 분양권(입주 후 합친 거래)은 제외
-                g = str(int(t[4]))
+                ai = int(t[4])
+                g = "59" if ai == 59 else "74" if 70 <= ai <= 77 else "84" if ai == 84 else ""   # 74 타입 = 전용 70~77㎡
                 if g in pool:
                     by[g].append(t[1])
         for g, ps in by.items():
