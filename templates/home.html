@@ -99,6 +99,17 @@
   .ah .row2{display:flex;gap:8px;margin-top:14px}
   .ah .row2 button{flex:1;height:48px;border-radius:14px;border:0;font:inherit;font-size:15px;font-weight:800;cursor:pointer;background:#eef1f5;color:var(--ink)}
   .ah .row2 button.p{background:var(--navy);color:#fff}
+  .ah .row2 button:disabled{opacity:.45}
+  .nt{display:grid;gap:10px}
+  .nt label.op{display:flex;gap:12px;align-items:flex-start;background:#f4f6f9;border-radius:16px;padding:14px;cursor:pointer;border:2px solid transparent}
+  .nt label.op.on{border-color:var(--navy);background:#eef1f8}
+  .nt input[type=checkbox]{width:22px;height:22px;accent-color:var(--navy);flex:none;margin-top:1px}
+  .nt .t b{display:block;font-size:15.5px;font-weight:800}.nt .t small{display:block;font-size:13px;color:var(--ink-2);margin-top:3px;line-height:1.45}
+  .nt .t em{font-style:normal;color:#2754d6;font-weight:700}
+  .nt select{margin-top:8px;width:100%;height:40px;border-radius:10px;border:1px solid #d6dbe2;background:#fff;font:inherit;font-size:14.5px;padding:0 10px;color:var(--ink)}
+  .nt .rg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .ah .st{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.5}
+  .ah .st b{color:var(--ink-2)}
   .dim{position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:10}
   .sheet{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(1080px,100%);max-height:82vh;overflow:auto;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 40px rgba(20,30,60,.25);padding:14px 26px 28px;z-index:11}
   .sheet .grab{width:48px;height:5px;background:#d9dee6;border-radius:3px;margin:0 auto 12px}
@@ -145,11 +156,12 @@
   </div>
   <div class="foot">
     <button class="fb" type="button" id="addHome" onclick="addHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 8.5v6M9 11.5h6"/></svg>홈 화면에 추가</button>
-    <button class="fb" type="button" onclick="soon()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16V11a6 6 0 0 0-12 0v5l-1.5 2h15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>알림 설정</button>
+    <button class="fb" type="button" id="notiBtn" onclick="openNoti()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16V11a6 6 0 0 0-12 0v5l-1.5 2h15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>알림 설정</button>
   </div>
 </div>
 <div class="toast" id="toast">준비 중이에요</div>
 <div class="ah-dim" id="ahDim" hidden onclick="closeAH()"></div>
+<script type="application/json" id="rgLinks">[{% for s in sidos if s.ready %}[{{ ('전남광주' if s.short == '광주전남' else s.short)|tojson }},{{ s.href|tojson }},[{% for c in s.chips %}[{{ c.name|tojson }},{{ c.href|tojson }}]{{ ',' if not loop.last }}{% endfor %}]]{{ ',' if not loop.last }}{% endfor %}]</script>
 <div class="ah" id="ah" hidden></div>
 
 {% for s in sidos %}
@@ -200,6 +212,13 @@ function showAH(desc, steps, extra) {
 }
 function closeAH() { document.getElementById('ah').hidden = true; document.getElementById('ahDim').hidden = true; }
 function copyLink() { (navigator.clipboard ? navigator.clipboard.writeText(location.origin + '/') : Promise.reject()).then(() => toast('주소를 복사했어요'), () => toast(location.origin)); }
+function openExternal() {   // 앱 안 브라우저 → Safari/Chrome 으로 바로 열기 (가능한 앱만)
+  const url = location.origin + '/?install=1';
+  if (/KAKAOTALK/i.test(UA)) { location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url); return true; }
+  if (/Line\//.test(UA)) { location.href = url + '&openExternalBrowser=1'; return true; }
+  if (isAndroid) { location.href = 'intent://' + location.host + '/?install=1#Intent;scheme=https;package=com.android.chrome;end'; return true; }
+  return false;
+}
 async function addHome() {
   if (standalone()) return toast('이미 홈 화면 앱으로 보고 있어요');
   if (installEvt) {   // 브라우저 설치 창
@@ -210,6 +229,7 @@ async function addHome() {
     return;
   }
   const D = '앱처럼 바로 열 수 있고, 매일 올라오는 실거래를 빠르게 확인할 수 있어요.';
+  if (inApp && openExternal()) return;
   if (inApp) return showAH('지금 보고 있는 앱 안의 브라우저에서는 추가할 수 없어요. ' + (isIOS ? 'Safari' : 'Chrome') + '에서 열어 주세요.',
     [`오른쪽 위(또는 아래) ${DOTS_I} 메뉴를 누르기`, `<b>${isIOS ? 'Safari로 열기' : '다른 브라우저로 열기'}</b> 선택`, '열린 화면에서 다시 <b>홈 화면에 추가</b> 누르기'],
     '<button type="button" onclick="copyLink()">주소 복사</button>');
@@ -219,6 +239,67 @@ async function addHome() {
 }
 if (standalone()) { const b = document.getElementById('addHome'); if (b) b.lastChild.textContent = '홈 화면에 추가됨'; }
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1800); }
+// ── 알림 설정 ── 알림 종류를 고르고, 휴대폰의 알림 허용 창을 띄움 (선택은 이 기기에 저장)
+const NKEY = 'ndp_notify';
+const RG = JSON.parse(document.getElementById('rgLinks').textContent);
+const nGet = () => { try { return JSON.parse(localStorage.getItem(NKEY)) || {}; } catch (e) { return {}; } };
+const nSet = v => { try { localStorage.setItem(NKEY, JSON.stringify(v)); } catch (e) {} };
+const esc2 = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function permText() {
+  if (!('Notification' in window)) return isIOS && !standalone() ? '아이폰은 <b>홈 화면에 추가한 앱</b>에서만 알림을 받을 수 있어요.' : '이 브라우저는 알림을 지원하지 않아요.';
+  return { granted: '휴대폰 알림: <b>허용됨</b>', denied: '휴대폰 알림: <b>차단됨</b> — 휴대폰 설정에서 옆집얼마(또는 브라우저) 알림을 켜 주세요.', default: '알림 켜기를 누르면 휴대폰의 알림 허용 창이 열려요.' }[Notification.permission];
+}
+function openNoti() {
+  const v = nGet(), favN = ((window.NDPFav && NDPFav.get()) || []).length;
+  const rsel = v.region || (RG[0] && RG[0][1]) || '';
+  const sido = RG.find(r => r[1] === rsel || r[2].some(c => c[1] === rsel)) || RG[0] || ['', '', []];
+  const el = document.getElementById('ah');
+  el.innerHTML = `<div class="grab"></div><h3><img src="apple-touch-icon.png" alt="">알림 설정</h3><p class="d">받고 싶은 알림을 골라 주세요.</p>
+    <div class="nt">
+      <label class="op ${v.fav ? 'on' : ''}"><input type="checkbox" id="nFav" ${v.fav ? 'checked' : ''}><span class="t"><b>관심단지 실거래</b><small>관심단지에 새 실거래가 올라오면 바로 알려드려요.<br>${favN ? `지금 관심단지 <em>${favN}곳</em>` : '아직 관심단지가 없어요 — 단지 페이지의 ☆로 추가해 주세요.'}</small></span></label>
+      <label class="op ${v.daily ? 'on' : ''}"><input type="checkbox" id="nDaily" ${v.daily ? 'checked' : ''}><span class="t"><b>매일 아침 7시 관심지역 요약</b><small>알림을 누르면 관심지역 요약 페이지로 연결돼요.</small>
+        <span class="rg"><select id="nSido">${RG.map(r => `<option value="${esc2(r[1])}" ${r === sido ? 'selected' : ''}>${esc2(r[0])}</option>`).join('')}</select><select id="nGu"></select></span></span></label>
+    </div>
+    <div class="row2"><button type="button" onclick="closeAH()">닫기</button><button type="button" class="p" id="nGo" onclick="saveNoti()">알림 켜기</button></div>
+    <p class="st" id="nSt">${permText()}</p>`;
+  const fillGu = () => {
+    const r = RG.find(x => x[1] === document.getElementById('nSido').value) || ['', '', []];
+    document.getElementById('nGu').innerHTML = `<option value="${esc2(r[1])}">${esc2(r[0])} 전체</option>` + r[2].map(c => `<option value="${esc2(c[1])}" ${c[1] === rsel ? 'selected' : ''}>${esc2(c[0])}</option>`).join('');
+  };
+  fillGu();
+  document.getElementById('nSido').onchange = fillGu;
+  el.querySelectorAll('label.op input').forEach(i => i.onchange = () => { i.closest('label').classList.toggle('on', i.checked); upd(); });
+  const upd = () => { document.getElementById('nGo').textContent = (document.getElementById('nFav').checked || document.getElementById('nDaily').checked) ? '알림 켜기' : '알림 끄기'; };
+  upd();
+  el.hidden = false; document.getElementById('ahDim').hidden = false;
+}
+async function saveNoti() {
+  const fav = document.getElementById('nFav').checked, daily = document.getElementById('nDaily').checked;
+  const gu = document.getElementById('nGu'), region = gu.value, rname = gu.selectedOptions[0] ? gu.selectedOptions[0].textContent.replace(' 전체', '') : '';
+  nSet({ fav, daily, region, rname, at: Date.now() });
+  if (!fav && !daily) { notiLabel(); closeAH(); return toast('알림을 껐어요'); }
+  if (!('Notification' in window)) {   // 아이폰 Safari 탭: 홈 화면 앱에서만 알림 가능
+    closeAH();
+    if (isIOS && !standalone()) { toast('홈 화면에 추가한 앱에서 알림을 켤 수 있어요'); setTimeout(addHome, 900); }
+    else toast('이 브라우저는 알림을 지원하지 않아요');
+    return;
+  }
+  let p = Notification.permission;
+  if (p === 'default') p = await Notification.requestPermission();   // 휴대폰 알림 허용 창
+  document.getElementById('nSt').innerHTML = permText();
+  if (p !== 'granted') return toast(p === 'denied' ? '휴대폰 설정에서 알림을 허용해 주세요' : '알림을 허용하지 않았어요');
+  try {   // 확인용 알림 한 번
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('옆집얼마 알림이 켜졌어요', { body: [fav ? '관심단지 실거래' : '', daily ? `매일 아침 7시 ${rname} 요약` : ''].filter(Boolean).join(' · '), icon: 'icon-192.png', data: { url: daily ? region : 'fav.html' } });
+  } catch (e) {}
+  notiLabel(); closeAH(); toast('알림 설정을 저장했어요');
+}
+function notiLabel() {
+  const b = document.getElementById('notiBtn'), v = nGet();
+  if (b) b.lastChild.textContent = (v.fav || v.daily) && 'Notification' in window && Notification.permission === 'granted' ? '알림 켜짐' : '알림 설정';
+}
+notiLabel();
+if (new URLSearchParams(location.search).get('install') && !standalone()) setTimeout(() => toast('아래 홈 화면에 추가를 눌러 주세요'), 600);
 function soon() { toast('준비 중이에요'); }   // 아직 개발 전 메뉴
 function closeSheet() { document.getElementById('sheet').hidden = true; document.getElementById('dim').hidden = true; }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheet(); closeMenu(); closeAH(); } });
