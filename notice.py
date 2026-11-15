@@ -14,7 +14,7 @@ import requests
 
 UA = {"User-Agent": "Mozilla/5.0 (compatible; nextdoorprice-bot)"}
 RETRY_DAYS = 30
-VER = 3   # 읽는 방식이 바뀌면 올려서 다시 읽게 함
+VER = 4   # 읽는 방식이 바뀌면 올려서 다시 읽게 함
 
 
 def _int(s):
@@ -114,14 +114,15 @@ def parse(data, types):
         m = re.search(r"공급\s*규모[^\n]*?총\s*([\d,]+)\s*세대", whole) or re.search(r"총\s*([\d,]+)\s*세대", whole)
         if m:
             info["total"] = _int(m.group(1))
-        m = re.search(r"공급\s*규모[^\n]*", whole)       # '아파트 지하 4층, 지상 48층 3개동 총 660세대'
-        if m:
-            g = re.search(r"지상\s*(?:최고\s*)?(\d+)\s*층", m.group(0)) or re.search(r"지상\s*\d+\s*~\s*(\d+)\s*층", m.group(0))
-            if g:
-                info["fl"] = int(g.group(1))
-            g = re.search(r"(\d+)\s*개\s*동", m.group(0))
-            if g:
-                info["bd"] = int(g.group(1))
+        i = whole.find("공급규모") if "공급규모" in whole else whole.find("공급 규모")
+        if i >= 0:   # '아파트 지하 4층, 지상 48층 3개동 총 660세대 …' — 줄바꿈이 섞여도 되게 400자 범위에서 가장 큰 값
+            w = whole[i:i + 400]
+            fl = [int(x) for x in re.findall(r"지상\s*(?:최고\s*)?(?:\d+\s*[~∼-]\s*)?(\d+)\s*층", w)]
+            bd = [int(x) for x in re.findall(r"(\d+)\s*개\s*동", w)]
+            if fl:
+                info["fl"] = max(fl)
+            if bd:
+                info["bd"] = max(bd)
         m = re.search(r"주차\s*(?:대수|계획)?\s*[:：]?\s*(?:총\s*)?([\d,]{2,})\s*대", whole)
         if m:
             info["pk"] = _int(m.group(1))
