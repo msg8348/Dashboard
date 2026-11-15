@@ -520,7 +520,7 @@ function showPage(n) {
   document.querySelectorAll('[data-page]').forEach(t => t.classList.toggle('on', t.dataset.page == tab));
   movePill();
   fitFoot();
-  try { localStorage.setItem('busanPage2', n); } catch (e) {}
+  try { sessionStorage.setItem('page:' + location.pathname, n); } catch (e) {}
   prerender();
 }
 
@@ -670,7 +670,12 @@ function render(n) {
 let prerenderTimer;
 function prerender() { clearTimeout(prerenderTimer); if (currentPage === 2) return; prerenderTimer = setTimeout(() => render(currentPage).catch(() => {}), 400); }   // 실거래는 거래가 많아 누를 때만 만듦
 window.addEventListener('load', prerender);
-try { const saved = +localStorage.getItem('busanPage2'); if (saved >= 2 && saved <= MAXPAGE && document.getElementById('page' + saved)) showPage(saved); } catch (e) {}
+// 지역을 새로 고르면 요약부터, 뒤로가기·새로고침으로 돌아오면 보던 탭 그대로
+try {
+  const nav = (performance.getEntriesByType('navigation')[0] || {}).type;
+  const saved = +sessionStorage.getItem('page:' + location.pathname);
+  if ((nav === 'back_forward' || nav === 'reload') && saved >= 2 && saved <= MAXPAGE && document.getElementById('page' + saved)) showPage(saved);
+} catch (e) {}
 
 function busy(id, on, text) {
   const b = document.getElementById(id);
