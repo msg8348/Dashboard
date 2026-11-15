@@ -231,6 +231,6 @@ async function shareSummary(btn) {
 function siteMark(doc, el) {   // 저장 이미지 맨 아래 가운데 작은 회색 주소
   const m = doc.createElement('div');
   m.textContent = 'nextdoorprice.com';
-  Object.assign(m.style, { textAlign: 'center', fontSize: '10px', color: '#a3abb7', fontWeight: '400', margin: '-6px 0 0', padding: '0 0 2px', letterSpacing: '.2px', gridColumn: '1 / -1', width: '100%' });
+  Object.assign(m.style, { textAlign: 'center', fontSize: '10px', color: '#a3abb7', fontWeight: '400', margin: '-6px 0 0', padding: '0 0 2px', letterSpacing: '.6px', gridColumn: '1 / -1', width: '100%' });
   el.appendChild(m);
 }
