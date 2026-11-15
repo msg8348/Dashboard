@@ -52,20 +52,18 @@ async function shareCard(btn) {   // 카드 1장 이미지 (오른쪽 아래 회
         c.classList.add('capturing');
         c.style.width = '390px';
         c.querySelector('.tshare').style.visibility = 'hidden';
-        const ls = c.querySelector('.logo-slot');   // 카드: 주소는 오른쪽 아래 로고 밑에
-        if (ls) {
-          const row = doc.createElement('span');
-          Object.assign(row.style, { display: 'flex', alignItems: 'center', gap: '4px' });
-          while (ls.firstChild) row.appendChild(ls.firstChild);
-          const mk = doc.createElement('span');
-          mk.textContent = 'nextdoorprice.com';
-          Object.assign(mk.style, { fontSize: '9px', color: '#a3abb7', fontWeight: '400', letterSpacing: '.6px', marginTop: '1px' });
-          Object.assign(ls.style, { flexDirection: 'column', alignItems: 'flex-end', gap: '0' });
-          ls.append(row, mk);
-        } else siteMark(doc, c);
       }
     });
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    // 카드 바깥 오른쪽 아래에 작은 회색 주소 (카드 아래로 여백을 붙여서)
+    const out = document.createElement('canvas'), pad = 34;
+    out.width = canvas.width; out.height = canvas.height + pad;
+    const g = out.getContext('2d');
+    g.drawImage(canvas, 0, 0);
+    g.font = "400 19px Pretendard, 'Apple SD Gothic Neo', sans-serif";
+    if ('letterSpacing' in g) g.letterSpacing = '1.2px';
+    g.fillStyle = '#a3abb7'; g.textAlign = 'right'; g.textBaseline = 'bottom';
+    g.fillText('nextdoorprice.com', out.width - 20, out.height - 6);
+    const blob = await new Promise(r => out.toBlob(r, 'image/png'));
     const nm = (el.querySelector('.nm') || {}).textContent || 'card';
     const rg = typeof REGION !== 'undefined' ? REGION : '관심단지';
     shareFiles([Object.assign(new File([blob], `${rg}_${DATE}_${nm}.png`, { type: 'image/png' }), { en: `apt_${DATE}_card${el.dataset.i}.png` })]);
