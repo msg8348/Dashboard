@@ -52,7 +52,7 @@ def bus(x, y):
     """TAGO: 좌표 근처 정류장 중 가장 가까운 곳 [이름, 거리m]."""
     try:
         r = requests.get(TAGO, params={"serviceKey": MOLIT, "gpsLati": y, "gpsLong": x, "_type": "json", "numOfRows": 30},
-                         timeout=15)
+                         timeout=6)
         it = r.json()["response"]["body"]["items"]
         it = (it or {}).get("item") or []
         it = it if isinstance(it, list) else [it]
@@ -115,12 +115,12 @@ def update(cache, targets, today, budget=1500, workers=6):
             return k, e
 
     # 버스 정보가 빠진 단지(TAGO 승인 전에 찾은 곳): 좌표로 버스만 다시
-    nob = [k for k in targets if k in cache and cache[k].get("x") and not cache[k].get("bk")][:budget * 2]
+    nob = [k for k in targets if k in cache and cache[k].get("x") and not cache[k].get("bk")][:budget]
 
     def bjob(k):
         return k, bus(cache[k]["x"], cache[k]["y"])
 
-    with ThreadPoolExecutor(workers) as ex:
+    with ThreadPoolExecutor(workers * 2) as ex:   # TAGO 응답이 느려 버스만 따로 더 많이 동시에
         nb = 0
         for k, b in ex.map(bjob, nob):
             if b is False:
