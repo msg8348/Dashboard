@@ -34,11 +34,24 @@
     $('types').querySelectorAll('button').forEach(b => b.onclick = () => { cur = b.dataset.k; shown = rshown = 10; draw(); });
   }
 
+  let kind = 's';   // 's' 매매 · 'r' 전월세
+  document.querySelectorAll('#kinds [data-k]').forEach(b => b.onclick = () => {
+    kind = b.dataset.k; document.querySelectorAll('#kinds [data-k]').forEach(x => x.classList.toggle('on', x === b)); draw();
+  });
+  const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+
   function draw() {
     drawTypes();
-    const T = S.filter(isCur);              // 최신순 (전체 = 모든 평형)
+    const T = S.filter(isCur);              // 매매 (최신순, 전체 = 모든 평형)
+    const RT = R.filter(isCur), J = RT.filter(t => !t[2]);   // 전월세 · 전세만
+    $('tbl-s').hidden = kind !== 's';
+    $('tbl-r').hidden = kind !== 'r';
+    if (kind === 's') saleView(T); else rentView(T, RT, J);
+    chart(T, J);
+  }
+
+  function saleView(T) {
     const tyL = t => (D.by >= 2020 && AREAS[grp(t[4])].size > 1) ? `${t[4]}㎡` : grp(t[4]);   // 2020년 이후 단지에서 면적이 여러 개면 면적 그대로
-    // 통계
     if (T.length) {
       const last = T[0], max = T.reduce((a, b) => b[1] > a[1] ? b : a), y1 = T.filter(t => t[0] >= d365).length;
       const first = T[T.length - 1][0];
@@ -47,12 +60,7 @@
         `<div><small>1년 거래</small><b class="k">${y1}건</b><em>최근 12개월</em></div>` +
         `<div><small>전체 거래</small><b class="k">${T.length.toLocaleString()}건</b><em>${String(first).slice(0, 4)}년 이후</em></div>`;
       $('srange').textContent = `${String(first).slice(0, 4)}.${String(first).slice(4, 6)} ~ ${String(last[0]).slice(0, 4)}.${String(last[0]).slice(4, 6)}`;
-    } else {
-      $('stats').innerHTML = '';
-      $('srange').textContent = '';
-    }
-    chart(T);
-    // 표: 신고가 = 그때까지의 최고가를 넘은 거래
+    } else { $('stats').innerHTML = ''; $('srange').textContent = ''; }
     $('rows').innerHTML = T.length ? T.slice(0, shown).map(t => `<tr><td>${dL(t[0])}</td><td class="p">${t[6] ? '<span class="ptg">분양권</span>' : ''}${HI.has(t) ? '<span class="stk">신고가</span>' : ''}${won(t[1])}</td>` +
       `<td>${dong(t[3])}${t[2]}층</td><td class="ty">${tyL(t)}</td><td class="g">${t[5] ? '<span class="ok">✓</span>' : ''}</td></tr>`).join('')
       : `<tr><td colspan="5" class="none">${curL()} 매매 거래가 없습니다</td></tr>`;
@@ -60,19 +68,15 @@
     mb.style.display = shown < T.length ? '' : 'none';
     mb.textContent = `더보기 (${(T.length - shown).toLocaleString()}건 남음)`;
     mb.onclick = () => { shown += 20; draw(); };
-    rent(T);
   }
 
-  // ---- 전월세 (최근 13개월, 선택 평형)
-  function rent(T) {
-    const RT = R.filter(isCur), J = RT.filter(t => !t[2]);
-    $('rtype').textContent = curL();
-    const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+  function rentView(T, RT, J) {   // 전월세 (최근 13개월)
     let ja = avg(J.filter(t => t[0] >= d92).map(t => t[1])), sa = avg(T.filter(t => t[0] >= d92).map(t => t[1]));
     if (!ja || !sa) { ja = avg(J.map(t => t[1])); sa = avg(T.filter(t => t[0] >= d365).map(t => t[1])); }
     const jmax = J.reduce((a, b) => !a || b[1] > a[1] ? b : a, null);
     const y1 = RT.filter(t => t[0] >= d365);
-    $('rstats').innerHTML = RT.length ? (
+    $('srange').textContent = '전월세 최근 13개월';
+    $('stats').innerHTML = RT.length ? (
       `<div><small>최근 전세</small><b class="t">${J.length ? won(J[0][1]) : '-'}</b>${J.length ? `<em>${dL(J[0][0])} · ${J[0][3]}층</em>` : ''}</div>` +
       `<div><small>전세 최고</small><b class="t">${jmax ? won(jmax[1]) : '-'}</b>${jmax ? `<em>${dL(jmax[0])}</em>` : ''}</div>` +
       `<div><small>전세가율</small><b class="k">${ja && sa ? Math.round(ja / sa * 100) + '%' : '-'}</b><em>전세÷매매</em></div>` +
@@ -83,63 +87,74 @@
     const mb = $('rmore');
     mb.style.display = rshown < RT.length ? '' : 'none';
     mb.textContent = `더보기 (${(RT.length - rshown).toLocaleString()}건 남음)`;
-    mb.onclick = () => { rshown += 20; rent(T); };
+    mb.onclick = () => { rshown += 20; draw(); };
   }
 
-  // ---- 그래프: 위 = 월평균 선, 아래 = 거래량 막대 (가로축은 실제 시간)
-  function chart(T) {
+  // ---- 그래프: 매매 월평균(파랑) + 전세 월평균(초록) 동시, 아래 = 선택한 쪽 거래량 막대 (가로축은 실제 시간)
+  function chart(T, J) {
     const box = $('chart'), svg = $('svg'), tip = $('tip'), rngEl = $('rng');
-    const by = {};
-    T.forEach(t => { const ym = ymOf(t[0]); (by[ym] = by[ym] || []).push(t[1]); });
-    const M = Object.keys(by).map(Number).sort((a, b) => a - b).map(ym => ({ ym, n: by[ym].length, avg: by[ym].reduce((a, b) => a + b, 0) / by[ym].length }));
-    if (!M.length) { box.classList.add('empty'); svg.innerHTML = ''; tip.style.display = rngEl.style.display = 'none'; box.dataset.msg = '1'; svg.style.display = 'none'; if (!box.querySelector('.msg')) box.insertAdjacentHTML('beforeend', '<div class="msg">매매 거래가 없습니다</div>'); return; }
+    const bs = {}, bj = {};
+    T.forEach(t => { const ym = ymOf(t[0]); (bs[ym] = bs[ym] || []).push(t[1]); });
+    J.forEach(t => { const ym = ymOf(t[0]); (bj[ym] = bj[ym] || []).push(t[1]); });
+    const M = [...new Set([...Object.keys(bs), ...Object.keys(bj)])].map(Number).sort((a, b) => a - b)
+      .map(ym => ({ ym, s: bs[ym] ? avg(bs[ym]) : null, sn: (bs[ym] || []).length, j: bj[ym] ? avg(bj[ym]) : null, jn: (bj[ym] || []).length }));
+    if (!M.length) { box.classList.add('empty'); svg.innerHTML = ''; tip.style.display = rngEl.style.display = 'none'; svg.style.display = 'none'; if (!box.querySelector('.msg')) box.insertAdjacentHTML('beforeend', '<div class="msg">거래가 없습니다</div>'); return; }
     box.classList.remove('empty'); svg.style.display = ''; const msg = box.querySelector('.msg'); if (msg) msg.remove();
+    const K = kind === 's' ? 's' : 'j', KN = K + 'n';
     const W = svg.clientWidth || 660, H = svg.clientHeight || 250;
     const P = { l: 44, r: 12, t: 40, b: 22 }, VH = 40, PB = H - P.b - VH - 10, vb = H - P.b;
     const m0 = mIdx(M[0].ym), m1 = Math.max(mIdx(M[M.length - 1].ym), m0 + 1);
     const xs = i => P.l + (W - P.l - P.r) * (mIdx(M[i].ym) - m0) / (m1 - m0);
     const xm = m => P.l + (W - P.l - P.r) * (m - m0) / (m1 - m0);
-    let mn = Math.min(...M.map(m => m.avg)), mx = Math.max(...M.map(m => m.avg));
+    const vals = M.flatMap(m => [m.s, m.j]).filter(v => v !== null);
+    let mn = Math.min(...vals), mx = Math.max(...vals);
     if (mx - mn < mx * 0.1) { mn -= mx * 0.05; mx += mx * 0.05; }
     mn *= 0.97; mx *= 1.02;
     const ys = v => P.t + (PB - P.t) * (1 - (v - mn) / (mx - mn));
-    const nmax = Math.max(...M.map(m => m.n)), vs = n => VH * n / nmax;
+    const nmax = Math.max(1, ...M.map(m => m[KN])), vs = n => VH * n / nmax;
     let g = '';
     for (let k = 0; k < 4; k++) { const v = mn + (mx - mn) * k / 3; g += `<line x1="${P.l}" x2="${W - P.r}" y1="${ys(v)}" y2="${ys(v)}" stroke="#eef0f4"/><text x="${P.l - 6}" y="${ys(v) + 4}" font-size="10" text-anchor="end" fill="#8a94a3">${eok(v)}</text>`; }
     g += `<text x="${P.l - 6}" y="${vb - 2}" font-size="10" text-anchor="end" fill="#8a94a3">거래량</text><line x1="${P.l}" x2="${W - P.r}" y1="${vb}" y2="${vb}" stroke="#e3e7ee"/>`;
     const y0 = Math.floor(M[0].ym / 100), y1 = Math.floor(M[M.length - 1].ym / 100), step = Math.max(1, Math.ceil((y1 - y0 + 1) / 6));
     for (let y = y0 + (M[0].ym % 100 > 1 ? 1 : 0); y <= y1; y += step) { const x = xm(y * 12); if (x >= P.l && x <= W - P.r) g += `<line x1="${x}" x2="${x}" y1="${vb}" y2="${vb + 4}" stroke="#c9d0da"/><text x="${x}" y="${H - 6}" font-size="10" text-anchor="middle" fill="#8a94a3">${String(y).slice(2)}년</text>`; }
     const bw = Math.max(1.2, Math.min(8, (W - P.l - P.r) / (m1 - m0 + 1) * 0.7));
-    const bars = M.map((m, i) => `<rect class="vb" data-i="${i}" x="${xs(i) - bw / 2}" y="${vb - vs(m.n)}" width="${bw}" height="${vs(m.n)}" rx="1" fill="#c9d2e4"/>`).join('');
-    const path = M.map((m, i) => (i ? 'L' : 'M') + xs(i).toFixed(1) + ',' + ys(m.avg).toFixed(1)).join('');
-    svg.innerHTML = g + '<path id="area" d=""/>' + bars + `<path d="${path}" fill="none" stroke="#2754d6" stroke-width="2" stroke-linejoin="round"/>` +
-      '<line id="vl" stroke="#2754d6" stroke-dasharray="3 3" style="display:none"/><line id="vl2" stroke="#2754d6" stroke-dasharray="3 3" style="display:none"/>' +
-      '<circle id="dot" r="5" fill="#2754d6" stroke="#fff" stroke-width="2" style="display:none"/><circle id="dot2" r="5" fill="#2754d6" stroke="#fff" stroke-width="2" style="display:none"/>';
+    const bars = M.map((m, i) => m[KN] ? `<rect class="vb" data-i="${i}" x="${xs(i) - bw / 2}" y="${vb - vs(m[KN])}" width="${bw}" height="${vs(m[KN])}" rx="1" fill="#c9d2e4"/>` : '').join('');
+    const line = (key, col, w) => { const pts = M.map((m, i) => m[key] === null ? null : [xs(i), ys(m[key])]).filter(Boolean); return pts.length ? `<path d="${pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('')}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linejoin="round"/>` : ''; };
+    const front = K === 's' ? line('j', '#0f9b7a', 1.6) + line('s', '#2754d6', 2.2) : line('s', '#2754d6', 1.6) + line('j', '#0f9b7a', 2.2);
+    svg.innerHTML = g + '<path id="area" d=""/>' + bars + front +
+      '<line id="vl" stroke="#2c3563" stroke-dasharray="3 3" style="display:none"/><line id="vl2" stroke="#2c3563" stroke-dasharray="3 3" style="display:none"/>' +
+      '<circle id="dot" r="5" fill="#2754d6" stroke="#fff" stroke-width="2" style="display:none"/><circle id="dotj" r="5" fill="#0f9b7a" stroke="#fff" stroke-width="2" style="display:none"/><circle id="dot2" r="5" fill="#2c3563" stroke="#fff" stroke-width="2" style="display:none"/>';
     const q = id => svg.querySelector('#' + id);
     const idx = cx => { const r = svg.getBoundingClientRect(), x = cx - r.left; let bi = 0, bd = 1e9; M.forEach((m, i) => { const d = Math.abs(xs(i) - x); if (d < bd) { bd = d; bi = i; } }); return bi; };
-    const mark = (i, dot, vl) => { q(dot).setAttribute('cx', xs(i)); q(dot).setAttribute('cy', ys(M[i].avg)); q(dot).style.display = ''; const l = q(vl); l.setAttribute('x1', xs(i)); l.setAttribute('x2', xs(i)); l.setAttribute('y1', P.t - 6); l.setAttribute('y2', vb); l.style.display = ''; };
+    const vline = (i, vl) => { const l = q(vl); l.setAttribute('x1', xs(i)); l.setAttribute('x2', xs(i)); l.setAttribute('y1', P.t - 6); l.setAttribute('y2', vb); l.style.display = ''; };
+    const dot = (id, i, v) => { const d = q(id); if (v === null) { d.style.display = 'none'; return; } d.setAttribute('cx', xs(i)); d.setAttribute('cy', ys(v)); d.style.display = ''; };
     const paint = f => svg.querySelectorAll('.vb').forEach(b => b.setAttribute('fill', f(+b.dataset.i)));
-    function one(i) {                                       // 그 달 평균 · 거래 건수
+    function one(i) {                                       // 그 달 매매·전세 평균
       q('dot2').style.display = q('vl2').style.display = 'none'; q('area').setAttribute('d', ''); rngEl.style.display = 'none';
       paint(j => j === i ? '#2c3563' : '#c9d2e4');
-      mark(i, 'dot', 'vl'); const m = M[i];
-      tip.innerHTML = `${String(m.ym).slice(0, 4)}년 ${+String(m.ym).slice(4)}월<b>평균 ${eok(m.avg)}</b>거래 ${m.n}건`;
+      const m = M[i]; vline(i, 'vl'); dot('dot', i, m.s); dot('dotj', i, m.j);
+      tip.innerHTML = `${String(m.ym).slice(0, 4)}년 ${+String(m.ym).slice(4)}월` +
+        (m.s !== null ? `<b>매매 ${eok(m.s)} <small>${m.sn}건</small></b>` : '') + (m.j !== null ? `<b class="jt">전세 ${eok(m.j)} <small>${m.jn}건</small></b>` : '');
       tip.style.display = 'block';
-      tip.style.left = Math.max(64, Math.min(W - 60, xs(i))) + 'px'; tip.style.top = Math.max(52, ys(m.avg) + 2) + 'px';
+      const top = Math.min(...[m.s, m.j].filter(v => v !== null).map(ys));
+      tip.style.left = Math.max(64, Math.min(W - 60, xs(i))) + 'px'; tip.style.top = Math.max(60, top + 2) + 'px';
     }
-    function two(a, b) {                                    // 기간 수익금 · 수익률
-      if (a > b) [a, b] = [b, a]; if (a === b) return one(a);
-      tip.style.display = 'none'; mark(a, 'dot', 'vl'); mark(b, 'dot2', 'vl2');
+    function two(a, b) {                                    // 기간 상승액 · 상승률 (선택한 쪽: 매매 또는 전세)
+      if (a > b) [a, b] = [b, a];
+      while (a < b && M[a][K] === null) a++;
+      while (b > a && M[b][K] === null) b--;
+      if (a === b) return one(a);
+      tip.style.display = 'none'; q('dotj').style.display = 'none';
+      vline(a, 'vl'); vline(b, 'vl2'); dot('dot', a, M[a][K]); dot('dot2', b, M[b][K]);
       paint(j => j >= a && j <= b ? '#2c3563' : '#dde3ee');
-      const A = M[a], B = M[b], diff = B.avg - A.avg, pct = diff / A.avg * 100, up = diff >= 0, sg = up ? '+' : '-';
-      const seg = M.slice(a, b + 1).map((m, k) => `${xs(a + k)},${ys(m.avg)}`).join(' L');
+      const A = M[a], B = M[b], diff = B[K] - A[K], pct = diff / A[K] * 100, up = diff >= 0, sg = up ? '+' : '-';
+      const seg = M.slice(a, b + 1).map((m, k) => m[K] === null ? null : `${xs(a + k)},${ys(m[K])}`).filter(Boolean).join(' L');
       q('area').setAttribute('d', `M${xs(a)},${PB} L${seg} L${xs(b)},${PB} Z`);
       q('area').setAttribute('fill', up ? 'rgba(224,71,44,.14)' : 'rgba(39,84,214,.14)');
-      rngEl.innerHTML = `${ymL(A.ym)}~${ymL(B.ym)} (${mdiff(A.ym, B.ym)})&nbsp; <b class="${up ? 'up' : 'dn'}">${sg}${(Math.abs(diff) / 10000).toFixed(2)}억 (${sg}${Math.round(Math.abs(pct))}%)</b>`;
+      rngEl.innerHTML = `${K === 's' ? '매매' : '전세'} ${ymL(A.ym)}~${ymL(B.ym)} (${mdiff(A.ym, B.ym)})&nbsp; <b class="${up ? 'up' : 'dn'}">${sg}${(Math.abs(diff) / 10000).toFixed(2)}억 (${sg}${Math.round(Math.abs(pct))}%)</b>`;
       rngEl.style.display = 'block';
     }
     const touch = e => { const t = e.touches; if (t.length >= 2) { e.preventDefault(); two(idx(t[0].clientX), idx(t[1].clientX)); } else if (t.length === 1) one(idx(t[0].clientX)); };
-    svg.ontouchstart = svg.ontouchmove = null;
     if (!svg._bound) { svg.addEventListener('touchstart', e => svg._h(e), { passive: false }); svg.addEventListener('touchmove', e => svg._h(e), { passive: false }); svg._bound = 1; }
     svg._h = touch;
     let drag = null;
