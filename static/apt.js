@@ -58,7 +58,7 @@
   }
 
   function saleView(T) {
-    const tyL = t => (D.by >= 2020 && AREAS[grp(t[4])].size > 1) ? `${t[4]}㎡` : grp(t[4]);   // 2020년 이후 단지에서 면적이 여러 개면 면적 그대로
+    const tyL = t => (D.tl && D.tl[String(t[4])]) || ((D.by >= 2020 && AREAS[grp(t[4])].size > 1) ? `${t[4]}㎡` : grp(t[4]));   // 청약홈 타입(84A) → 없으면 2020년 이후 여러 면적은 면적 그대로
     if (T.length) {
       const last = T[0], max = T.reduce((a, b) => b[1] > a[1] ? b : a), y1 = T.filter(t => t[0] >= d365).length;
       const first = T[T.length - 1][0];

@@ -174,7 +174,21 @@ def price_ranks(apts, now):
     return out
 
 
-def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, ckey, site_url, store="store", pre=None):
+def type_labels(sd, houses, ckey):
+    """청약홈 단지 → {(시군구코드, 이름키): [[전용면적, '84A'], ...]} (글자 있는 타입만)."""
+    out = {}
+    for h in houses or []:
+        ty = [[t[4], t[2]] for t in h.get("types", []) if len(t) >= 5 and t[2][-1:].isalpha()]
+        if not ty:
+            continue
+        gu = next((n for c, n in sd["codes"].items() if n.split()[-1] in h["addr"]), "")
+        code = next((c for c, n in sd["codes"].items() if n == gu), "")
+        if code:
+            out.setdefault((code, ckey(h["name"])), []).extend(ty)
+    return out
+
+
+def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, ckey, site_url, store="store", pre=None, houses=None):
     """pre {주택관리번호: (청약홈 단지, 분양권 거래)}: 입주예정월이 지난 분양권 — 같은 시군구·같은 이름의 매매 단지가
     있으면 그 단지 거래에 분양권 거래를 합친다. 반환: (단지번호 집합, 검색 목록, 주소 목록, {주택관리번호: 단지번호})."""
     """시도 하나의 단지 페이지를 만들고 (단지번호 집합, 검색 목록, 주소 목록) 반환."""
@@ -211,6 +225,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
     poi.assign(pcache, order, zones, "z2")
     poi.save(ppath, pcache)
     ranks = price_ranks(apts, now)
+    tlab = type_labels(sd, houses, ckey)
     tpl = env.get_template("apt.html")
     out_dir = os.path.join(site, sdir, APT_DIR)
     os.makedirs(out_dir, exist_ok=True)
@@ -233,6 +248,16 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
         year = int(ad[:4]) if ad else (int(a["by"]) if str(a["by"]).isdigit() else 0)
         age = f"{now.year - year + 1}년차" if year and year <= now.year else ("입주예정" if year else "")
         data = {"s": a["s"], "r": a["r"], "by": year, "hh": info.get("hh", 0)}
+        lab = tlab.get((a["c"], ckey(a["n"])))
+        if lab:   # 청약홈 분양 단지: 거래 면적 → 84A 같은 타입 (면적이 정확히 같을 때만)
+            areas = {x[4] for x in a["s"]} | {x[4] for x in a["r"]}
+            tl = {}
+            for ar in areas:
+                m = min(lab, key=lambda t: abs(t[0] - ar))
+                if abs(m[0] - ar) < 0.006:
+                    tl[str(ar)] = m[1]
+            if tl:
+                data["tl"] = tl
         ctx = {"ranks": ranks.get(k, []), "sido_short": sd["short"], "name": a["n"], "loc": loc, "loc2": " ".join(x for x in (gu, a["u"]) if x), "poi": pcache.get(k) if (pcache.get(k) or {}).get("x") else None, "fav": [a["n"], f"{sd['short']} {gu} {a['u']}".strip(), f"{sdir}/{APT_DIR}/{k}.html"], "jibun": a["j"], "road": info.get("road", ""), "info": info,
                "meta": " · ".join(x for x in ("" if (info.get("kind") or "아파트") == "아파트" else info["kind"], built, age) if x),
                "crumbs": crumbs, "root": "../../", "data": data, "today": now.strftime("%Y%m%d"),
