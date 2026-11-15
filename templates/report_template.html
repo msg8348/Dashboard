@@ -290,6 +290,10 @@
   .actions{width:1080px;margin:18px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .btn{background:#fff;color:#111;border:1.5px solid #cfd6de;border-radius:14px;padding:17px;font:inherit;font-size:17px;font-weight:800;cursor:pointer}
   .btn:hover{background:#f6f8fa}.btn:disabled{opacity:.6;cursor:progress}
+  .actions.card{grid-template-columns:1fr}
+  .btn[hidden]{display:none}
+  .btn.cshare{display:flex;align-items:center;justify-content:center;gap:10px;font-size:15.5px;font-weight:700;color:var(--ink-2)}
+  .btn.cshare svg{width:26px;height:26px;color:#5b6472;flex:none}
   .actions-note{text-align:center;color:var(--muted);font-size:14px;margin-top:14px}
   .save-sheet{position:fixed;inset:0;background:rgba(15,20,28,.72);z-index:50;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px}
   .save-sheet[hidden]{display:none}
@@ -498,6 +502,7 @@
 <div class="actions">
   <button class="btn" id="share-btn" onclick="shareReport()">공유하기</button>
   <button class="btn" id="save-btn" onclick="saveReport()">저장하기</button>
+  <button class="btn cshare" id="cshare-btn" type="button" hidden onclick="shareCards()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg><span id="cshare-txt"></span></button>
 </div>
 <div class="actions-note">{{ RG }} · 20{{ date_label|replace(".", "-") }}</div>
 
@@ -520,6 +525,7 @@ function showPage(n) {
   document.querySelectorAll('[data-page]').forEach(t => t.classList.toggle('on', t.dataset.page == tab));
   movePill();
   fitFoot();
+  updActions();
   try { sessionStorage.setItem('page:' + location.pathname, n); } catch (e) {}
   prerender();
 }
@@ -645,6 +651,15 @@ function renderOne(n, shot) {
             }
           });
           page.querySelectorAll('.pshare, .tshare').forEach(e => e.remove());
+        }
+        if (shot.grid) {   // 카드 여러 장을 2열로 모아 한 장 이미지
+          const t = page.querySelector('#tout');
+          Object.assign(t.style, { display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: '12px', alignItems: 'start' });
+          page.querySelectorAll('.tf1, .tf2').forEach(e => { e.style.display = 'none'; });   // 필터 버튼 대신 적용한 필터를 글로 표시
+          const tc = page.querySelector('#tcnt');
+          if (tc) tc.textContent = [{ sale: '매매', rent: '전월세' }[TR.k], TR.hi ? '신고가만' : '', TR.t !== 'all' ? TR.t : '', tc.textContent].filter(Boolean).join(' · ');
+          t.querySelectorAll('.tcard').forEach(c => { c.style.margin = '0'; });
+          t.querySelectorAll('.tmore').forEach(m => { m.style.gridColumn = '1 / -1'; });
         }
         if (shot.hide) page.querySelectorAll(shot.hide).forEach(e => { e.style.display = 'none'; });
         if (shot.width) page.style.width = shot.width + 'px';   // 목록 페이지는 휴대폰 폭으로 (단지명·금액 간격 좁게)
@@ -825,6 +840,38 @@ function tRender() {
   }
   delete cache[2];
   partCache.clear && partCache.clear();
+  updActions();
+}
+// 실거래 카드형: 아래 버튼은 '공유' 하나 — 10장까지 카드마다 한 장씩, 넘으면 한 장으로 합쳐서 (30장까지 + 외 N건)
+const CARD_MAX = 10, CARD_GRID_MAX = 30;
+function updActions() {
+  let card = false;
+  try { card = currentPage === 2 && TR.v === 'card'; } catch (e) {}
+  const n = document.querySelectorAll('#tout .tcard').length;
+  document.querySelector('.actions').classList.toggle('card', card);
+  document.getElementById('share-btn').hidden = card;
+  document.getElementById('save-btn').hidden = card;
+  const b = document.getElementById('cshare-btn');
+  b.hidden = !card; b.disabled = card && !n;
+  document.getElementById('cshare-txt').textContent = n <= CARD_MAX ? `카드 ${n}장 · 각각 이미지로 공유 (10장까지)` : `카드 ${n.toLocaleString()}장 · 한 장으로 합쳐서 공유 (10장 초과하여)`;
+}
+async function shareCards() {
+  const b = document.getElementById('cshare-btn'), txt = document.getElementById('cshare-txt'), label = txt.textContent;
+  const cards = [...document.querySelectorAll('#tout .tcard')];
+  if (!cards.length) return;
+  b.disabled = true; txt.textContent = '이미지 준비 중…';
+  try {
+    let files;
+    if (cards.length <= CARD_MAX) {
+      files = [];
+      for (const el of cards) files.push(await cardFile(el));
+    } else {
+      const s = await renderOne(2, { ko: '2_실거래카드', en: '2_trade_cards', width: 900, trim: CARD_GRID_MAX, grid: true });
+      files = [Object.assign(new File([s.blob], s.ko, { type: 'image/png' }), { en: s.en })];
+    }
+    shareFiles(files);
+  } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); }
+  finally { b.disabled = false; txt.textContent = label; }
 }
 function tSet(sel, attr, key) {
   document.querySelectorAll(sel).forEach(b => b.onclick = () => {
