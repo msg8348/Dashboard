@@ -120,8 +120,9 @@ def schools_at(zones, lng, lat):
             continue
         n = sum(1 for ring in z["r"] if _inside(x, y, ring))   # 구멍(내부 고리)까지 고려: 홀수면 안쪽
         if n % 2 == 1:
-            for nm in re.split(r"[,·/]", re.sub(r"(공동)?통학구역$", "", z["n"])):
-                nm = nm.strip()
+            base = re.sub(r"\(.*?\)|통학구역|공동|[\s,·/]", "", z["n"])   # '금정초공덕초금성초공동(일방)' → 학교 3곳
+            for nm in re.findall(r".+?초(?:등학교)?(?=$|[^등])", base) or [base]:
+                nm = nm.replace("초등학교", "초")
                 if nm and nm not in out:
                     out.append(nm)
     return out

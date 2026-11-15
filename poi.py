@@ -173,7 +173,7 @@ def assign(cache, keys, zones, ver, budget=2000, workers=6):
     def job(k):
         c = cache[k]
         names = schoolzone.schools_at(zones, c["x"], c["y"])
-        return k, [[n, school_walk(c["x"], c["y"], n)] for n in names[:2]]
+        return k, [[n, school_walk(c["x"], c["y"], n) if i == 0 else None] for i, n in enumerate(names[:4])]
 
     with ThreadPoolExecutor(workers) as ex:
         for k, r in ex.map(job, todo):
