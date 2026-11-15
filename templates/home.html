@@ -277,7 +277,7 @@ async function saveNoti() {
   const fav = document.getElementById('nFav').checked, daily = document.getElementById('nDaily').checked;
   const gu = document.getElementById('nGu'), region = gu.value, rname = gu.selectedOptions[0] ? gu.selectedOptions[0].textContent.replace(' 전체', '') : '';
   nSet({ fav, daily, region, rname, at: Date.now() });
-  if (!fav && !daily) { notiLabel(); closeAH(); return toast('알림을 껐어요'); }
+  if (!fav && !daily) { if (window.NDPPush) NDPPush.sync().catch(() => {}); notiLabel(); closeAH(); return toast('알림을 껐어요'); }
   if (!('Notification' in window)) {   // 아이폰 Safari 탭: 홈 화면 앱에서만 알림 가능
     closeAH();
     if (isIOS && !standalone()) { toast('홈 화면에 추가한 앱에서 알림을 켤 수 있어요'); setTimeout(addHome, 900); }
@@ -288,6 +288,11 @@ async function saveNoti() {
   if (p === 'default') p = await Notification.requestPermission();   // 휴대폰 알림 허용 창
   document.getElementById('nSt').innerHTML = permText();
   if (p !== 'granted') return toast(p === 'denied' ? '휴대폰 설정에서 알림을 허용해 주세요' : '알림을 허용하지 않았어요');
+  const btn = document.getElementById('nGo'); btn.disabled = true; btn.textContent = '저장 중…';
+  let res = 'error';
+  try { res = await NDPPush.sync(true); } catch (e) { res = 'error'; }
+  btn.disabled = false;
+  if (res !== 'ok') { btn.textContent = '다시 시도'; return toast(res === 'unsupported' ? '이 브라우저는 알림을 지원하지 않아요' : '알림 서버에 저장하지 못했어요. 잠시 후 다시 시도해 주세요'); }
   try {   // 확인용 알림 한 번
     const reg = await navigator.serviceWorker.ready;
     await reg.showNotification('옆집얼마 알림이 켜졌어요', { body: [fav ? '관심단지 실거래' : '', daily ? `매일 아침 7시 ${rname} 요약` : ''].filter(Boolean).join(' · '), icon: 'icon-192.png', data: { url: daily ? region : 'fav.html' } });

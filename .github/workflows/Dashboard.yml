@@ -108,3 +108,10 @@ jobs:
         if: steps.gen.outputs.skip != 'true'
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: 알림 서버에 새 데이터 알리기 (관심단지 실거래 알림)
+        if: steps.gen.outputs.skip != 'true'
+        continue-on-error: true
+        run: |
+          sleep 60   # Pages 반영 대기
+          curl -sS -m 20 https://nextdoorprice-push.newreds22.workers.dev/kick || true

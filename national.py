@@ -436,6 +436,14 @@ def main():
     months = D.month_list(now, D.WINDOW_MONTHS)
     urls = []
     home = []
+    # 알림 서버(cloudflare/push)가 읽는 오늘의 알림 재료: 관심단지별 신규 거래 문구, 지역별 요약 숫자
+    push = {"date": now.strftime("%Y%m%d"), "new": not fallback, "apts": {}, "regions": {}}
+
+    def push_msg(c):
+        kind = {"sale": "매매", "pre": "분양권"}.get(c["k"], "월세" if c.get("m") else "전세")
+        price = D.fmt_short(c["p"]) + (f"/{c['m']:,}" if c.get("m") else "")
+        fl = f" {c['f']}층" if str(c.get("f", "")).lstrip("-").isdigit() else ""
+        return f"{kind} {c.get('tl') or str(round(c['a'])) + '㎡'} {price}{fl}" + (" 신고가" if c.get("up") else "")
     search = []
     for sd in sidos:
         key = sd["key"]
@@ -584,6 +592,15 @@ def main():
                     f.write(tpl.render(c2))
                 chips.append({"name": l["name"], "href": f"{sdir}/{l2slug[l['key']]}.html", "cnt": s2["cnt"], "high": s2["high_cnt"]})
         chips.sort(key=lambda c: c["name"])   # 지역 선택 시트도 가나다순
+        for c in sale_ctx["cards"]:
+            if c.get("h"):
+                pa = push["apts"].setdefault(f"{sdir}/{c['h']}.html", {"n": c["n"], "t": []})
+                if len(pa["t"]) < 5:
+                    pa["t"].append(push_msg(c))
+        nm = "전남광주" if sd["short"] == "광주전남" else sd["short"]
+        push["regions"][f"{sdir}/index.html"] = {"n": nm, "c": sale_ctx["cnt"], "h": sale_ctx["high_cnt"], "r": rent_ctx["cnt"]}
+        for c in chips:
+            push["regions"][c["href"]] = {"n": f"{nm} {c['name']}", "c": c["cnt"], "h": c["high"]}
         # --- 지난 날짜 (최근 7일 중 신규 공개가 있었던 날) — /{시도}/d{날짜}/
         for dd in days[1:]:
             day = now.replace(year=int(dd[:4]), month=int(dd[4:6]), day=int(dd[6:]))
@@ -625,6 +642,8 @@ def main():
           "max_cnt": max([h["cnt"] for h in home] + [1])}
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
         f.write(env.get_template("home.html").render(hc))
+    with open(os.path.join(SITE, "push.json"), "w", encoding="utf-8") as f:
+        json.dump(push, f, ensure_ascii=False, separators=(",", ":"))
     with open(os.path.join(SITE, "fav.html"), "w", encoding="utf-8") as f:   # 관심단지 (기기에 저장한 단지의 최근 7일 거래)
         f.write(env.get_template("fav.html").render(today=now.strftime("%Y%m%d")))
     with open(os.path.join(SITE, "search.json"), "w", encoding="utf-8") as f:   # 단지 검색 목록 [이름, 위치, 주소, 거래수]

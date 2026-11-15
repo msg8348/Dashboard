@@ -1,0 +1,44 @@
+name: PUSH
+
+# 알림 서버(Cloudflare Worker) 배포 — cloudflare/push 가 바뀌면 자동, 또는 수동 실행
+on:
+  push:
+    branches: [main]
+    paths: ['cloudflare/push/**', '.github/workflows/Push.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: 'push-worker'
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloudflare/push
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      WRANGLER: npx --yes wrangler@3.114.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 구독 저장소(KV) 준비
+        run: |
+          id=$($WRANGLER kv namespace list | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const a=JSON.parse(s.slice(s.indexOf("[")));const n=a.find(x=>x.title==="nextdoorprice-push-SUBS");process.stdout.write(n?n.id:"")})')
+          if [ -z "$id" ]; then
+            $WRANGLER kv namespace create SUBS
+            id=$($WRANGLER kv namespace list | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const a=JSON.parse(s.slice(s.indexOf("[")));const n=a.find(x=>x.title==="nextdoorprice-push-SUBS");process.stdout.write(n?n.id:"")})')
+          fi
+          [ -n "$id" ] || { echo "KV 를 만들지 못했습니다"; exit 1; }
+          sed -i "s/__KV_ID__/$id/" wrangler.toml
+          echo "KV: $id"
+      - name: 배포
+        run: $WRANGLER deploy
+      - name: 확인
+        run: |
+          sleep 5
+          curl -sS https://nextdoorprice-push.newreds22.workers.dev/vapid | head -c 200; echo
