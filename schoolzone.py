@@ -110,9 +110,45 @@ def to5186(lng, lat):
     return _TF.transform(lng, lat)
 
 
+def _seg_dist(px, py, ax, ay, bx, by):
+    dx, dy = bx - ax, by - ay
+    t = 0 if dx == dy == 0 else max(0, min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    return ((px - ax - t * dx) ** 2 + (py - ay - t * dy) ** 2) ** 0.5
+
+
+NEAR_M = 300   # 좌표가 어느 구역에도 안 들어가면(대지 경계 근처·공사 중 부지) 이 거리 안의 가장 가까운 구역
+
+
 def schools_at(zones, lng, lat):
     """좌표가 속한 통학구역의 학교 이름들 (예: ['남천초'])."""
     x, y = to5186(float(lng), float(lat))
+    out = _names_at(zones, x, y)
+    if out:
+        return out
+    best = None
+    for z in zones:
+        b = z["bb"]
+        if not (b[0] - NEAR_M <= x <= b[2] + NEAR_M and b[1] - NEAR_M <= y <= b[3] + NEAR_M):
+            continue
+        for ring in z["r"]:
+            for i in range(len(ring) - 1):
+                d = _seg_dist(x, y, ring[i][0], ring[i][1], ring[i + 1][0], ring[i + 1][1])
+                if d <= NEAR_M and (best is None or d < best[0]):
+                    best = (d, z)
+    return _zone_names(best[1]) if best else []
+
+
+def _zone_names(z):
+    base = re.sub(r"\(.*?\)|통학구역|공동|[\s,·/]", "", z["n"])
+    out = []
+    for nm in re.findall(r".+?초(?:등학교)?(?=$|[^등])", base) or [base]:
+        nm = nm.replace("초등학교", "초")
+        if nm and nm not in out:
+            out.append(nm)
+    return out
+
+
+def _names_at(zones, x, y):
     out = []
     for z in zones:
         b = z["bb"]
@@ -120,9 +156,7 @@ def schools_at(zones, lng, lat):
             continue
         n = sum(1 for ring in z["r"] if _inside(x, y, ring))   # 구멍(내부 고리)까지 고려: 홀수면 안쪽
         if n % 2 == 1:
-            base = re.sub(r"\(.*?\)|통학구역|공동|[\s,·/]", "", z["n"])   # '금정초공덕초금성초공동(일방)' → 학교 3곳
-            for nm in re.findall(r".+?초(?:등학교)?(?=$|[^등])", base) or [base]:
-                nm = nm.replace("초등학교", "초")
-                if nm and nm not in out:
+            for nm in _zone_names(z):
+                if nm not in out:
                     out.append(nm)
     return out
