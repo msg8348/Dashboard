@@ -2,7 +2,7 @@
 function siteMark(doc, el) {   // 저장 이미지 맨 아래 가운데 작은 회색 주소
   const m = doc.createElement('div');
   m.textContent = 'nextdoorprice.com';
-  Object.assign(m.style, { textAlign: 'center', fontSize: '10px', color: '#a3abb7', fontWeight: '400', margin: '-6px 0 0', padding: '0 0 2px', letterSpacing: '.2px', gridColumn: '1 / -1', width: '100%' });
+  Object.assign(m.style, { textAlign: 'center', fontSize: '10px', color: '#a3abb7', fontWeight: '400', margin: '-6px 0 0', padding: '0 0 2px', letterSpacing: '.6px', gridColumn: '1 / -1', width: '100%' });
   el.appendChild(m);
 }
 const GLOGO = '<svg viewBox="0 0 60 44"><path d="M3 19 L17 5 L31 19 V41 H3 Z" fill="#5b6472" stroke="#5b6472" stroke-width="4" stroke-linejoin="round"/><rect x="9" y="22" width="7" height="7" rx="1.5" fill="#fff"/><path d="M25 26 L40 12 L55 26 V41 H25 Z" fill="#fff" stroke="#fff" stroke-width="8" stroke-linejoin="round"/><path d="M25 26 L40 12 L55 26 V41 H25 Z" fill="#5b6472" stroke="#5b6472" stroke-width="4" stroke-linejoin="round"/><rect x="36" y="27" width="8" height="8" rx="1.5" fill="#fff"/></svg>';
@@ -52,7 +52,17 @@ async function shareCard(btn) {   // 카드 1장 이미지 (오른쪽 아래 회
         c.classList.add('capturing');
         c.style.width = '390px';
         c.querySelector('.tshare').style.visibility = 'hidden';
-        siteMark(doc, c);
+        const ls = c.querySelector('.logo-slot');   // 카드: 주소는 오른쪽 아래 로고 밑에
+        if (ls) {
+          const row = doc.createElement('span');
+          Object.assign(row.style, { display: 'flex', alignItems: 'center', gap: '4px' });
+          while (ls.firstChild) row.appendChild(ls.firstChild);
+          const mk = doc.createElement('span');
+          mk.textContent = 'nextdoorprice.com';
+          Object.assign(mk.style, { fontSize: '9px', color: '#a3abb7', fontWeight: '400', letterSpacing: '.6px', marginTop: '1px' });
+          Object.assign(ls.style, { flexDirection: 'column', alignItems: 'flex-end', gap: '0' });
+          ls.append(row, mk);
+        } else siteMark(doc, c);
       }
     });
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
