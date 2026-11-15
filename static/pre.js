@@ -103,7 +103,7 @@
   })();
   if (D.gen) {   // 분양 세대 대비 분양권 거래(손바뀜)
     const n = T.length, pct = Math.round(n / D.gen * 100);
-    $('turn').innerHTML = `분양 <b class="c1">${D.gen.toLocaleString()}</b>세대 중 <b class="c2">${n.toLocaleString()}</b>건 거래로 <b class="c3">${pct}%</b> 손바뀜되었어요`;
+    $('turn').innerHTML = `분양 <b class="c1">${D.gen.toLocaleString()}</b>세대 중 <b class="c2">${n.toLocaleString()}</b>건 거래로 <b class="c3">${pct}%</b> 손바뀜 되었어요`;
   } else $('turn').remove();
   const nm = document.querySelector('.nmap[data-lat]');   // 네이버지도 앱: 단지 위치 핀
   if (nm && /iPhone|iPad|Android/i.test(navigator.userAgent)) nm.addEventListener('click', e => {
