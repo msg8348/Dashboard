@@ -23,17 +23,24 @@ def _download():
     s = requests.Session()
     s.headers.update(UA)
     html = s.get(B + "/publicData/publicDataList.do", timeout=30).text
-    for ntt in re.findall(r"fn_view_detail\(event,\s*'(\d+)'\)", html)[:16]:
+    ids = re.findall(r"fn_view_detail\(event,\s*'(\d+)'\)", html)
+    print(f"🏫 학구도 목록 {len(ids)}건")
+    for ntt in ids[:16]:
         t = s.post(B + "/publicData/publicDataView.do", data={"nttId": ntt, "pageIndex": 1}, timeout=30).text
-        if "초등학교통학구역" not in t.replace(" ", "") and "초등학교 통학구역" not in t:
+        files = re.findall(r"([^<>\"']{3,80}\.zip)", t)
+        if not any("초등학교통학구역" in f.replace(" ", "") for f in files):   # 첨부 파일 이름으로 판단 (표준안 문서 제외)
             continue
-        m = re.search(r'data-nttId="(\d+)"\s+data-atchFileId="([^"]+)"\s+data-fileSn="(\d+)"', t, re.I)
+        m = re.search(r'data-nttId="(\d+)"\s+data-atchFileId="([^"]+)"\s+data-fileSn="(\d+)"', t, re.I) or \
+            re.search(r"fn_file_download\(\s*'?(\d+)'?\s*,\s*'([^']+)'\s*,\s*'?(\d+)'?", t)
         if not m:
+            print("🏫 첨부 정보 못 찾음", ntt)
             continue
         z = s.get(B + "/publicData/publicDataFileDownload.do",
                   params={"nttId": m.group(1), "atchFileId": m.group(2), "fileSn": m.group(3)}, timeout=300)
+        print(f"🏫 통학구역 파일 {ntt}: {len(z.content):,}B")
         if z.content[:2] == b"PK":
             return z.content
+    print("🏫 통학구역 파일을 찾지 못함")
     return None
 
 
@@ -69,6 +76,7 @@ def load(store, sido_code, today):
             data = _download()
             if data:
                 zones = _extract(data, sido_code)
+                print(f"🏫 통학구역 {sido_code}: 시도 구역 {len(zones)}곳")
                 if zones:
                     st = {"date": today.strftime("%Y%m%d"), "zones": zones}
                     with open(p, "w", encoding="utf-8") as f:
