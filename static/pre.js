@@ -101,6 +101,10 @@
       `<div><small>최근 1년</small><b style="color:#137a6c">${c1}건</b>${rate(c1)}</div>` +
       `<div><small>추세</small>${c1 ? `<span class="badge ${tr[0]}">${tr[1]} ${ch > 0 ? '+' : ''}${ch}%</span>` : '<b>-</b>'}</div>`;
   })();
+  if (D.gen) {   // 분양 세대 대비 분양권 거래(손바뀜)
+    const n = T.length, pct = Math.round(n / D.gen * 100);
+    $('turn').innerHTML = `분양 <b class="c1">${D.gen.toLocaleString()}</b>세대 중 <b class="c2">${n.toLocaleString()}</b>건 거래로 <b class="c3">${pct}%</b> 손바뀜되었어요`;
+  } else $('turn').remove();
   const nm = document.querySelector('.nmap[data-lat]');   // 네이버지도 앱: 단지 위치 핀
   if (nm && /iPhone|iPad|Android/i.test(navigator.userAgent)) nm.addEventListener('click', e => {
     e.preventDefault();
@@ -113,3 +117,34 @@
   let rw = window.innerWidth;
   window.addEventListener('resize', () => { if (window.innerWidth !== rw) { rw = window.innerWidth; draw(); } });
 })();
+
+// 기본정보 + 거래 활발도를 한 장 이미지로 공유
+async function shareSummary(btn) {
+  const label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = '이미지 준비 중…';
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const el = document.getElementById('summary');
+    const canvas = await html2canvas(el, {
+      scale: 2, backgroundColor: '#eef1f4', useCORS: true, windowWidth: 420, scrollX: 0, scrollY: -window.scrollY,
+      onclone: doc => {
+        const c = doc.getElementById('summary');
+        c.style.width = '400px'; c.style.padding = '16px';
+        const br = doc.querySelector('.topbar .brand');
+        if (br) { const b = br.cloneNode(true); b.classList.add('cap-brand'); c.insertBefore(b, c.firstChild); }
+        c.querySelectorAll('.favb, .nmap').forEach(x => x.style.display = 'none');
+      }
+    });
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const name = ((document.querySelector('h1') || {}).firstChild || {}).textContent || '단지';
+    const file = new File([blob], `${name.trim()}_분양권_${TODAY}.png`, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); }
+      catch (e) { if (e.name !== 'AbortError') window.open(URL.createObjectURL(blob), '_blank'); }
+    } else {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+  } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); }
+  finally { btn.disabled = false; btn.innerHTML = label; }
+}
