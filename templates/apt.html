@@ -43,19 +43,20 @@
 </div>
 
 <section class="card" id="sale">
-  <div class="sec-t"><h2>매매 실거래</h2><small id="srange"></small></div>
+  <div class="sec-t"><h2>실거래</h2><small id="srange"></small></div>
+  <div class="kinds" id="kinds"><button type="button" class="on" data-k="s">매매</button><button type="button" data-k="r">전월세</button></div>
   <div class="types" id="types"></div>
   <div class="stats" id="stats"></div>
   <div class="chart" id="chart"><div class="rng" id="rng"></div><svg id="svg"></svg><div class="tip" id="tip"></div></div>
-  <table class="tt"><thead><tr><th>계약일</th><th class="p">금액</th><th>동 · 층</th><th>타입</th><th class="g">등기</th></tr></thead><tbody id="rows"></tbody></table>
-  <button class="more" id="more" type="button">더보기</button>
-</section>
-
-<section class="card rent" id="rent">
-  <div class="sec-t"><h2>전월세 실거래</h2><small>최근 13개월 · <span id="rtype"></span></small></div>
-  <div class="stats" id="rstats"></div>
-  <table class="tt"><thead><tr><th>계약일</th><th>층</th><th class="p">보증금/월세</th></tr></thead><tbody id="rrows"></tbody></table>
-  <button class="more" id="rmore" type="button">더보기</button>
+  <div class="lgd"><span><i class="ls"></i>매매 월평균</span><span><i class="lj"></i>전세 월평균 <small>(최근 13개월)</small></span></div>
+  <div id="tbl-s">
+    <table class="tt"><thead><tr><th>계약일</th><th class="p">금액</th><th>동 · 층</th><th>타입</th><th class="g">등기</th></tr></thead><tbody id="rows"></tbody></table>
+    <button class="more" id="more" type="button">더보기</button>
+  </div>
+  <div id="tbl-r" class="rent" hidden>
+    <table class="tt"><thead><tr><th>계약일</th><th>층</th><th class="p">보증금/월세</th></tr></thead><tbody id="rrows"></tbody></table>
+    <button class="more" id="rmore" type="button">더보기</button>
+  </div>
 </section>
 
 <p class="foot">국토교통부 실거래가 공개시스템 · K-apt 공동주택관리정보 기준 · 계약 해제 거래 제외</p>

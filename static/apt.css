@@ -73,3 +73,11 @@ table{width:100%;border-collapse:collapse}
 .asof{font-size:11.5px;color:var(--muted)}
 .pshr{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:14px;font-weight:700;color:var(--ink);background:#fff;border:1.5px solid #c9d0da;border-radius:12px;padding:7px 14px;cursor:pointer}
 .pshr svg{width:17px;height:17px}
+.kinds{display:flex;gap:6px;margin-bottom:10px}
+.kinds button{font:inherit;font-size:14.5px;font-weight:800;border:1.5px solid #dfe3ea;background:#fff;border-radius:999px;padding:7px 16px;cursor:pointer;color:var(--ink)}
+.kinds button[data-k="s"]{color:var(--blue)}.kinds button[data-k="r"]{color:var(--teal)}
+.kinds button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.lgd{display:flex;gap:14px;font-size:11.5px;color:var(--ink-2);font-weight:700;margin:6px 2px 0}
+.lgd i{display:inline-block;width:14px;height:0;border-top:2.4px solid #2754d6;vertical-align:3px;margin-right:4px}.lgd i.lj{border-color:#0f9b7a}
+.lgd small{font-weight:600;color:var(--muted)}
+.tip b.jt{color:#8ef0cf}.tip b small{font-size:11px;font-weight:700;opacity:.8}
