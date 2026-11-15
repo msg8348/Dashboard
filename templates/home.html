@@ -63,6 +63,22 @@
   .card .sub{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-2);margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
   .card .sub b{color:var(--ink);white-space:nowrap}.card .sub .d30{color:var(--muted);font-size:11px}
   .bar{height:5px;background:#eef1f6;border-radius:3px;margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--blue);border-radius:3px}
+  /* 메뉴 박스 (즐겨찾기 · 단지 검색 · 최고가 · 거래활발도) */
+  .menu{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+  .mb{background:#fff;border:1px solid #dfe5ea;border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px;height:62px;min-width:0;font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
+  .mb:hover{border-color:var(--navy)}
+  .mb .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none}.mb .ic svg{width:20px;height:20px}
+  .mb .tx{min-width:0}.mb b{font-size:16px;font-weight:800;display:block;white-space:nowrap}
+  .mb small{font-size:11.5px;color:var(--muted);font-weight:600;display:block;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mb .go{margin-left:auto;color:#c3c9d2;font-size:18px;font-weight:700}
+  .i-fav{background:#fff6d9;color:#f2ac00}.i-sch{background:#e8eefc;color:var(--blue)}.i-hi{background:#fdecea;color:var(--red)}.i-act{background:#e3f3ee;color:#127a64}
+  .rtitle{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800;margin:18px 4px 10px}.rtitle svg{width:22px;height:22px;color:var(--navy)}
+  .grid .card .row{white-space:nowrap}
+  .foot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .fb{display:flex;align-items:center;justify-content:center;gap:8px;height:42px;border-radius:13px;background:transparent;border:1px dashed #c4ccd6;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink-2);cursor:pointer}
+  .fb svg{width:19px;height:19px}
+  .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(23,32,44,.92);color:#fff;font-size:14px;font-weight:700;padding:10px 16px;border-radius:999px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.on{opacity:1}
   .dim{position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:10}
   .sheet{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(1080px,100%);max-height:82vh;overflow:auto;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 40px rgba(20,30,60,.25);padding:14px 26px 28px;z-index:11}
   .sheet .grab{width:48px;height:5px;background:#d9dee6;border-radius:3px;margin:0 auto 12px}
@@ -79,6 +95,7 @@
     .top .dt{display:none}.card .sub .d30{display:none}
     .hero{grid-template-columns:1fr 1fr 1fr;padding:18px}.hero>div:first-child{grid-column:1/-1}.hero .v{font-size:24px}
     .grid{grid-template-columns:1fr 1fr;gap:8px}.card{padding:14px}.card .cnt{font-size:24px}
+    .menu{grid-template-columns:1fr 1fr}
     .lv2{grid-template-columns:1fr 1fr}.sheet{padding:12px 16px 24px}
     .all{padding:14px 16px}.all b{white-space:nowrap;font-size:16px}.all span{font-size:12px;text-align:right}
   }
@@ -91,17 +108,27 @@
     <div><div class="k">신규 매매</div><div class="v">{{ "{:,}".format(tot.cnt) }}<span>건</span></div></div>
     <div><div class="k">신고가</div><div class="v r">{{ "{:,}".format(tot.high) }}<span>건</span></div></div>
     <div><div class="k">신규 전월세</div><div class="v">{{ "{:,}".format(tot.rent) }}<span>건</span></div></div></div>
+  <div class="menu">
+    <a class="mb" href="fav.html"><span class="ic i-fav"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9L3.5 9.7l5.9-.8z"/></svg></span><span class="tx"><b>즐겨찾기</b><small>관심단지</small></span><span class="go">›</span></a>
+    <button class="mb" type="button" onclick="openSearch()"><span class="ic i-sch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span><span class="tx"><b>단지 검색</b><small>아파트 이름으로</small></span><span class="go">›</span></button>
+    <button class="mb" type="button" onclick="soon()"><span class="ic i-hi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-6 4 3 7-9"/><path d="M15 6h5v5"/></svg></span><span class="tx"><b>최고가</b><small>지역별 최고 거래</small></span><span class="go">›</span></button>
+    <button class="mb" type="button" onclick="soon()"><span class="ic i-act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 20V12M12 20V5M18 20v-9"/></svg></span><span class="tx"><b>거래활발도</b><small>지역 · 지표단지</small></span><span class="go">›</span></button>
+  </div>
+  <div class="rtitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>지역 선택</div>
   <div class="grid">
     {% for s in sidos %}
     <button class="card" onclick="openSheet({{ loop.index0 }})">
-      <div class="nm">{{ s.sido }}<i>›</i></div>
+      <div class="nm">{{ '전남광주' if s.short == '광주전남' else s.short }}<i>›</i></div>
       <div class="row"><div class="cnt">{{ "{:,}".format(s.cnt) }}<span>건</span></div>{% if not s.ready %}<span class="wait">수집 중</span>{% elif s.high %}<span class="hi">신고가 {{ s.high }}</span>{% endif %}</div>
-      <div class="bar"><i style="width:{{ (s.cnt / max_cnt * 100)|round(1) }}%"></i></div>
-      <div class="sub"><span>84타입 평균<small class="d30"> · 최근 30일</small></span><b>{{ s.avg84 }}</b></div>
     </button>
     {% endfor %}
   </div>
+  <div class="foot">
+    <button class="fb" type="button" onclick="soon()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 8.5v6M9 11.5h6"/></svg>홈 화면에 추가</button>
+    <button class="fb" type="button" onclick="soon()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16V11a6 6 0 0 0-12 0v5l-1.5 2h15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>알림 설정</button>
+  </div>
 </div>
+<div class="toast" id="toast">준비 중이에요</div>
 
 {% for s in sidos %}
 <template id="sh{{ loop.index0 }}">
@@ -127,6 +154,8 @@ function openSheet(i) {
 }
 function openMenu() { document.getElementById('mdim').hidden = false; document.getElementById('drawer').classList.add('open'); }
 function closeMenu() { document.getElementById('mdim').hidden = true; document.getElementById('drawer').classList.remove('open'); }
+let toastT;
+function soon() { const t = document.getElementById('toast'); t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1600); }   // 아직 개발 전 메뉴
 function closeSheet() { document.getElementById('sheet').hidden = true; document.getElementById('dim').hidden = true; }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheet(); closeMenu(); } });
 </script>
