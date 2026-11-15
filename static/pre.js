@@ -121,7 +121,7 @@
 // 기본정보 + 거래 활발도를 한 장 이미지로 공유
 async function shareSummary(btn) {
   const label = btn.innerHTML;
-  btn.disabled = true; btn.textContent = '이미지 준비 중…';
+  btn.disabled = true; btn.textContent = '준비 중…';
   try {
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const el = document.getElementById('summary');
@@ -132,7 +132,7 @@ async function shareSummary(btn) {
         c.style.width = '400px'; c.style.padding = '16px';
         const br = doc.querySelector('.topbar .brand');
         if (br) { const b = br.cloneNode(true); b.classList.add('cap-brand'); c.insertBefore(b, c.firstChild); }
-        c.querySelectorAll('.favb, .nmap').forEach(x => x.style.display = 'none');
+        c.querySelectorAll('.favb, .nmap, .pshr').forEach(x => x.style.display = 'none');
       }
     });
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
