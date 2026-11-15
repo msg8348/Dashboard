@@ -291,6 +291,9 @@
   .btn{background:#fff;color:#111;border:1.5px solid #cfd6de;border-radius:14px;padding:17px;font:inherit;font-size:17px;font-weight:800;cursor:pointer}
   .btn:hover{background:#f6f8fa}.btn:disabled{opacity:.6;cursor:progress}
   .actions.card{grid-template-columns:1fr}
+  /* 지표단지: 상세 / 구·군별 거래량 전환 (같은 자리에 하나만, 이미지 저장 때는 둘 다) */
+  .ivrow{display:flex;justify-content:flex-end;margin:0 0 10px}.capturing .ivrow{display:none}
+  #page4:not(.capturing).ivgu .tbl.qx:not(.gu),#page4:not(.capturing):not(.ivgu) .tbl.qx.gu{display:none}
   .btn[hidden]{display:none}
   .btn.cshare{display:flex;align-items:center;justify-content:center;gap:10px;font-size:15.5px;font-weight:700;color:var(--ink-2)}
   .btn.cshare svg{width:26px;height:26px;color:#5b6472;flex:none}
@@ -444,6 +447,7 @@
     </div>
     {% endfor %}
   </div>
+  <div class="ivrow"><div class="tfv" id="indv"><button class="on" type="button" data-iv="apt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 20V9l6-4v15M10 20V5l10 4v11M3 20h18"/></svg>지표단지 상세</button><button type="button" data-iv="gu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>{{ L2W }}별 거래량</button></div></div>
   <div class="tbl qx"><div class="hd"><div><b>지표단지별 상세</b><small>{{ ind.count }}개 지표단지 · 아파트 매매 · 최근 3개월 순</small></div>
     <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
     <div class="bfgrid" style="--rows:{{ ((ind.by_r3|length) / 2)|round(0, 'ceil')|int }}">{% for a in ind.by_r3 %}<div class="bf">{{ rk(loop.index0, 'cn') }}
@@ -880,6 +884,10 @@ function tSet(sel, attr, key) {
     tRender();
   });
 }
+document.querySelectorAll('#indv [data-iv]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#indv [data-iv]').forEach(x => x.classList.toggle('on', x === b));
+  document.getElementById('page4').classList.toggle('ivgu', b.dataset.iv === 'gu');
+});
 tSet('#tf1 [data-k]', 'k', 'k'); tSet('#tft [data-t]', 't', 't'); tSet('#tfv [data-v]', 'v', 'v');
 document.getElementById('tfhi').onclick = e => { TR.hi = !TR.hi; e.currentTarget.classList.toggle('on', TR.hi); tRender(); };
 function goTrade(k) {   // 요약 카드 → 실거래 탭 (매매/전월세 필터)
