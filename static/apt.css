@@ -59,3 +59,4 @@ table{width:100%;border-collapse:collapse}
 .card>.addr{display:flex;align-items:center;gap:2px}.card>.addr .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.card>.addr .nmap{flex:none}
 .badge{white-space:nowrap}
 .ptg{font-size:9.5px;font-weight:800;color:#c2185b;background:#fde4ec;border-radius:6px;padding:2px 5px;margin-right:5px;vertical-align:1px}
+.asg{display:inline-block;font-size:10px;font-weight:800;color:#0f6b5c;background:#e3f3ec;border-radius:5px;padding:1px 4px;margin-right:4px;vertical-align:2px}

@@ -152,3 +152,33 @@ def load(path):
 def save(path, cache):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, separators=(",", ":"))
+
+
+def school_walk(x, y, name):
+    """배정 학교(예: '남천초')까지 도보 분 — 카카오에서 그 학교 위치를 찾아 직선거리로."""
+    q = name + "등학교" if name.endswith("초") else name
+    for z in _k("search/keyword.json", query=q, x=x, y=y, radius=20000, sort="distance"):
+        if z["category_name"].endswith("초등학교") and z["place_name"].replace(" ", "").startswith(name[:-1] if name.endswith("초") else name):
+            return walk_min(z["distance"])
+    return None
+
+
+def assign(cache, keys, zones, ver, budget=2000, workers=6):
+    """통학구역(학구도)으로 배정 초등학교 채우기: cache[k]['as'] = [[학교, 도보분], ...]."""
+    import schoolzone
+    if not zones or not KAKAO:
+        return 0
+    todo = [k for k in keys if k in cache and cache[k].get("x") and cache[k].get("asv") != ver][:budget]
+
+    def job(k):
+        c = cache[k]
+        names = schoolzone.schools_at(zones, c["x"], c["y"])
+        return k, [[n, school_walk(c["x"], c["y"], n)] for n in names[:2]]
+
+    with ThreadPoolExecutor(workers) as ex:
+        for k, r in ex.map(job, todo):
+            cache[k]["as"] = r
+            cache[k]["asv"] = ver
+    if todo:
+        print(f"🏫 배정 초등학교 {len(todo)}곳 확인 (찾음 {sum(1 for k in todo if cache[k]['as'])})")
+    return len(todo)
