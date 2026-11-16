@@ -37,7 +37,7 @@
 
   window.NDPHi = function (el, o) {
     const root = o.root || '', key = 'ndp_hi' + (o.s ? ':' + o.s + ':' + (o.g || '') : '');
-    const S = { s: o.s || '', g: o.g || '', d: '', y: '', m: '', k: 's', t: 0 };
+    const S = { s: o.s || '', g: o.g || '', d: '', y: '', m: '', k: 's', t: 84 };
     try { Object.assign(S, JSON.parse(sessionStorage.getItem(key)) || {}); } catch (e) {}
     if (o.s) S.s = o.s;
     if (o.g) S.g = o.g;
