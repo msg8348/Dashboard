@@ -281,7 +281,7 @@ def pre_history(key):
         with gzip.open(p, "rt", encoding="utf-8") as f:
             db = json.load(f)
         for a in db.get("apts", {}).values():
-            out[(a["c"], ckey(a["n"]))] += [r[4] for r in a["t"]]
+            out[(a["c"], ckey(a["n"]))] += [(r[4], int(r[0])) for r in a["t"]]   # (전용면적, 계약일)
     return out
 
 
@@ -627,7 +627,7 @@ def main():
         pre_hist = pre_history(key)
         pre_now = defaultdict(list)
         for t in sdb["pre"]["trades"]:
-            pre_now[(t.get("c"), ckey(t["n"]))].append(t["a"])
+            pre_now[(t.get("c"), ckey(t["n"]))].append((t["a"], int(t["dt"])))
         pcache = {}
 
         def cinfo(t, kapt_l2=kapt_l2, l2_of=l2_of, ccache=ccache, sd=sd, pre_hist=pre_hist, pre_now=pre_now, pcache=pcache):
@@ -636,8 +636,9 @@ def main():
                 ck = (t.get("c"), ckey(t["n"]), D.area_type(t["a"]) if D.area_type(t["a"]) != "기타" else round(t["a"]))
                 if ck not in pcache:
                     areas = pre_hist.get(ck[:2], []) + pre_now.get(ck[:2], [])
-                    pc = sum(1 for a in areas if same_type(a, t["a"]))
                     h = match_house(houses, sd, t)
+                    since = int(re.sub(r"\D", "", (h or {}).get("pbl") or "")[:8] or 0)   # 모집공고 이전 거래는 같은 이름의 옛 단지
+                    pc = sum(1 for a, d in areas if same_type(a, t["a"]) and d >= since)
                     extra = {"pc": pc}
                     if h and h["id"] in D.PRE_PAGES:
                         extra["h"] = f"pre/{h['id']}"   # 분양권 페이지
