@@ -565,6 +565,7 @@ def main():
     months = D.month_list(now, D.WINDOW_MONTHS)
     urls = []
     home = []
+    act_nat, act_sidos = {"s": [], "g": []}, []   # 홈 '거래활발도'
     # 알림 서버(cloudflare/push)가 읽는 오늘의 알림 재료: 관심단지별 신규 거래 문구, 지역별 요약 숫자
     push = {"date": now.strftime("%Y%m%d"), "new": not fallback, "apts": {}, "regions": {}}
 
@@ -704,6 +705,19 @@ def main():
         redirect(f"r/{key}/index.html", f"{sdir}/index.html")   # 예전 주소 → 새 주소
         with open(os.path.join(SITE, sdir, "index.html"), "w", encoding="utf-8") as f:
             f.write(tpl.render(ctx))
+        # 홈 '거래활발도': 이 시도의 지표단지·구군 조각 + 전국 순위 재료
+        nm_s = "전남광주" if sd["short"] == "광주전남" else sd["short"]
+        if ind["count"] or ind["gus"]:
+            os.makedirs(os.path.join(SITE, "act"), exist_ok=True)
+            with open(os.path.join(SITE, "act", f"{sdir}.html"), "w", encoding="utf-8") as f:
+                f.write(env.get_template("_act_frag.html").render(ind=ind, region=sd["short"], l2_word=l2_word))
+            act_sidos.append([nm_s, sdir])
+        if ind.get("gu_rate"):
+            t = ind["gu_total"]
+            act_nat["s"].append({"n": nm_s, "c3": t["c3"], "c1": t["c1"], "r3": t["r3"], "r1": t["r1"], "trend": t["trend"], "change": t["change"], "h": f"{sdir}/index.html"})
+            for g in ind["gus"]:
+                if (g.get("hh") or 0) >= 3000:   # 작은 시군구 제외 (아파트 3천세대 이상)
+                    act_nat["g"].append({"n": f"{nm_s} {g['name']}", "c3": g["c3"], "c1": g["c1"], "r3": g["r3"], "r1": g["r1"], "trend": g["trend"], "change": g["change"]})
         # --- 레벨2
         chips = []
         if len(sd["l2"]) > 1:
@@ -780,6 +794,11 @@ def main():
     with open(os.path.join(SITE, "pop.html"), "w", encoding="utf-8") as f:   # 인기단지 (많이 산 단지 · 실시간 검색)
         f.write(env.get_template("pop.html").render(today=now.strftime("%Y%m%d"),
                 sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home if h["key"] in APT_SIDOS]))
+    act_nat["s"].sort(key=lambda r: -r["r3"])
+    act_nat["g"] = sorted(act_nat["g"], key=lambda r: -r["r3"])[:20]   # 전국 시군구 Top 20
+    with open(os.path.join(SITE, "act.html"), "w", encoding="utf-8") as f:   # 거래활발도 (시도별 · 전국 시군구 · 지표단지 · 구군별)
+        f.write(env.get_template("act.html").render(today=now.strftime("%Y%m%d"), nat=act_nat, sidos=act_sidos,
+                date_label=now.strftime("%y.%m.%d")))
     with open(os.path.join(SITE, "hi.html"), "w", encoding="utf-8") as f:   # 최고가 (기간·지역·평형별)
         f.write(env.get_template("hi.html").render(today=now.strftime("%Y%m%d"),
                 sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home if h["key"] in APT_SIDOS]))

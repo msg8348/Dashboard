@@ -560,7 +560,7 @@ def build_indicator(sale_trades, today, gu_hh=None, complexes=None, key="d", gu_
     for i in items:
         i["w1"] = round(i["r1"] / max_r1 * 100, 1)
         i["w3"] = round(i["r3"] / max_r3 * 100, 1)
-    rated = [i for i in items if not i["nohh"]]          # 세대수를 아는 단지만 회전율 순위에 넣음
+    rated = [i for i in items if (i["households"] or 0) >= 300]   # 300세대 이상만 회전율 순위에 넣음
     hh = sum(i["households"] for i in rated)
     c1 = sum(i["c1"] for i in rated)
     c3 = sum(i["c3"] for i in rated)
@@ -600,7 +600,7 @@ def build_indicator(sale_trades, today, gu_hh=None, complexes=None, key="d", gu_
     return {
         "groups": groups, "count": len(items), "households": hh,
         "c1": c1, "r1": c1 / hh * 100 if hh else 0, "c3": c3, "r3": c3 / hh * 100 if hh else 0,
-        "top5_1y": sorted(rated, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5], "by_r3": by_r3 + sorted((i for i in items if i["nohh"]), key=lambda i: -i["c3"]), "gus": gus, "gu_rate": gu_rate, "gu_total": gu_total,
+        "top5_1y": sorted(rated, key=lambda i: -i["r1"])[:5], "top5_3m": by_r3[:5], "by_r3": by_r3 + sorted((i for i in items if (i["households"] or 0) < 300), key=lambda i: -i["c3"]), "gus": gus, "gu_rate": gu_rate, "gu_total": gu_total,
         "period_1y": f"{ymd_label(d_1y)}~", "period_3m": f"{ymd_label(d_3m)}~",
     }
 
