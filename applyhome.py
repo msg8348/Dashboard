@@ -17,6 +17,7 @@ import requests
 
 BASE = "https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1"
 REFRESH_DAYS = 1   # 청약 일정(청약단지 메뉴) 때문에 매일
+DIAG = {}   # 서비스별 첫 응답 요약 (전체 건수·항목·첫 줄·오류) — applyhome.json 에 같이 저장해 원인 확인용
 
 
 def _pages(op, key, per=1000, max_pages=200, base=None, extra=None):
@@ -34,10 +35,13 @@ def _pages(op, key, per=1000, max_pages=200, base=None, extra=None):
                 r = None
             time.sleep(3 * (attempt + 1))
         if r is None or r.status_code != 200:
+            DIAG[op] = {"err": f"{getattr(r, 'status_code', '-')} {(r.text[:300] if r is not None else '')}"}
             raise RuntimeError(f"청약홈 {op} {page}쪽 실패: {getattr(r, 'status_code', '-')} {(r.text[:150] if r is not None else '')}")
         j = r.json()
         rows = j.get("data") or []
         if page == 1:
+            DIAG[op] = {"total": j.get("totalCount"), "match": j.get("matchCount"), "keys": list(rows[0].keys()) if rows else [],
+                        "row0": {k: str(v)[:40] for k, v in (rows[0].items() if rows else [])}}
             print(f"🏗️ 청약홈 {op}: 전체 {j.get('totalCount', '?')}건 · 항목 {list(rows[0].keys())[:14] if rows else '-'}")
         out += rows
         if not rows or page * per >= int(j.get("totalCount") or j.get("matchCount") or 0):
@@ -82,6 +86,11 @@ def competition(key, since):
     """{주택관리번호: {"c": {주택형: [1순위 해당지역 경쟁률, 접수 건수, 공급]}, "s": {주택형: [최저, 최고, 평균 가점]}}} — 실패해도 빈 값."""
     out = {}
     cond = {"cond[HOUSE_MANAGE_NO::GTE]": since}
+    try:
+        _pages("getAPTLttotPblancCmpet", key, base=CMP, extra=cond, max_pages=1, per=1)
+    except Exception:   # 조건 검색을 지원하지 않으면 조건 없이 (최근 것부터 오는지 모르니 넉넉히)
+        DIAG["cmp_probe"] = DIAG.get("getAPTLttotPblancCmpet")
+        cond = {}
     try:
         for r in _pages("getAPTLttotPblancCmpet", key, base=CMP, extra=cond, max_pages=60):
             hid = str(r.get("HOUSE_MANAGE_NO") or "")
@@ -154,12 +163,12 @@ def load(path, key, today=None):
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             st = json.load(f)
-    fresh = st and st.get("v") == 3 and (today.date() - datetime.strptime(st["date"], "%Y%m%d").date()).days < REFRESH_DAYS
+    fresh = st and st.get("v") == 4 and (today.date() - datetime.strptime(st["date"], "%Y%m%d").date()).days < REFRESH_DAYS
     if key and not fresh:
         try:
             rows = fetch(key)
             if rows:
-                st = {"v": 3, "date": today.strftime("%Y%m%d"), "houses": rows}
+                st = {"v": 4, "date": today.strftime("%Y%m%d"), "houses": rows, "diag": DIAG}
                 os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
                 with open(path, "w", encoding="utf-8") as f:
                     json.dump(st, f, ensure_ascii=False, separators=(",", ":"))
