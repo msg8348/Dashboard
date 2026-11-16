@@ -53,53 +53,21 @@
 {%- if l2opts %}{% if level == 1 %}<span class="sep">›</span>{% endif %}<label class="l2sel"><select aria-label="{{ L2W }} 선택" onchange="if (this.value) location.href = this.value">
 <option value="{{ 'index.html' if level == 2 else '' }}"{% if level == 1 %} selected{% endif %}>{{ L2W }} 전체</option>
 {% for n, h in l2opts %}<option value="{{ h }}"{% if level == 2 and n == region %} selected{% endif %}>{{ n }}</option>{% endfor %}
-</select></label>{% endif %}</nav>{% endif %}
+</select></label>{% endif %}<span class="cdate">{{ dsel() }}</span></nav>{% endif %}
+<div class="vtabs" id="vtabs"><button type="button" data-v="list" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>리스트형</button><button type="button" data-v="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="4.5" width="14" height="6" rx="1.6"/><rect x="5" y="13.5" width="14" height="6" rx="1.6"/></svg>카드형</button></div>
 {% set PAGES = [('요약','sum',1),('실거래','sale',2)] %}   {#- 최고가·거래활발도는 홈 메뉴로 옮김 #}
 
 <!-- ============ 1. 요약 ============ -->
-<div class="report page" id="page1">
-  <div class="head"><h1>{{ RG }} 아파트 실거래 요약 {{ dsel() }}</h1></div>
+<div class="report page" id="page1" hidden></div>
+
+<!-- ============ 2. 실거래 (매매·분양권·전월세 통합) ============ -->
+<div class="report page trd" id="page2">
+  <div class="head"><h1>{{ RG }} 아파트 실거래</h1></div>
   {{ notices_box() }}
-  <div class="cards c2">
+  <div class="cards c2 lsum" id="lsum">
     <div class="cd b go" role="button" onclick="goTrade('sale')"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
     <div class="cd t go" role="button" onclick="goTrade('rent')"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">전세 신고가 {{ rent.high_cnt }}건</div></div></div>
   </div>
-  <div class="quad"><div class="colA">
-    <div class="q s"><h3>매매 최고가 <small>금액순 · 분양권 포함</small></h3>
-      {% for r in sale.top15 %}<div class="r">{{ rk(loop.index0, 'cs') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.pre %}<span class="ptag">분양권</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr">{{ r.price }}</span></div>
-      {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
-    </div>
-  </div><div class="colB">
-    <div class="q j"><h3>전세 최고가 <small>보증금순</small></h3>
-      {% for r in rent.jeonse_top15 %}<div class="r">{{ rk(loop.index0, 'cj') }}<span class="nm">{{ tyb(r.type) }}<span class="nt">{{ r.name }}</span>{% if r.type == '기타' and r.py %}<span class="pyg">{{ r.py }}평</span>{% endif %}{% if r.up %}<span class="stk">신고가</span>{% endif %}</span><span class="sub">{{ r.floor }}</span><span class="pr {% if r.monthly %}w{% endif %}">{% if r.monthly %}<span class="wtag">월</span>{% endif %}{{ r.price }}</span></div>
-      {% else %}<div class="empty">집계된 거래가 없습니다</div>{% endfor %}
-    </div>
-  </div></div>
-  {% if has_ind %}
-  <div class="qx sumind"><div class="hd"><div><b>지표단지 거래량 Top10</b><small>아파트 매매 · 최근 3개월 순</small></div>
-    <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
-    {% set t = ind.gu_total %}
-    <div class="bf one wide total"><span class="tot-chip">전체</span>
-      <div class="who"><b>{{ RG }} 전체</b><span>{% if ind.gu_rate %}아파트 {{ "{:,}".format(t.hh) }}세대{% else %}{{ ind.gus|length }}개 {{ L2W }}{% endif %}</span>{{ trendb(t) }}</div>
-      {% if ind.gu_rate %}
-      <div class="side l"><span class="val c-m">{{ "%.2f"|format(t.r3) }}%<em>{{ "{:,}".format(t.c3) }}건</em></span><span class="bw"><i class="i-m" style="width:{{ t.iw3 }}%"></i></span></div><div class="axis"></div>
-      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ t.iw1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(t.r1) }}%<em>{{ "{:,}".format(t.c1) }}건</em></span></div>
-      {% else %}
-      <div class="side l"><span class="val c-m">{{ "{:,}".format(t.c3) }}건</span></div><div class="axis"></div>
-      <div class="side r"><span class="val c-g">{{ "{:,}".format(t.c1) }}건</span></div>
-      {% endif %}</div>
-    {% set top10 = (ind.by_r3|rejectattr('nohh')|list)[:10] %}
-    <div class="bfgrid" style="--rows:{{ ((top10|length) / 2)|round(0, 'ceil')|int }}">{% for a in top10 %}<div class="bf">{{ rk(loop.index0, 'cn') }}
-      <div class="who"><b>{{ a.name }}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span>{{ trendb(a) }}</div>
-      <div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>
-      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}</div>
-  </div>
-  {% endif %}
-</div>
-
-<!-- ============ 2. 실거래 (매매·분양권·전월세 통합) ============ -->
-<div class="report page trd" id="page2" hidden>
-  <div class="head"><h1>{{ RG }} 실거래 {{ dsel() }}</h1></div>
   <div class="tf1" id="tf1"><button class="all on" data-k="all">전체</button><button class="sale" data-k="sale">매매</button><button class="rent" data-k="rent">전월세</button><button class="hi" id="tfhi">신고가만</button></div>
   <div class="tf2"><div class="tft" id="tft"><button class="on" data-t="all">전체</button><button data-t="84타입">84</button><button data-t="59타입">59</button><button data-t="기타">기타</button></div>
     <div class="tfv" id="tfv"><button class="on" data-v="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="4.5" width="14" height="6" rx="1.6"/><rect x="5" y="13.5" width="14" height="6" rx="1.6"/></svg>카드형</button><button data-v="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>리스트형</button></div></div>
@@ -111,7 +79,7 @@
 <!-- ============ 4. 지표단지 ============ -->
 </div>
 
-<nav class="bnav" id="bnav">
+<nav class="bnav" id="bnav" hidden>
   <span class="bpill" id="bpill"></span>
   {% for t, k, pn in PAGES %}<button class="bt {% if loop.first %}on{% endif %}" data-page="{{ pn }}" onclick="showPage({{ pn }})">{{ t }}</button>{% endfor %}
 </nav>
@@ -120,7 +88,7 @@
   <div class="dr-top"><button class="dr-x" type="button" aria-label="닫기" onclick="closeMenu()">{{ ic('x') }}</button></div>
   {% if crumbs %}<div class="dr-crumb">{% for c in crumbs %}{% if c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a><span>›</span>{% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}</div>{% endif %}
   <div class="dr-list">
-    {% for t, k, pn in PAGES %}<button class="dr-it {% if loop.first %}on{% endif %}" data-page="{{ pn }}" onclick="showPage({{ pn }}); closeMenu(); window.scrollTo(0, 0)">{{ ic(k) }}<span>{{ t }}</span></button>{% endfor %}
+    <button class="dr-it" type="button" onclick="setView('list'); closeMenu(); window.scrollTo(0, 0)">{{ ic('sale') }}<span>리스트형</span></button><button class="dr-it" type="button" onclick="setView('card'); closeMenu(); window.scrollTo(0, 0)">{{ ic('sum') }}<span>카드형</span></button>
   </div>
   <div class="dr-list sub">
     <a class="dr-it" href="{{ root|default('') }}fav.html">{{ ic('star') }}<span>관심단지</span></a>
@@ -145,7 +113,7 @@
 </div>
 
 <script>
-let currentPage = 1;
+let currentPage = 2;
 function showPage(n) {
   if (n !== currentPage) window.scrollTo(0, 0);   // 탭을 바꾸면 페이지 맨 위로
   currentPage = n;
@@ -447,7 +415,7 @@ function closeSheet() { document.getElementById('save-sheet').hidden = true; }
 
 // ---------------- 실거래 (카드형·리스트형) ----------------
 const TDATA = JSON.parse(document.getElementById('tdata').textContent || '[]');
-const TR = { k: 'all', hi: false, t: 'all', v: 'card' };
+const TR = { k: 'all', hi: false, t: 'all', v: 'list' };   // 처음엔 리스트형
 {% include "_tcard_js.html" %}
 function tRows() {
   return TDATA.filter(r => (TR.k === 'all' || (TR.k === 'sale' ? r.k !== 'rent' : r.k === 'rent')) && (!TR.hi || r.up) && (TR.t === 'all' || r.ty === TR.t));
@@ -524,6 +492,14 @@ document.querySelectorAll('#indv [data-iv]').forEach(b => b.onclick = () => {
   document.querySelectorAll('#indv [data-iv]').forEach(x => x.classList.toggle('on', x === b));
   document.getElementById('page4').classList.toggle('ivgu', b.dataset.iv === 'gu');
 });
+function setView(v) {   // 위쪽 [리스트형 | 카드형] 탭
+  TR.v = v;
+  document.querySelectorAll('#vtabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  document.getElementById('lsum').hidden = v !== 'list';   // 건수 상자는 리스트형에만
+  try { sessionStorage.setItem('view:' + location.pathname, v); } catch (e) {}
+  tRender();
+}
+document.getElementById('vtabs').onclick = e => { const b = e.target.closest('button'); if (b && b.dataset.v !== TR.v) setView(b.dataset.v); };
 tSet('#tf1 [data-k]', 'k', 'k'); tSet('#tft [data-t]', 't', 't'); tSet('#tfv [data-v]', 'v', 'v');
 document.getElementById('tfhi').onclick = e => { TR.hi = !TR.hi; e.currentTarget.classList.toggle('on', TR.hi); tRender(); };
 function goTrade(k) {   // 요약 카드 → 실거래 탭 (매매/전월세 필터)
@@ -537,7 +513,12 @@ document.getElementById('tout').addEventListener('click', e => {   // 카드·�
   const el = e.target.closest('[data-h]');
   if (el) location.href = APTB + el.dataset.h + '.html';
 });
-tRender();
+try {   // 뒤로가기·새로고침이면 보던 형태 그대로, 새로 들어오면 리스트형
+  const nav = (performance.getEntriesByType('navigation')[0] || {}).type;
+  const sv = sessionStorage.getItem('view:' + location.pathname);
+  if ((nav === 'back_forward' || nav === 'reload') && sv === 'card') TR.v = 'card';
+} catch (e) {}
+setView(TR.v);
 </script>
 <script src="{{ root|default('') }}search.js?v={{ date_full }}"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "abacec54a0cc4c2a9c18d8b390e67068"}'></script><!-- End Cloudflare Web Analytics -->
