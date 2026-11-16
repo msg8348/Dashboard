@@ -109,7 +109,9 @@ async function render() {
 document.getElementById('tabs').onclick = e => { const b = e.target.closest('button'); if (b) { S.t = b.dataset.t; render(); } };
 document.getElementById('per').onclick = e => { const b = e.target.closest('button'); if (b) { S.p = b.dataset.p; render(); } };
 const sel = document.getElementById('sido');
-if (S.s && [...sel.options].some(o => o.value === S.s)) sel.value = S.s; else S.s = sel.value;
+const FV = (() => { try { return localStorage.getItem('ndp_region_fav_dir') || ''; } catch (e) { return ''; } })();   // 홈 지역 즐겨찾기 (없으면 서울)
+const pickSido = (has, cur, st) => { if (st.fv !== FV) { st.fv = FV; cur = ''; } return has(cur) ? cur : has(FV) ? FV : has('seoul') ? 'seoul' : ''; };
+{ const s0 = S.s; S.s = pickSido(v => [...sel.options].some(o => o.value === v), S.s, S) || sel.value; if (S.s !== s0) S.g = ''; sel.value = S.s; }   // 기본: 지역 즐겨찾기 → 서울
 sel.onchange = () => { S.s = sel.value; S.g = ''; render(); };
 document.getElementById('gu').onchange = e => { S.g = e.target.value; render(); };
 render();

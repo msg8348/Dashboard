@@ -60,7 +60,9 @@ const A = { t: '1', s: '', w: 'sum' };
 try { Object.assign(A, JSON.parse(sessionStorage.getItem('ndp_act')) || {}); } catch (e) {}
 const fc = {};
 const sel = document.getElementById('asido');
-if (!(A.s && [...sel.options].some(o => o.value === A.s))) A.s = [...sel.options].some(o => o.value === 'busan') ? 'busan' : sel.value;   // 기본 부산
+const FV = (() => { try { return localStorage.getItem('ndp_region_fav_dir') || ''; } catch (e) { return ''; } })();   // 홈 지역 즐겨찾기 (없으면 서울)
+const pickSido = (has, cur, st) => { if (st.fv !== FV) { st.fv = FV; cur = ''; } return has(cur) ? cur : has(FV) ? FV : has('seoul') ? 'seoul' : ''; };
+A.s = pickSido(v => [...sel.options].some(o => o.value === v), A.s, A) || sel.value;   // 기본: 지역 즐겨찾기 → 서울
 sel.value = A.s;
 async function render() {
   try { sessionStorage.setItem('ndp_act', JSON.stringify(A)); } catch (e) {}
