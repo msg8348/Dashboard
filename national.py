@@ -831,7 +831,14 @@ def main():
             json.dump(hist_d, f, separators=(",", ":"))
     else:
         hist_d.setdefault(today_d, dict({h["key"]: h["cnt"] for h in home}, _=sum(h["cnt"] for h in home)))
-    ddays = [(now - timedelta(days=i)).strftime("%Y%m%d") for i in range(29, -1, -1)]
+    # 공개일만 이어 붙인 30칸: 기록이 있는 날 + 기록 시작(11.14) 전의 화~토 자리 (일·월·공휴일 등 공개 없는 날은 건너뜀)
+    ddays, dd = [], now
+    while len(ddays) < 30:
+        ds = dd.strftime("%Y%m%d")
+        if hist_d.get(ds, {}).get("_") or (ds < "20261114" and dd.weekday() in (1, 2, 3, 4, 5)):
+            ddays.append(ds)
+        dd -= timedelta(days=1)
+    ddays.reverse()
     daily = [[d, hist_d.get(d, {}).get("_")] for d in ddays]
     daily_by = {k: [hist_d.get(d, {}).get(k) for d in ddays] for k in ["_"] + [h["key"] for h in home]}
     hc = {"date_label": now.strftime("%y.%m.%d"), "sidos": home, "site_url": SITE_URL, "daily": daily, "daily_by": daily_by,
