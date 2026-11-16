@@ -337,3 +337,8 @@
   .bnav[hidden],#tfv,.lsum[hidden]{display:none!important}
   .lsum .cd>div:last-child{display:flex;justify-content:flex-end;align-items:baseline;gap:8px}
   .lsum .cd .h{margin-top:0}
+  .lsum .cd .l span{display:none}   /* '분양권 포함' · '전세 N · 월세 N' 작은 글씨 숨김 */
+  .lsum .cd .l{font-size:19px;font-weight:800}
+  .lsum .cd .h{font-size:14.5px}
+  .lsum .cd>div:last-child{flex-wrap:wrap;column-gap:6px;row-gap:0;min-width:0}
+  @media(max-width:820px){.lsum .cd .h{font-size:13.5px}.lsum .cd .l{font-size:18px}}
