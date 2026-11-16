@@ -291,6 +291,7 @@
   .btn{background:#fff;color:#111;border:1.5px solid #cfd6de;border-radius:14px;padding:17px;font:inherit;font-size:17px;font-weight:800;cursor:pointer}
   .btn:hover{background:#f6f8fa}.btn:disabled{opacity:.6;cursor:progress}
   .actions.card{grid-template-columns:1fr}
+  .actions[hidden],.actions-note[hidden]{display:none}
   /* 지표단지: 상세 / 구·군별 거래량 전환 (같은 자리에 하나만, 이미지 저장 때는 둘 다) */
   .ivrow{display:flex;justify-content:flex-end;margin:0 0 10px}.capturing .ivrow{display:none}
   #page4:not(.capturing).ivgu .tbl.qx:not(.gu),#page4:not(.capturing):not(.ivgu) .tbl.qx.gu{display:none}
@@ -364,7 +365,7 @@
 {% macro rk(i, c) %}<span class="rkc {{ c }} {% if i >= 3 %}lt{% endif %}">{{ i + 1 }}</span>{% endmacro %}
 {% macro tyb(t) %}<span class="ty {{ 'ty84' if t == '84타입' else 'ty59' if t == '59타입' else 'tyx' }}">{{ t[:2] if t != '기타' else '기타' }}</span>{% endmacro %}
 {% macro notices_box() %}{% if notices %}<div class="notice">{% for n in notices %}⚠ {{ n }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}{% endmacro %}
-{% macro ic(n) %}<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if n == 'menu' %}<path d="M4 6h16M4 12h16M4 18h16"/>{% elif n == 'x' %}<path d="M6 6l12 12M18 6L6 18"/>{% elif n == 'sum' %}<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>{% elif n == 'sale' %}<path d="M4 7h11M4 12h16M4 17h9"/><circle cx="19" cy="7" r="1.6"/>{% elif n == 'rent' %}<path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>{% elif n == 'ind' %}<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>{% elif n == 'map' %}<path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/>{% elif n == 'star' %}<path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>{% elif n == 'up' %}<path d="M12 19V5M6 11l6-6 6 6"/>{% endif %}</svg>{% endmacro %}
+{% macro ic(n) %}<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if n == 'menu' %}<path d="M4 6h16M4 12h16M4 18h16"/>{% elif n == 'x' %}<path d="M6 6l12 12M18 6L6 18"/>{% elif n == 'sum' %}<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>{% elif n == 'sale' %}<path d="M4 7h11M4 12h16M4 17h9"/><circle cx="19" cy="7" r="1.6"/>{% elif n == 'rent' %}<path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>{% elif n == 'ind' %}<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>{% elif n == 'map' %}<path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/>{% elif n == 'star' %}<path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>{% elif n == 'up' %}<path d="M12 19V5M6 11l6-6 6 6"/>{% elif n == 'hi' %}<path d="M4 18l1.5-9 4.5 4 2-7 2 7 4.5-4 1.5 9z"/><path d="M4 21h16"/>{% endif %}</svg>{% endmacro %}
 {% macro trendb(a) %}{% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}{% endmacro %}
 {% set ind = indicator %}
 {% set RG = region|default('부산') %}
@@ -381,6 +382,7 @@
 {% for n, h in l2opts %}<option value="{{ h }}"{% if level == 2 and n == region %} selected{% endif %}>{{ n }}</option>{% endfor %}
 </select></label>{% endif %}</nav>{% endif %}
 {% set PAGES = [('요약','sum',1),('실거래','sale',2),('지표단지','ind',4)] if has_ind else [('요약','sum',1),('실거래','sale',2)] %}
+{% if hi %}{% set PAGES = PAGES + [('최고가','hi',5)] %}{% endif %}
 
 <!-- ============ 1. 요약 ============ -->
 <div class="report page" id="page1">
@@ -486,6 +488,12 @@
 {% endif %}
 </div>
 
+{% if hi %}
+<div class="report page" id="page5" hidden>
+  <div class="head"><h1>{{ RG }} 최고가</h1></div>
+  <div id="hiw" data-s="{{ hi.s }}" data-g="{{ hi.g }}"></div>
+</div>
+{% endif %}
 <nav class="bnav" id="bnav">
   <span class="bpill" id="bpill"></span>
   {% for t, k, pn in PAGES %}<button class="bt {% if loop.first %}on{% endif %}" data-page="{{ pn }}" onclick="showPage({{ pn }})">{{ t }}</button>{% endfor %}
@@ -530,6 +538,7 @@ function showPage(n) {
   movePill();
   fitFoot();
   updActions();
+  if (n === 5) openHi();
   try { sessionStorage.setItem('page:' + location.pathname, n); } catch (e) {}
   prerender();
 }
@@ -618,7 +627,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu();
 
 const DATE = '{{ date_full }}';
 const APTB = '{{ apt_base|default('') }}';
-const REGION = '{{ RG }}', MAXPAGE = {{ 4 if has_ind else 2 }};
+const REGION = '{{ RG }}', MAXPAGE = {{ 5 if hi else 4 if has_ind else 2 }};
 // 페이지별 저장 이미지 (지표단지는 2장: 1년·3개월 / 상세)
 const SHOTS = {
   1: [{ ko: '1_요약', en: '1_summary' }],
@@ -687,7 +696,7 @@ function render(n) {
   return cache[n];
 }
 let prerenderTimer;
-function prerender() { clearTimeout(prerenderTimer); if (currentPage === 2) return; prerenderTimer = setTimeout(() => render(currentPage).catch(() => {}), 400); }   // 실거래는 거래가 많아 누를 때만 만듦
+function prerender() { clearTimeout(prerenderTimer); if (currentPage === 2 || !SHOTS[currentPage]) return; prerenderTimer = setTimeout(() => render(currentPage).catch(() => {}), 400); }   // 실거래는 거래가 많아 누를 때만 만듦
 window.addEventListener('load', prerender);
 // 지역을 새로 고르면 요약부터, 뒤로가기·새로고침으로 돌아오면 보던 탭 그대로
 try {
@@ -848,11 +857,21 @@ function tRender() {
 }
 // 실거래 카드형: 아래 버튼은 '공유' 하나 — 10장까지 카드마다 한 장씩, 넘으면 한 장으로 합쳐서 (30장까지 + 외 N건)
 const CARD_MAX = 10, CARD_GRID_MAX = 30;
+let hiOn = false;
+function openHi() {   // 최고가 탭: 처음 열 때 불러옴 (지역은 이 페이지 지역으로 고정)
+  if (hiOn) return; hiOn = true;
+  const el = document.getElementById('hiw');
+  const go = () => NDPHi(el, { root: '{{ root|default('') }}', s: el.dataset.s, g: el.dataset.g, v: DATE });
+  if (window.NDPHi) return go();
+  const sc = document.createElement('script'); sc.src = '{{ root|default('') }}hi.js?v=' + DATE; sc.onload = go; document.head.appendChild(sc);
+}
 function updActions() {
   let card = false;
   try { card = currentPage === 2 && TR.v === 'card'; } catch (e) {}
   const n = document.querySelectorAll('#tout .tcard').length;
   document.querySelector('.actions').classList.toggle('card', card);
+  document.querySelector('.actions').hidden = currentPage === 5;   // 최고가 탭은 이미지 저장 없음
+  document.querySelector('.actions-note').hidden = currentPage === 5;
   document.getElementById('share-btn').hidden = card;
   document.getElementById('save-btn').hidden = card;
   const b = document.getElementById('cshare-btn');
