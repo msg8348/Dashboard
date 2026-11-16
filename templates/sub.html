@@ -66,6 +66,10 @@ const SIDOS = {{ sidos|tojson }};
 const C = {};
 let S = { s: '', h: '' };
 try { Object.assign(S, JSON.parse(sessionStorage.getItem('ndp_sub')) || {}); } catch (e) {}
+const FV = (() => { try { return localStorage.getItem('ndp_region_fav_dir') || ''; } catch (e) { return ''; } })();   // 홈 지역 즐겨찾기 (없으면 서울)
+const pickSido = (has, cur, st) => { if (st.fv !== FV) { st.fv = FV; cur = ''; } return has(cur) ? cur : has(FV) ? FV : has('seoul') ? 'seoul' : ''; };
+S.s = pickSido(v => SIDOS.some(x => x[1] === v), S.s, S) || S.s;
+{ const rg = document.getElementById('rg'), fb = FV && rg.querySelector(`[data-v="${FV}"]`); if (fb) rg.prepend(fb); }   // 즐겨찾기 지역을 맨 앞에
 const $ = id => document.getElementById(id);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const eok = p => { const e = Math.floor(p / 1e4), r = p % 1e4; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() : '') || '0'; };
@@ -85,8 +89,9 @@ const tagsOf = h => [h.cr ? `1순위 평균 ${h.cr} : 1` : '', ...(h.reg && h.re
 async function data(s) { return C[s] = C[s] || await fetch(`sub/${s}.json?v={{ today }}`).then(r => r.json()); }
 async function render() {
   try { sessionStorage.setItem('ndp_sub', JSON.stringify(S)); } catch (e) {}
-  if (!S.s || !SIDOS.some(x => x[1] === S.s)) S.s = (SIDOS.find(x => x[1] === 'busan') || SIDOS[0] || [])[1] || '';
+  if (!S.s || !SIDOS.some(x => x[1] === S.s)) S.s = (SIDOS[0] || [])[1] || '';
   document.querySelectorAll('#rg button').forEach(b => b.classList.toggle('on', b.dataset.v === S.s));
+  { const on = document.querySelector('#rg button.on'); if (on && on.parentNode.scrollTo) on.parentNode.scrollTo({ left: on.offsetLeft - 16 }); }
   if (!S.s) { $('cards').innerHTML = '<div class="empty">최근 청약 단지가 없어요</div>'; return; }
   const d = await data(S.s);
   // 이번 주

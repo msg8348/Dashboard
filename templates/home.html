@@ -191,7 +191,7 @@
   <div class="dr-list">{% for s in sidos %}<a class="dr-it" href="{{ s.href }}"><span>{{ s.sido }}</span><em>{{ "{:,}".format(s.cnt) }}건</em></a>{% endfor %}</div>
 </aside>
 <div class="sheet" id="sheet" hidden></div>
-<script type="application/json" id="hData">{"d":{{ daily|map(attribute=0)|list|tojson }},"by":{{ daily_by|tojson }},"tot":{{ tot|tojson }},"rg":{ {%- for s in sidos %}{{ s.key|tojson }}:[{{ ('전남광주' if s.short == '광주전남' else s.short)|tojson }},{{ s.cnt }},{{ s.high }},{{ s.rent }}]{{ ',' if not loop.last }}{% endfor %}}}</script>
+<script type="application/json" id="hData">{"d":{{ daily|map(attribute=0)|list|tojson }},"by":{{ daily_by|tojson }},"tot":{{ tot|tojson }},"rg":{ {%- for s in sidos %}{{ s.key|tojson }}:[{{ ('전남광주' if s.short == '광주전남' else s.short)|tojson }},{{ s.cnt }},{{ s.high }},{{ s.rent }},{{ s.href.split('/')[0]|tojson }}]{{ ',' if not loop.last }}{% endfor %}}}</script>
 <script>
 function openSheet(i) {
   const s = document.getElementById('sheet');
@@ -204,6 +204,9 @@ function openSheet(i) {
 const HD = JSON.parse(document.getElementById('hData').textContent);
 const FV_KEY = 'ndp_region_fav';
 const getFav = () => { try { const k = localStorage.getItem(FV_KEY); return k && HD.rg[k] ? k : ''; } catch (e) { return ''; } };
+// 다른 메뉴(청약·인기·거래활발도·최고가·나의 예산)가 첫 화면 지역으로 쓰는 값 (시도 폴더 이름)
+const syncFavDir = () => { try { const k = getFav(); k ? localStorage.setItem('ndp_region_fav_dir', HD.rg[k][4]) : localStorage.removeItem('ndp_region_fav_dir'); } catch (e) {} };
+syncFavDir();
 function hBars(vals) {
   const n = vals.length, known = vals.filter(v => v), mx = (known.length ? Math.max(...known) : 1) * 1.05;
   const avg = known.reduce((a, b) => a + b, 0) / (known.length || 1), y = v => (62 - v / mx * 58).toFixed(1);
@@ -232,6 +235,7 @@ function fvPaint() {
 function toggleFav(k) {
   const on = getFav() === k;
   try { on ? localStorage.removeItem(FV_KEY) : localStorage.setItem(FV_KEY, k); } catch (e) {}
+  syncFavDir();
   fvPaint();
   toast(on ? '지역 즐겨찾기를 해제했어요' : `즐겨찾기 지역: ${HD.rg[k][0]}`);
 }
@@ -240,7 +244,7 @@ function fvHelp() {
   el.innerHTML = `<div class="grab"></div><h3>지역 즐겨찾기</h3><p class="d sm">자주 보는 지역 한 곳을 정하면 홈에서 바로 볼 수 있어요</p><ol class="sm">`
     + `<li><span class="n">1</span><span>지역 카드를 누르고, 열린 창 위쪽의 ${star}<b>별</b>을 누르세요</span></li>`
     + `<li><span class="n">2</span><span>그 지역 카드가 <b>맨 앞</b>으로 오고 이름 옆에 <b style="color:#f5b301">★</b>가 붙어요</span></li>`
-    + `<li><span class="n">3</span><span>맨 위 박스의 건수와 <b>막대그래프</b>가 그 지역 기준으로 바뀌어요</span></li>`
+    + `<li><span class="n">3</span><span>맨 위 박스와 <b>최고가·거래활발도·인기단지·청약단지·나의 예산</b>이 그 지역으로 먼저 열려요</span></li>`
     + `<li><span class="n">4</span><span>한 곳만 정할 수 있어요. 다른 지역 별을 누르면 바뀌고, 같은 별을 다시 누르면 해제돼요</span></li></ol>`
     + `<div class="row2"><button type="button" class="p" onclick="closeAH()">확인</button></div>`;
   el.hidden = false; document.getElementById('ahDim').hidden = false;

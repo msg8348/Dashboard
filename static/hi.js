@@ -54,7 +54,13 @@
       <div class="h-cap"></div><div class="h-list"></div><div class="note h-note"></div><div class="h-sh"><button type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>공유</button></div>`;
     const $ = c => el.querySelector(c);
     const sel = $('.h-sido');
-    if (!o.s) { if (S.s && [...sel.options].some(x => x.value === S.s)) sel.value = S.s; else S.s = sel.value; }
+    if (!o.s) {   // 기본: 홈 지역 즐겨찾기 → 서울 (단지 페이지에서 시도를 정해 들어오면 그대로)
+      const FV = (() => { try { return localStorage.getItem('ndp_region_fav_dir') || ''; } catch (e) { return ''; } })();
+      const has = v => !!v && [...sel.options].some(x => x.value === v);
+      if (!o.hl && S.fv !== FV) { S.fv = FV; S.s = ''; S.g = ''; S.d = ''; }
+      S.s = has(S.s) ? S.s : has(FV) ? FV : has('seoul') ? 'seoul' : sel.value;
+      sel.value = S.s;
+    }
 
     async function render() {
       try { sessionStorage.setItem(key, JSON.stringify(S)); } catch (e) {}
