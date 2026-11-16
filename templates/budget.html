@@ -109,7 +109,7 @@
 
 <div class="sec"><div class="st">STEP 3 · 우선순위</div><div class="sh">중요한 순서대로 눌러 주세요</div>
   <div class="pr" id="pri"><button type="button" data-k="brand"><em></em>1군 브랜드</button><button type="button" data-k="subway"><em></em>역세권</button><button type="button" data-k="big"><em></em>대단지</button><button type="button" data-k="new"><em></em>신축</button><button type="button" disabled><em>-</em>평지<small>준비 중</small></button><button type="button" data-k="school"><em></em>초등학교</button><button type="button" data-k="acad"><em></em>학원가</button><button type="button" data-k="shop"><em></em>상권</button></div>
-  <div class="hint">1순위 ×3 · 2순위 ×2.5 · 3순위 ×2 · 4순위 ×1.5 · 그다음 ×1 · 안 누른 항목은 점수에 넣지 않아요. 다시 누르면 빠져요. 같은 점수면 예산에 가까운 단지가 위로 와요.</div>
+  <div class="hint">1순위 ×3 · 2순위 ×2.5 · 3순위 ×2 · 4순위 ×1.5 · 그다음 ×1 · 안 누른 항목은 점수에 넣지 않아요. 다시 누르면 빠져요. 추천은 예산에 가까운 순이고, 우선순위 점수가 너무 낮은 단지(1등의 60% 미만)는 빼요.</div>
 </div>
 <div id="out"></div>
 <div class="note">기본값 ({{ rules.asof }} 기준, 일반 무주택·은행권): DSR {{ rules.dsr }}% · {% for k, r in rules.regions.items() %}{{ r.name }} LTV {{ r.ltv }}%(생애최초 {{ r.ltv1 }}%)·스트레스 +{{ r.stress }}%p{% if not loop.last %} / {% endif %}{% endfor %} · 수도권·규제지역 주담대 상한(규제지역 15억 이하 6억·25억 이하 4억·초과 2억, 수도권 6억) · 취득세 1~3%+지방교육세(생애최초 12억 이하 {{ rules.acq_first_cut }}만원 감면) · 중개수수료 법정 상한 요율 · 추천 예상가 = 최근 6개월 실거래 중간값 · 1군 브랜드 = 시공능력평가 상위 10개사 대표 브랜드 · 학원가 = 반경 500m 학원 수, 상권 = 반경 500m 음식점·카페 수와 대형마트 거리(카카오 지도, 같은 시도 안에서 상대 비교).<br>계산은 참고용이에요. 실제 대출 한도와 세금은 은행 심사, 개인 조건, 정책 변경에 따라 달라요. 입력값은 이 기기에만 저장돼요.</div>
@@ -239,7 +239,12 @@ async function recommend() {
     V.pri.filter(k => k in s).forEach((k, i) => { sum += s[k] * W[i]; wt += W[i]; });
     list.push({ a, p, n: t[1], tr: t[2], score: wt ? sum / wt : 50, fit: Math.abs(maxP * .95 - p) });
   }
-  const ok = list.filter(x => x.p <= maxP).sort((x, y) => Math.round(y.score) - Math.round(x.score) || x.fit - y.fit);
+  // 기본은 예산에 가까운(비싼) 순 — 우선순위 점수가 너무 낮은 단지(1등 점수의 60% 미만 또는 35점 미만)만 뺌
+  const inB = list.filter(x => x.p <= maxP);
+  const top = Math.max(0, ...inB.map(x => x.score));
+  const cut = V.pri.length ? Math.max(35, top * .6) : 0;
+  const ok = inB.filter(x => x.score >= cut).sort((x, y) => y.p - x.p || y.score - x.score);
+  const cutN = inB.length - ok.length;
   const over = list.filter(x => x.p > maxP).sort((x, y) => y.score - x.score).slice(0, 3);
   const card = (x, i) => {
     const a = x.a, ch = [];
@@ -260,7 +265,7 @@ async function recommend() {
       <div class="ln">${need ? `대출 ${won(loan)} 필요 · 월 ${won(firstPay(loan, RES.r, RES.y, RES.m))}원` : '대출 없이 가능'} · 최근 6개월 ${x.n}건</div></a>`;
   };
   const gl = V.gu || ($('sido').selectedOptions[0] || {}).textContent;
-  out.innerHTML = `<div class="sub">${gl} · ${V.ty}타입 · ${won(maxP)} 이하 추천 ${ok.length}곳${ok.length > 10 ? ' 중 Top 10' : ''}</div>`
+  out.innerHTML = `<div class="sub">${gl} · ${V.ty}타입 · ${won(maxP)} 이하 · 예산에 가까운 순 ${ok.length}곳${ok.length > 10 ? ' 중 10곳' : ''}${cutN ? `<br><small style="font-weight:600;color:var(--muted)">우선순위 점수가 낮은 ${cutN}곳은 뺐어요</small>` : ''}</div>`
     + (ok.length ? ok.slice(0, 10).map((x, i) => card(x, i + 1)).join('') : '<div class="sec"><div class="empty">이 예산에 맞는 거래가 최근 6개월에 없어요<br>다른 지역·평형을 골라 보세요</div></div>')
     + (over.length ? `<div class="sub">조금만 더 보태면</div>` + over.map(x => card(x, '+')).join('') : '');
 }
