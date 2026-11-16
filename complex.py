@@ -164,6 +164,29 @@ def merge_split(apts, ckey):
             b["r"] = sorted(b["r"] + a["r"], key=lambda x: -x[0])
             b["by"] = min(x for x in (b["by"], a["by"]) if x) if (b["by"] or a["by"]) else b["by"]
             alias[k] = to
+    # 동·구가 달라도: '(OO동)' 꼬리나 'N단지'가 붙은 같은 이름(6글자 이상)은 한 단지로 (예: 래미안포레스티지1단지(장전동) → 래미안포레스티지)
+    PAREN = re.compile(r"\([^)]*[동리가]\)$")   # 괄호 안이 동 이름일 때만 (번지 등은 다른 단지)
+    base = lambda n: DAN.sub("", PAREN.sub("", n.replace(" ", ""))) or n
+    groups = defaultdict(list)
+    for k, a in apts.items():
+        groups[ckey(base(a["n"]))].append(k)
+    for key, ks in groups.items():
+        if len(ks) < 2 or len(key) < 6:
+            continue
+        tail = lambda k: PAREN.search(apts[k]["n"].replace(" ", "")) or DAN.search(apts[k]["n"].replace(" ", "")) or apts[k].get("mem")
+        if not any(tail(k) for k in ks) or sum(1 for k in ks if not tail(k)) > 1:
+            continue   # 꼬리 없는 같은 이름이 여럿이면 체인 브랜드(다른 단지)일 수 있어 그대로
+        to = max(ks, key=lambda k: len(apts[k]["s"]) + len(apts[k]["r"]))
+        b = apts[to]
+        b["mem"] = (b.get("mem") or [(b["j"], b["n"])]) + [m for k in ks if k != to for m in (apts[k].get("mem") or [(apts[k]["j"], apts[k]["n"])])]
+        b["n"] = base(b["n"]) if len(base(b["n"])) >= 2 else b["n"]
+        for k in ks:
+            if k == to:
+                continue
+            a = apts.pop(k)
+            b["s"] = sorted(b["s"] + a["s"], key=lambda x: -x[0])
+            b["r"] = sorted(b["r"] + a["r"], key=lambda x: -x[0])
+            alias[k] = to
     for k, to in list(alias.items()):   # 두 단계로 합쳐진 곳은 최종 대표로
         while to in alias:
             to = alias[to]
