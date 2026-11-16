@@ -292,6 +292,7 @@
   .btn:hover{background:#f6f8fa}.btn:disabled{opacity:.6;cursor:progress}
   .actions.card{grid-template-columns:1fr}
   .actions[hidden],.actions-note[hidden]{display:none}
+  #page5{margin-bottom:84px}   /* 최고가 탭: 아래 탭 막대에 공유 버튼이 가리지 않게 */
   /* 지표단지: 상세 / 구·군별 거래량 전환 (같은 자리에 하나만, 이미지 저장 때는 둘 다) */
   .ivrow{display:flex;justify-content:flex-end;margin:0 0 10px}.capturing .ivrow{display:none}
   #page4:not(.capturing).ivgu .tbl.qx:not(.gu),#page4:not(.capturing):not(.ivgu) .tbl.qx.gu{display:none}
@@ -490,7 +491,7 @@
 {% if hi %}
 <div class="report page" id="page5" hidden>
   <div class="head"><h1>{{ RG }} 최고가</h1></div>
-  <div id="hiw" data-s="{{ hi.s }}" data-g="{{ hi.g }}"></div>
+  <div id="hiw" data-s="{{ hi.s }}" data-g="{{ hi.g }}" data-n="{{ hi.n }}"></div>
 </div>
 {% endif %}
 <nav class="bnav" id="bnav">
@@ -860,7 +861,7 @@ let hiOn = false;
 function openHi() {   // 최고가 탭: 처음 열 때 불러옴 (지역은 이 페이지 지역으로 고정)
   if (hiOn) return; hiOn = true;
   const el = document.getElementById('hiw');
-  const go = () => NDPHi(el, { root: '{{ root|default('') }}', s: el.dataset.s, g: el.dataset.g, v: DATE });
+  const go = () => NDPHi(el, { root: '{{ root|default('') }}', s: el.dataset.s, g: el.dataset.g, name: el.dataset.n, v: DATE });
   if (window.NDPHi) return go();
   const sc = document.createElement('script'); sc.src = '{{ root|default('') }}hi.js?v=' + DATE; sc.onload = go; document.head.appendChild(sc);
 }

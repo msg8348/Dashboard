@@ -695,7 +695,7 @@ def main():
             ind = D.build_indicator(sdb["sale"]["trades"], now, *ind_args)
             rule = f"{l2_word}별 최근 1년 84타입 평균거래가 상위 5위 안에서 거래량 최다 단지 · 84타입 거래가 없으면 거래 최다 단지 · {quarter(now)} 고정"
         ctx = dict(base, sale=sale_ctx, rent=rent_ctx, indicator=ind, has_ind=bool(ind["count"]), level=1,
-                   hi={"s": sdir, "g": ""} if key in APT_SIDOS else None,
+                   hi={"s": sdir, "g": "", "n": sd["short"]} if key in APT_SIDOS else None,
                    region=sd["short"], region_full=sd["sido"], ind_rule=rule,
                    crumbs=[("전국", "../index.html"), (sd["short"], None)], page_url=f"{SITE_URL}/{sdir}/",
                    seo_title=f"{sd['short']} 아파트 실거래가·신고가 | 옆집얼마",
@@ -710,7 +710,7 @@ def main():
             for l in sd["l2"]:
                 s2, r2, _, _ = D.build_trades(subset(sdb, set(l["codes"])), now, cinfo)
                 c2 = dict(base, sale=s2, rent=r2, indicator=None, has_ind=False, level=2,
-                          hi={"s": sdir, "g": l["name"]} if key in APT_SIDOS else None,
+                          hi={"s": sdir, "g": l["name"], "n": sd["short"]} if key in APT_SIDOS else None,
                           dates=date_opts(days, today_s, f"{l2slug[l['key']]}.html", False),
                           region=l["name"], region_full=f"{sd['sido']} {l['name']}",
                           crumbs=[("전국", "../index.html"), (sd["short"], "index.html"), (l["name"], None)],

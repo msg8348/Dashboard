@@ -19,7 +19,11 @@
 .hiw .pr{text-align:right;flex:none}.hiw .pr b{display:block;font-size:16px;font-weight:800;color:#2754d6}.hiw .pr.j b{color:#0f6b5c}
 .hiw .pr small{font-size:11.5px;color:#8a94a3;font-weight:400}
 .hiw .empty{text-align:center;color:#8a94a3;font-size:14px;padding:34px 0;line-height:1.6;border-top:1px solid #f0f2f5}
-.hiw .note{font-size:11.5px;color:#8a94a3;text-align:right;padding:6px 0 4px}`;
+.hiw .note{font-size:11.5px;color:#8a94a3;text-align:right;padding:6px 0 4px}
+.hiw .h-sh{display:flex;justify-content:flex-end;padding:4px 0 6px}
+.hiw .h-sh button{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:13px;font-weight:700;color:#17202c;background:#fff;border:1.5px solid #c9d0da;border-radius:10px;padding:5px 11px;cursor:pointer}
+.hiw .h-sh button:disabled{opacity:.55}.hiw .h-sh svg{width:14px;height:14px}
+.hiw .h-cap{display:none}`;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const eok = p => { const e = Math.floor(p / 1e4), r = p % 1e4; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() : '') || '0'; };
@@ -38,7 +42,7 @@
       <div class="sels2"><select class="h-yr" aria-label="연도"></select><select class="h-mo" aria-label="월"></select></div>
       <div class="seg h-kind"><button type="button" data-k="s">매매·분양권</button><button type="button" data-k="j">전세</button></div>
       <div class="seg h-ty"><button type="button" data-t="0">전체</button><button type="button" data-t="59">59</button><button type="button" data-t="74">74</button><button type="button" data-t="84">84</button></div>
-      <div class="h-list"></div><div class="note h-note"></div>`;
+      <div class="h-cap"></div><div class="h-list"></div><div class="note h-note"></div><div class="h-sh"><button type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>공유</button></div>`;
     const $ = c => el.querySelector(c);
     const sel = $('.h-sido');
     if (!o.s) { if (S.s && [...sel.options].some(x => x.value === S.s)) sel.value = S.s; else S.s = sel.value; }
@@ -87,6 +91,45 @@
       }).join('') : '<div class="empty">이 조건에 맞는 거래가 없어요</div>';
       $('.h-note').textContent = `국토부 실거래 · 계약일 기준 · 기간 중 단지별 최고 거래${S.k === 'j' ? ' (전세는 최근 1년)' : ''}`;
     }
+    // 공유: 지금 보이는 순위를 이미지 한 장으로 (필터 대신 조건을 글로)
+    const capTitle = () => {
+      const sn = o.name || ((o.sidos || []).find(x => x[1] === S.s) || [''])[0];
+      const reg = [sn, S.g, S.d].filter(Boolean).join(' ');
+      const cond = [`${S.y}년${S.m ? ' ' + S.m + '월' : ''}`, S.k === 'j' ? '전세' : '매매·분양권', +S.t ? S.t + '타입' : '전체 평형'].join(' · ');
+      return [reg + ' 최고가', cond];
+    };
+    const loadH2C = () => window.html2canvas ? Promise.resolve() : new Promise((ok, no) => {
+      const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
+    });
+    const shBtn = $('.h-sh button');
+    shBtn.onclick = async () => {
+      const label = shBtn.innerHTML; shBtn.disabled = true; shBtn.textContent = '준비 중…';
+      try {
+        await loadH2C();
+        if (document.fonts && document.fonts.ready) await document.fonts.ready;
+        const id = 'hi' + Date.now(); el.dataset.cap = id;
+        const [t1, t2] = capTitle();
+        const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, windowWidth: 520, scrollX: 0, scrollY: -window.scrollY,
+          onclone: doc => {
+            const c = doc.querySelector(`[data-cap="${id}"]`);
+            const pg = c.closest('.page'); if (pg) pg.hidden = false;
+            Object.assign(c.style, { width: '500px', padding: '18px 18px 10px', background: '#fff', borderRadius: '0', border: '0' });
+            c.querySelectorAll('.sels2, .seg, .h-sh').forEach(x => { x.style.display = 'none'; });
+            const cap = c.querySelector('.h-cap');
+            cap.style.display = 'block';
+            cap.innerHTML = `<div style="font-size:20px;font-weight:900;color:#17202c">👑 ${esc(t1)}</div><div style="font-size:13px;font-weight:700;color:#4a5566;margin:4px 0 10px">${esc(t2)}</div>`;
+            const mk = doc.createElement('div'); mk.textContent = 'nextdoorprice.com';
+            Object.assign(mk.style, { textAlign: 'center', fontSize: '10px', color: '#a3abb7', letterSpacing: '.6px', padding: '4px 0 2px' });
+            c.appendChild(mk);
+          } });
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        const file = new File([blob], `${t1.replace(/\s+/g, '_')}_${S.y}${S.m ? '_' + S.m + '월' : ''}.png`, { type: 'image/png' });
+        if (typeof shareFiles === 'function') shareFiles([file]);   // 지역 페이지: 공용 공유(미리보기 포함)
+        else if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file] }).catch(() => {});
+        else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; a.click(); }
+      } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); }
+      finally { shBtn.disabled = false; shBtn.innerHTML = label; }
+    };
     sel.onchange = () => { S.s = sel.value; S.g = S.d = ''; render(); };
     $('.h-gu').onchange = e => { S.g = e.target.value; S.d = ''; render(); };
     $('.h-dong').onchange = e => { S.d = e.target.value; render(); };
