@@ -322,4 +322,6 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
                         f'<link rel="canonical" href="{to}.html"><script>location.replace("{to}.html")</script>')
             done.add(k)
     print(f"🏢 {sd['short']}: 단지 페이지 {len(done):,}개 (K-apt 정보 연결 포함)")
-    return done, search, urls, moved, {k: (to, apts[to]["n"]) for k, to in alias.items() if to in apts}
+    al = {k: (to, apts[to]["n"]) for k, to in alias.items() if to in apts}
+    al.update({to: (to, apts[to]["n"]) for k, to in alias.items() if to in apts})   # 대표 단지도 합친 이름으로
+    return done, search, urls, moved, al
