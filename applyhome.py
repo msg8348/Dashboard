@@ -19,14 +19,15 @@ BASE = "https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1"
 REFRESH_DAYS = 1   # 청약 일정(청약단지 메뉴) 때문에 매일
 
 
-def _pages(op, key, per=1000, max_pages=200):
+def _pages(op, key, per=1000, max_pages=200, base=None, extra=None):
     page, out = 1, []
+    base = base or BASE
     while page <= max_pages:
         r = None
         for attempt in range(3):
             try:
-                r = requests.get(f"{BASE}/{op}", params={"page": page, "perPage": per, "serviceKey": requests.utils.unquote(key),
-                                                         "returnType": "JSON"}, timeout=(10, 90))
+                r = requests.get(f"{base}/{op}", params=dict({"page": page, "perPage": per, "serviceKey": requests.utils.unquote(key),
+                                                         "returnType": "JSON"}, **(extra or {})), timeout=(10, 90))
                 if r.status_code == 200:
                     break
             except requests.RequestException:
@@ -66,6 +67,52 @@ def _d(v):
     return v if len(v) == 8 else ""
 
 
+CMP = "https://api.odcloud.kr/api/ApplyhomeInfoCmpetRtSvc/v1"   # 청약 신청·당첨자 정보 (경쟁률 · 당첨 가점)
+
+
+def _f(row, *names):
+    """필드 이름이 서비스마다 조금씩 달라 후보 중 먼저 있는 값"""
+    for n in names:
+        if row.get(n) not in (None, ""):
+            return row.get(n)
+    return None
+
+
+def competition(key, since):
+    """{주택관리번호: {"c": {주택형: [1순위 해당지역 경쟁률, 접수 건수, 공급]}, "s": {주택형: [최저, 최고, 평균 가점]}}} — 실패해도 빈 값."""
+    out = {}
+    cond = {"cond[HOUSE_MANAGE_NO::GTE]": since}
+    try:
+        for r in _pages("getAPTLttotPblancCmpet", key, base=CMP, extra=cond, max_pages=60):
+            hid = str(r.get("HOUSE_MANAGE_NO") or "")
+            ty = str(_f(r, "HOUSE_TY", "HOUSE_TY_NM") or "").strip()
+            rank = str(_f(r, "SUBSCRPT_RANK_CODE", "RANK") or "")
+            area = str(_f(r, "RESIDE_SENM", "RESIDE_SECD", "RESIDNT_PRIOR_SENM") or "")
+            if not hid or not ty or rank not in ("1", "1순위", "01"):
+                continue
+            if area and not any(x in area for x in ("해당", "01", "1")):
+                continue
+            rate = str(_f(r, "CMPET_RATE", "CMPET_RT") or "")
+            m = re.match(r"\s*\(?\s*([\d.]+)", rate.replace(",", ""))
+            out.setdefault(hid, {"c": {}, "s": {}})["c"][ty] = [float(m.group(1)) if m else None, _num(_f(r, "REQ_CNT", "RCEPT_CO")), _num(_f(r, "SUPLY_HSHLDCO"))]
+    except Exception as e:
+        print(f"⚠️ 청약 경쟁률 받기 실패: {str(e)[:200]}")
+    try:
+        for r in _pages("getAptLttotPblancScore", key, base=CMP, extra=cond, max_pages=60):
+            hid = str(r.get("HOUSE_MANAGE_NO") or "")
+            ty = str(_f(r, "HOUSE_TY", "HOUSE_TY_NM") or "").strip()
+            area = str(_f(r, "RESIDE_SENM", "RESIDE_SECD") or "")
+            if not hid or not ty or (area and not any(x in area for x in ("해당", "01", "1"))):
+                continue
+            lo, hi, av = (_num(_f(r, a, b)) for a, b in (("LWET_SCORE", "MIN_SCORE"), ("TOP_SCORE", "MAX_SCORE"), ("AVRG_SCORE", "AVG_SCORE")))
+            if lo or hi:
+                out.setdefault(hid, {"c": {}, "s": {}})["s"][ty] = [lo, hi, av]
+    except Exception as e:
+        print(f"⚠️ 청약 당첨 가점 받기 실패: {str(e)[:200]}")
+    print(f"🏆 청약 경쟁률 {sum(1 for v in out.values() if v['c'])}곳 · 당첨 가점 {sum(1 for v in out.values() if v['s'])}곳")
+    return out
+
+
 def fetch(key):
     det = _pages("getAPTLttotPblancDetail", key)
     mdl = _pages("getAPTLttotPblancMdl", key)
@@ -81,6 +128,8 @@ def fetch(key):
         # [전용면적, 세대수, 약식표기(84A · 글자가 없으면 99), 최고 분양가(만원), 전용면적(소수 넷째 자리)]
         types.setdefault(hid, []).append([round(float(mt.group(1)), 2), n, f"{int(float(mt.group(1)))}{letter.upper()}",
                                           _num(m.get("LTTOT_TOP_AMOUNT")), float(mt.group(1)), _num(m.get("SPSPLY_HSHLDCO"))])
+    since = f"{datetime.now().year - 1}000000"   # 작년부터
+    cmp = competition(key, since)
     out = []
     for d in det:
         hid = str(d.get("HOUSE_MANAGE_NO") or "")
@@ -94,7 +143,8 @@ def fetch(key):
                     "sch": {k: _d(d.get(f)) for k, f in SCH.items() if _d(d.get(f))},
                     "kind": str(d.get("HOUSE_DTL_SECD_NM") or ""), "hp": str(d.get("HMPG_ADRES") or ""),
                     "reg": [x for x, f in (("투기과열지구", "SPECLT_RDN_EARTH_AT"), ("조정대상지역", "MDAT_TRGET_AREA_SECD"), ("분양가상한제", "PARCPRC_ULS_AT"))
-                            if str(d.get(f) or "").upper() in ("Y", "1")]})
+                            if str(d.get(f) or "").upper() in ("Y", "1")],
+                    "cmp": cmp.get(hid)})
     return out
 
 
