@@ -1,0 +1,302 @@
+{% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>나의 예산 | 옆집얼마</title>
+<meta name="description" content="내 자금과 대출 조건(LTV·DSR·생애최초)으로 살 수 있는 주택가액을 계산하고, 예산에 맞는 아파트를 추천해요 — 옆집얼마">
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root { --ink:#17202c; --ink-2:#4a5566; --muted:#8a94a3; --navy:#2b3a67; --blue:#2754d6; --red:#e0472c; --vio:#7048e8; --vio2:#5b3cc4; --teal:#0f6b5c; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#eef1f4;color:var(--ink);padding:0 14px 40px;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:720px;margin:0 auto}
+{{ brand_css() }}
+  .topbar{position:sticky;top:0;z-index:15;background:rgba(238,241,244,.95);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:12px 0 8px;display:flex;align-items:center;justify-content:space-between}
+  .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}.menu-btn svg{width:22px;height:22px}
+  h1{font-size:23px;font-weight:900;margin:8px 2px 12px}
+  .sec{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:14px 16px 12px;margin-bottom:10px}
+  .st{font-size:12px;font-weight:800;color:var(--vio);margin-bottom:2px}.sh{font-size:16px;font-weight:800;margin-bottom:6px}
+  .f{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid #f0f2f5}
+  .f .l{flex:1;min-width:0;font-size:14px;font-weight:700}.f .l small{display:block;font-size:11px;color:var(--muted);font-weight:600}
+  .num{position:relative;width:128px;flex:none}
+  .num input{width:100%;font:inherit;text-align:right;font-size:15px;font-weight:800;border:1px solid #d6dbe2;border-radius:10px;padding:7px 34px 7px 10px;color:var(--ink);background:#fff}
+  .num i{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-style:normal;font-size:12px;color:var(--muted);font-weight:700}
+  .calc{width:128px;flex:none;text-align:right;font-size:14.5px;font-weight:800;border:1px dashed #cfd5de;border-radius:10px;padding:7px 10px;background:#f4f6f9;color:var(--ink-2)}
+  .sub2{margin:0 0 4px 12px;padding-left:10px;border-left:2px solid #eef0f4}.sub2 .f{padding:5px 0}.sub2 .l{font-size:13px;font-weight:600;color:var(--ink-2)}
+  .ck{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--ink-2);margin:2px 0 4px 22px}
+  .tot{display:flex;justify-content:space-between;align-items:baseline;background:#f4f1fe;border-radius:12px;padding:10px 12px;margin-top:8px}.tot span{font-size:13px;font-weight:700;color:var(--ink-2)}.tot b{font-size:21px;color:var(--vio2)}
+  .seg{display:flex;background:#e6e9ef;border-radius:11px;padding:3px;flex:none}
+  .seg button{flex:1;font:inherit;font-size:13px;font-weight:800;padding:6px 10px;border-radius:8px;color:var(--ink-2);border:0;background:none;cursor:pointer;white-space:nowrap}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(20,30,60,.12)}
+  .res{background:var(--navy);color:#fff;border-radius:20px;padding:16px 18px;margin-bottom:10px}
+  .res .k{font-size:13px;opacity:.8;font-weight:700}.res .v{font-size:34px;font-weight:900;margin:2px 0 8px}
+  .res .row{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0;border-top:1px solid rgba(255,255,255,.12)}.res .row b{font-weight:800}
+  .lim{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}.lim div{background:rgba(255,255,255,.1);border-radius:10px;padding:7px 8px;font-size:11.5px;opacity:.9}.lim b{display:block;font-size:14.5px;margin-top:2px}.lim .on{background:#fff;color:var(--navy);opacity:1}
+  .why{margin-top:8px;background:rgba(255,255,255,.12);border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:1.55}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chips button{font:inherit;font-size:13.5px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid #d6dbe2;background:#fff;color:var(--ink);cursor:pointer}
+  .chips button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .pr{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .pr button{display:flex;align-items:center;gap:8px;font:inherit;font-size:14px;font-weight:700;padding:9px 10px;border-radius:12px;background:#f4f6f9;border:0;color:var(--ink);cursor:pointer;text-align:left}
+  .pr button em{font-style:normal;width:22px;height:22px;border-radius:50%;background:#d6dbe2;color:#fff;font-size:12px;display:grid;place-items:center;flex:none}
+  .pr button.on{background:#f4f1fe}.pr button.on em{background:var(--vio)}
+  .pr button:disabled{color:#a3abb7;cursor:default}.pr button small{font-size:11px;color:#a3abb7;margin-left:auto}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+  .gap8{height:8px}
+  .sub{font-size:14px;font-weight:800;margin:12px 4px 6px;color:var(--ink-2)}
+  .rc{display:block;background:#fff;border:1px solid #e3e8ee;border-radius:18px;padding:13px 14px 11px;margin-bottom:8px}
+  .rc .t{display:flex;align-items:center;gap:8px}.rc .rk{width:24px;height:24px;border-radius:50%;background:var(--vio);color:#fff;font-size:12.5px;font-weight:800;display:grid;place-items:center;flex:none}
+  .rc .t b{font-size:16.5px;font-weight:800;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rc .sc{font-size:12px;font-weight:800;color:var(--vio2);background:#f4f1fe;border-radius:999px;padding:3px 8px;flex:none}
+  .rc .m{font-size:12.5px;color:var(--muted);margin:4px 0 8px 32px}
+  .rc .p{display:flex;align-items:baseline;gap:8px;margin-left:32px;white-space:nowrap}.rc .p span:first-child{font-size:12px;color:var(--ink-2)}.rc .p b{font-size:18px;color:var(--blue)}
+  .rc .p .ok{font-size:12px;font-weight:800;color:var(--teal);margin-left:auto}.rc .p .ov{font-size:12px;font-weight:800;color:var(--red);margin-left:auto}
+  .rc .ch{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 6px 32px}.rc .ch i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--teal);background:#e5f4f0;border-radius:6px;padding:2px 7px}
+  .rc .ln{font-size:12px;color:var(--ink-2);margin-left:32px}
+  .empty{text-align:center;color:var(--muted);font-size:14px;padding:26px 0;line-height:1.6}
+  .note{font-size:11px;color:var(--muted);line-height:1.55;padding:6px 2px}
+  .go{display:block;width:100%;text-align:center;background:var(--vio);color:#fff;font:inherit;font-weight:800;font-size:16px;border:0;border-radius:14px;padding:13px 0;margin:4px 0 12px;cursor:pointer}
+</style>
+</head>
+<body><div class="wrap">
+<div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
+<h1>💰 나의 예산</h1>
+
+<div class="sec"><div class="st">STEP 1-1 · 내 자금</div><div class="sh">넣을 수 있는 돈</div>
+  <div class="f"><span class="l">현금 · 예적금</span><span class="num"><input id="cash" inputmode="decimal"><i>만원</i></span></div>
+  <div class="f"><span class="l">주식 · 펀드<small>매도 세금·수수료 0.3% 빼고</small></span><span class="num"><input id="stock" inputmode="decimal"><i>만원</i></span></div>
+  <div class="f"><span class="l">기존 집 처분<small>손에 남는 돈 (자동)</small></span><span class="calc" id="houseNet">0</span></div>
+  <div class="sub2">
+    <div class="f"><span class="l">예상 매도가</span><span class="num"><input id="sell" inputmode="decimal"><i>만원</i></span></div>
+    <div class="f"><span class="l">남은 대출 · 전세보증금</span><span class="num"><input id="debt" inputmode="decimal"><i>만원</i></span></div>
+    <div class="f"><span class="l">중개수수료 등 (자동)</span><span class="calc" id="sellCost">0</span></div>
+    <div class="f"><span class="l">양도세</span><span class="calc">1주택 비과세 가정</span></div>
+  </div>
+  <div class="f"><span class="l">증여 받을 돈<small>세금 빼고 손에 남는 돈 아래 자동</small></span><span class="num"><input id="gift" inputmode="decimal"><i>만원</i></span></div>
+  <label class="ck"><input type="checkbox" id="marry"> 혼인·출산 추가 공제 (1억)</label>
+  <div class="sub2"><div class="f"><span class="l">증여세 (자동)</span><span class="calc" id="giftTax">0</span></div></div>
+  <div class="f"><span class="l">기타<small>퇴직금 등</small></span><span class="num"><input id="etc" inputmode="decimal"><i>만원</i></span></div>
+  <div class="tot"><span>내 자기자본</span><b id="equity">0</b></div>
+</div>
+
+<div class="sec"><div class="st">STEP 1-2 · 내 조건</div><div class="sh">대출 조건</div>
+  <div class="f"><span class="l">생애최초 구입</span><span class="seg" id="first"><button type="button" data-v="1">예</button><button type="button" data-v="0">아니오</button></span></div>
+  <div class="f"><span class="l">살 지역<small id="regHint"></small></span><span class="seg" id="region"><button type="button" data-v="reg">규제지역</button><button type="button" data-v="cap">수도권</button><button type="button" data-v="local">지방</button></span></div>
+  <div class="f"><span class="l">연소득 (세전)<small>부부 합산 가능</small></span><span class="num"><input id="income" inputmode="decimal"><i>만원</i></span></div>
+  <div class="f"><span class="l">다른 대출 월 상환액</span><span class="num"><input id="other" inputmode="decimal"><i>만원</i></span></div>
+  <div class="f"><span class="l">대출 금리<small>은행 평균 주담대{% if mort.m %} · {{ mort.m[2:4] }}년 {{ mort.m[4:6]|int }}월{% endif %}</small></span><span class="num"><input id="rate" inputmode="decimal"><i>%</i></span></div>
+  <div class="f"><span class="l">대출 기간</span><span class="seg" id="years"><button type="button" data-v="30">30년</button><button type="button" data-v="40">40년</button><button type="button" data-v="50">50년</button></span></div>
+  <div class="f"><span class="l">상환 방식</span><span class="seg" id="method"><button type="button" data-v="eq">원리금균등</button><button type="button" data-v="pr">원금균등</button><button type="button" data-v="bl">만기일시</button></span></div>
+</div>
+
+<div class="res">
+  <div class="k">살 수 있는 주택가액 (최대)</div><div class="v" id="maxP">-</div>
+  <div class="row"><span>자기자본</span><b id="rEq"></b></div>
+  <div class="row"><span>최대 대출</span><b id="rLoan"></b></div>
+  <div class="row"><span>취득세 · 중개수수료 등</span><b id="rCost"></b></div>
+  <div class="row"><span id="rPayL">월 상환액 (첫 달)</span><b id="rPay"></b></div>
+  <div class="lim"><div id="lL">LTV<b></b></div><div id="lD">DSR {{ rules.dsr }}%<b></b></div><div id="lC">금액 상한<b></b></div></div>
+  <div class="why" id="why"></div>
+</div>
+
+<div class="sec"><div class="st">STEP 2 · 지역</div><div class="sh">어디를 보시나요?</div>
+  <div class="chips" id="sido">{% for s in sidos %}<button type="button" data-v="{{ s[1] }}">{{ s[0] }}</button>{% endfor %}</div>
+  <div class="gap8"></div><div class="chips" id="gus"></div>
+  <div class="gap8"></div><div class="chips" id="ty"><button type="button" data-v="84">84타입</button><button type="button" data-v="59">59타입</button><button type="button" data-v="74">74타입</button></div>
+  <div class="hint">구·군은 여러 곳 고를 수 있어요 (안 고르면 전체)</div>
+</div>
+
+<div class="sec"><div class="st">STEP 3 · 우선순위</div><div class="sh">중요한 순서대로 눌러 주세요</div>
+  <div class="pr" id="pri"><button type="button" data-k="price"><em></em>가격</button><button type="button" data-k="school"><em></em>초등학교</button><button type="button" data-k="subway"><em></em>지하철</button><button type="button" data-k="new"><em></em>신축</button><button type="button" data-k="brand"><em></em>1군 브랜드</button><button type="button" data-k="big"><em></em>대단지</button><button type="button" disabled><em>-</em>평지<small>준비 중</small></button></div>
+  <div class="hint">1순위 ×3 · 2순위 ×2.5 · 3순위 ×2 · 4순위 ×1.5 · 5·6순위 ×1 · 안 누른 항목은 점수에 넣지 않아요. 다시 누르면 빠져요.</div>
+</div>
+<div id="out"></div>
+<div class="note">기본값 ({{ rules.asof }} 기준, 일반 무주택·은행권): DSR {{ rules.dsr }}% · {% for k, r in rules.regions.items() %}{{ r.name }} LTV {{ r.ltv }}%(생애최초 {{ r.ltv1 }}%)·스트레스 +{{ r.stress }}%p{% if not loop.last %} / {% endif %}{% endfor %} · 수도권·규제지역 주담대 상한(규제지역 15억 이하 6억·25억 이하 4억·초과 2억, 수도권 6억) · 취득세 1~3%+지방교육세(생애최초 12억 이하 {{ rules.acq_first_cut }}만원 감면) · 중개수수료 법정 상한 요율 · 추천 예상가 = 최근 6개월 실거래 중간값 · 1군 브랜드 = 시공능력평가 상위 10개사 대표 브랜드.<br>계산은 참고용이에요. 실제 대출 한도와 세금은 은행 심사, 개인 조건, 정책 변경에 따라 달라요. 입력값은 이 기기에만 저장돼요.</div>
+</div>
+<script>
+const RU = {{ rules|tojson }};
+const KEY = 'ndp_budget';
+const V = Object.assign({ cash: 10000, stock: 0, sell: 0, debt: 0, gift: 0, marry: false, etc: 0, first: '1', region: '', income: 6000, other: 0,
+  rate: {{ mort.v }}, years: '30', method: 'eq', sido: '', gus: [], ty: '84', pri: ['price', 'school', 'subway'] }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })());
+const $ = id => document.getElementById(id);
+const num = v => { const n = +String(v).replace(/[^\d.]/g, ''); return isFinite(n) ? n : 0; };
+const won = v => { v = Math.round(v); const neg = v < 0; v = Math.abs(v); const e = Math.floor(v / 10000), m = v % 10000; return (neg ? '−' : '') + ((e ? e + '억' : '') + (m ? (e ? ' ' : '') + m.toLocaleString() + '만' : '') || '0'); };
+const fmt = v => v ? Number(v).toLocaleString() : '';
+// ── 세금 · 비용 (만원)
+function brokerage(p) {   // 매매 중개수수료 법정 상한
+  const r = p < 5000 ? .006 : p < 20000 ? .005 : p < 90000 ? .004 : p < 120000 ? .005 : p < 150000 ? .006 : .007;
+  const c = p < 5000 ? 25 : p < 20000 ? 80 : Infinity;
+  return Math.min(p * r, c) * 1.1;   // 부가세 포함
+}
+function acqTax(p, first) {   // 1주택 취득세 + 지방교육세
+  const r = p <= 60000 ? .01 : p > 90000 ? .03 : (p / 10000 * 2 / 3 - 3) / 100;
+  let t = p * r * 1.1 + (p > 60000 ? 0 : 0);
+  if (first && p <= RU.acq_first_max) t -= Math.min(RU.acq_first_cut, p * r);
+  return Math.max(0, t);
+}
+const buyCost = (p, first) => acqTax(p, first) + brokerage(p) + p * .002;   // + 등기·법무 등 0.2%
+function giftTax(g, marry) {
+  const base = Math.max(0, g - RU.gift_ded - (marry ? RU.gift_ded_marry : 0));
+  const br = [[10000, .1, 0], [50000, .2, 1000], [100000, .3, 6000], [300000, .4, 16000], [Infinity, .5, 46000]];
+  const [, r, d] = br.find(b => base <= b[0]);
+  return Math.max(0, (base * r - d) * .97);   // 신고세액공제 3%
+}
+// ── 대출
+function annualPay(L, r, y, m) {   // DSR 용 연간 원리금 (만원)
+  if (m === 'eq') { const i = r / 12, n = y * 12; return i ? L * i / (1 - Math.pow(1 + i, -n)) * 12 : L / y; }
+  if (m === 'pr') return L / y + L * r * (y * 12 + 1) / (2 * y * 12);   // 원금균등: 평균 이자
+  return L / Math.min(y, 10) + L * r;   // 만기일시: 원금을 최대 10년에 나눠 반영
+}
+function dsrLoan(income, other, r, y, m) {
+  const room = income * RU.dsr / 100 - other * 12;
+  if (room <= 0) return 0;
+  let lo = 0, hi = 500000;
+  for (let k = 0; k < 50; k++) { const mid = (lo + hi) / 2; annualPay(mid, r, y, m) <= room ? lo = mid : hi = mid; }
+  return lo;
+}
+const capFor = (reg, p) => { const c = RU.regions[reg].cap.find(x => p <= x[0]); return c ? c[1] : Infinity; };
+function firstPay(L, r, y, m) {
+  const i = r / 12, n = y * 12;
+  if (m === 'eq') return i ? L * i / (1 - Math.pow(1 + i, -n)) : L / n;
+  if (m === 'pr') return L / n + L * i;
+  return L * i;
+}
+let RES = null;
+function calc() {
+  ['cash', 'stock', 'sell', 'debt', 'gift', 'etc', 'income', 'other', 'rate'].forEach(k => V[k] = num($(k).value));
+  V.marry = $('marry').checked;
+  try { localStorage.setItem(KEY, JSON.stringify(V)); } catch (e) {}
+  const sc = V.sell ? brokerage(V.sell) : 0;
+  const house = V.sell ? V.sell - V.debt - sc : 0;
+  const gt = V.gift ? giftTax(V.gift, V.marry) : 0;
+  const eq = V.cash + V.stock * .997 + house + (V.gift - gt) + V.etc;
+  $('sellCost').textContent = V.sell ? '−' + won(sc) : '0';
+  $('houseNet').textContent = won(house);
+  $('giftTax').textContent = gt ? '−' + won(gt) : '0';
+  $('equity').textContent = won(eq);
+  const R = RU.regions[V.region], first = V.first === '1', r = V.rate / 100, y = +V.years;
+  const ltv = (first ? R.ltv1 : R.ltv) / 100;
+  const dl = dsrLoan(V.income, V.other, r + R.stress / 100, y, V.method);
+  const loanAt = p => Math.min(p * ltv, capFor(V.region, p), dl);
+  let lo = 0, hi = 1000000;
+  for (let k = 0; k < 60; k++) { const p = (lo + hi) / 2; (eq + loanAt(p) - buyCost(p, first) >= p) ? lo = p : hi = p; }
+  const P = Math.floor(lo / 100) * 100, L = loanAt(P), cost = buyCost(P, first);
+  const lims = { L: P * ltv, D: dl, C: capFor(V.region, P) };
+  const bind = L >= lims.D - 1 ? 'D' : L >= lims.C - 1 ? 'C' : 'L';
+  RES = { P, L, eq, first, r, y, m: V.method, ltv, dl, region: V.region };
+  $('maxP').textContent = eq <= 0 ? '-' : '약 ' + won(P);
+  $('rEq').textContent = won(eq); $('rLoan').textContent = won(L); $('rCost').textContent = '−' + won(cost);
+  $('rPayL').textContent = V.method === 'bl' ? '월 이자' : '월 상환액 (첫 달)';
+  $('rPay').textContent = won(firstPay(L, r, y, V.method)) + '원';
+  $('lL').firstChild.textContent = `LTV ${Math.round(ltv * 100)}%`; $('lL').querySelector('b').textContent = won(lims.L);
+  $('lD').querySelector('b').textContent = won(lims.D);
+  $('lC').querySelector('b').textContent = isFinite(lims.C) ? won(lims.C) : '없음';
+  ['L', 'D', 'C'].forEach(k => $('l' + k).classList.toggle('on', k === bind));
+  const more = dsrLoan(V.income + 1000, V.other, r + R.stress / 100, y, V.method) - dl;
+  $('why').innerHTML = bind === 'D'
+    ? `💡 <b>DSR</b>(소득 대비 연 상환액 ${RU.dsr}%) 때문에 대출이 ${won(L)}에서 막혀요. 스트레스 금리 +${R.stress}%p(${R.name})를 더해 계산했어요. 연소득이 1,000만 늘면 대출이 약 ${won(more)} 늘어요.`
+    : bind === 'C' ? `💡 ${R.name} <b>주담대 금액 상한</b> 때문에 대출이 ${won(L)}에서 막혀요.`
+    : `💡 <b>LTV</b>(집값의 ${Math.round(ltv * 100)}%) 때문에 대출이 ${won(L)}에서 막혀요.${!first && R.ltv1 > R.ltv ? ` 생애최초면 ${R.ltv1}%까지 가능해요.` : ''}`;
+  recommend();
+}
+// ── 추천
+const BUD = {};
+const isBrand = n => { const u = n.toUpperCase().replace(/\s/g, ''); return RU.brands.some(b => u.includes(b.toUpperCase())); };
+const W = [3, 2.5, 2, 1.5, 1, 1];
+const nowY = new Date().getFullYear();
+async function recommend() {
+  const out = $('out');
+  if (!V.sido || !RES || RES.eq <= 0) { out.innerHTML = ''; return; }
+  const d = BUD[V.sido] = BUD[V.sido] || await fetch(`bud/${V.sido}.json?v={{ today }}`).then(r => r.json()).catch(() => null);
+  if (!d) { out.innerHTML = '<div class="sec"><div class="empty">단지 정보를 불러오지 못했어요</div></div>'; return; }
+  const gus = $('gus');
+  if (gus.dataset.s !== V.sido) {
+    gus.dataset.s = V.sido;
+    gus.innerHTML = d.g.map(g => `<button type="button" data-v="${g}">${g}</button>`).join('');
+  }
+  gus.querySelectorAll('button').forEach(b => b.classList.toggle('on', V.gus.includes(b.dataset.v)));
+  const maxP = RES.P;
+  const list = [];
+  for (const a of d.a) {
+    const t = a.t[V.ty]; if (!t) continue;
+    if (V.gus.length && !V.gus.includes(a.g)) continue;
+    const p = t[0]; if (p > maxP * 1.05) continue;
+    const s = {
+      price: Math.max(0, 100 - Math.abs(maxP * .95 - p) / maxP * 300),
+      school: a.sc ? Math.max(0, 100 - (a.sc[1] - 3) * 9) : 0,
+      subway: a.st ? Math.max(0, 100 - (a.st[1] - 3) * 9) : 0,
+      new: a.y ? Math.max(0, 100 - (nowY - a.y) * 4) : 0,
+      brand: isBrand(a.n) ? 100 : 0,
+      big: Math.min(100, (a.h || 0) / 10),
+    };
+    let sum = 0, wt = 0;
+    V.pri.forEach((k, i) => { sum += s[k] * W[i]; wt += W[i]; });
+    list.push({ a, p, n: t[1], tr: t[2], score: wt ? sum / wt : 50 });
+  }
+  const ok = list.filter(x => x.p <= maxP).sort((x, y) => y.score - x.score || x.p - y.p);
+  const over = list.filter(x => x.p > maxP).sort((x, y) => y.score - x.score).slice(0, 3);
+  const card = (x, i) => {
+    const a = x.a, ch = [];
+    if (a.sc && a.sc[1] <= 10) ch.push(`✓ ${a.sc[0]} ${a.sc[1]}분`);
+    if (a.st && a.st[1] <= 10) ch.push(`✓ ${a.st[0]} ${a.st[1]}분`);
+    if (a.y && nowY - a.y <= 10) ch.push(`✓ ${String(a.y).slice(2)}년 신축급`);
+    if (a.h >= 1000) ch.push(`✓ ${a.h.toLocaleString()}세대`);
+    if (isBrand(a.n)) ch.push('✓ 1군 브랜드');
+    const diff = maxP - x.p;
+    const need = Math.max(0, x.p + buyCost(x.p, RES.first) - RES.eq);
+    const loan = Math.min(need, x.p * RES.ltv, capFor(RES.region, x.p), RES.dl);
+    return `<a class="rc" href="${a.p}"><div class="t"><span class="rk">${i}</span><b>${a.n}</b>${V.pri.length ? `<span class="sc">${Math.round(x.score)}점</span>` : ''}</div>
+      <div class="m">${[a.d, a.y ? String(a.y).slice(2) + '년' : '', a.h ? a.h.toLocaleString() + '세대' : '', V.ty + '타입'].filter(Boolean).join(' · ')}</div>
+      <div class="p"><span>예상가</span><b>${won(x.p)}</b>${diff >= 0 ? `<span class="ok">예산보다 ${won(diff)} 여유</span>` : `<span class="ov">+${won(-diff)} 필요</span>`}</div>
+      <div class="ch">${ch.map(c => `<i>${c}</i>`).join('')}</div>
+      <div class="ln">${need ? `대출 ${won(loan)} 필요 · 월 ${won(firstPay(loan, RES.r, RES.y, RES.m))}원` : '대출 없이 가능'} · 최근 6개월 ${x.n}건</div></a>`;
+  };
+  const gl = V.gus.length ? V.gus.join('·') : (document.querySelector(`#sido [data-v="${V.sido}"]`) || {}).textContent;
+  out.innerHTML = `<div class="sub">${gl} · ${V.ty}타입 · ${won(maxP)} 이하 추천 ${ok.length}곳${ok.length > 10 ? ' 중 Top 10' : ''}</div>`
+    + (ok.length ? ok.slice(0, 10).map((x, i) => card(x, i + 1)).join('') : '<div class="sec"><div class="empty">이 예산에 맞는 거래가 최근 6개월에 없어요<br>다른 지역·평형을 골라 보세요</div></div>')
+    + (over.length ? `<div class="sub">조금만 더 보태면</div>` + over.map(x => card(x, '+')).join('') : '');
+}
+// ── 입력 연결
+['cash', 'stock', 'sell', 'debt', 'gift', 'etc', 'income', 'other', 'rate'].forEach(k => { $(k).value = fmt(V[k]); $(k).oninput = calc; $(k).onblur = () => { $(k).value = fmt(num($(k).value)); }; });
+$('marry').checked = V.marry; $('marry').onchange = calc;
+function seg(id, key) {
+  const el = $(id);
+  const paint = () => el.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === String(V[key])));
+  el.onclick = e => { const b = e.target.closest('button'); if (!b) return; V[key] = b.dataset.v; paint(); onSeg(key); calc(); };
+  paint();
+}
+function onSeg(key) {
+  if (key === 'sido') { V.gus = []; const reg = (BUD[V.sido] || {}).region; if (reg) { V.region = reg; $('region').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === reg)); } }
+}
+seg('first', 'first'); seg('region', 'region'); seg('years', 'years'); seg('method', 'method'); seg('ty', 'ty');
+const sidoEl = $('sido');
+sidoEl.onclick = async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  V.sido = b.dataset.v; V.gus = [];
+  sidoEl.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  const d = BUD[V.sido] = BUD[V.sido] || await fetch(`bud/${V.sido}.json?v={{ today }}`).then(r => r.json()).catch(() => null);
+  if (d && d.region) { V.region = d.region; $('region').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.v === V.region)); }
+  calc();
+};
+$('gus').onclick = e => { const b = e.target.closest('button'); if (!b) return; const g = b.dataset.v; V.gus = V.gus.includes(g) ? V.gus.filter(x => x !== g) : [...V.gus, g]; calc(); };
+const priEl = $('pri');
+function paintPri() { priEl.querySelectorAll('button[data-k]').forEach(b => { const i = V.pri.indexOf(b.dataset.k); b.classList.toggle('on', i >= 0); b.querySelector('em').textContent = i >= 0 ? i + 1 : ''; }); }
+priEl.onclick = e => { const b = e.target.closest('button[data-k]'); if (!b) return; const k = b.dataset.k; V.pri = V.pri.includes(k) ? V.pri.filter(x => x !== k) : [...V.pri, k]; paintPri(); calc(); };
+paintPri();
+$('regHint').textContent = '규제지역: 서울 전역 등 · 수도권: 경기·인천 비규제';
+if (!V.sido && sidoEl.querySelector('button')) V.sido = (sidoEl.querySelector('[data-v="busan"]') || sidoEl.querySelector('button')).dataset.v;
+sidoEl.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.v === V.sido));
+(async () => {
+  if (!V.region) {
+    const d = BUD[V.sido] = await fetch(`bud/${V.sido}.json?v={{ today }}`).then(r => r.json()).catch(() => null);
+    V.region = (d && d.region) || 'local';
+  }
+  seg('region', 'region');
+  calc();
+})();
+</script>
+<script src="search.js?v={{ today }}"></script>
+</body>
+</html>

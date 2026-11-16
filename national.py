@@ -566,6 +566,7 @@ def main():
     urls = []
     home = []
     act_nat, act_sidos = {"s": [], "g": []}, []   # 홈 '거래활발도'
+    bud_sidos = []   # 나의 예산
     # 알림 서버(cloudflare/push)가 읽는 오늘의 알림 재료: 관심단지별 신규 거래 문구, 지역별 요약 숫자
     push = {"date": now.strftime("%Y%m%d"), "new": not fallback, "apts": {}, "regions": {}}
 
@@ -748,6 +749,10 @@ def main():
             push["regions"][c["href"]] = {"n": f"{nm} {c['name']}", "c": c["cnt"], "h": c["high"]}
         if key in APT_SIDOS:   # 최고가: 연도별 단지·타입·월 최고 거래 (과거 데이터 있는 해부터)
             hi_build(sd, sdir, sdb, cinfo, l2_of, l2_name)
+            import budget, poi as POI   # 나의 예산: 예산 맞춤 추천용 단지 목록
+            budget.build(SITE, sd, sdir, sdb["sale"]["trades"], cinfo, l2_of, l2_name, D.APT_PAGES,
+                         POI.load(os.path.join(STORE, "poi.json")), now)
+            bud_sidos.append(["전남광주" if sd["short"] == "광주전남" else sd["short"], sdir])
         if key in APT_SIDOS:   # 인기단지 '많이 산 단지': 기간·지역별 거래 많은 단지 (주 단위는 공개일, 월·연 단위는 계약일)
             pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name)
         # --- 지난 날짜 (최근 7일 중 신규 공개가 있었던 날) — /{시도}/d{날짜}/
@@ -799,9 +804,14 @@ def main():
     with open(os.path.join(SITE, "act.html"), "w", encoding="utf-8") as f:   # 거래활발도 (시도별 · 전국 시군구 · 지표단지 · 구군별)
         f.write(env.get_template("act.html").render(today=now.strftime("%Y%m%d"), nat=act_nat, sidos=act_sidos,
                 date_label=now.strftime("%y.%m.%d")))
-    import rate   # 금리 (한국은행 ECOS, 하루 한 번)
+    import rate, budget   # 금리 (한국은행 ECOS, 하루 한 번)
+    rate_d = rate.build(STORE)
     with open(os.path.join(SITE, "rate.html"), "w", encoding="utf-8") as f:
-        f.write(env.get_template("rate.html").render(today=now.strftime("%Y%m%d"), rate=rate.build(STORE)))
+        f.write(env.get_template("rate.html").render(today=now.strftime("%Y%m%d"), rate=rate_d))
+    mort = (rate_d.get("mort") or [[None, 4.5]])[-1]
+    with open(os.path.join(SITE, "budget.html"), "w", encoding="utf-8") as f:   # 나의 예산 (예산 계산 + 맞춤 추천)
+        f.write(env.get_template("budget.html").render(today=now.strftime("%Y%m%d"), rules=budget.RULES, sidos=bud_sidos,
+                mort={"v": mort[1], "m": mort[0] or ""}))
     with open(os.path.join(SITE, "hi.html"), "w", encoding="utf-8") as f:   # 최고가 (기간·지역·평형별)
         f.write(env.get_template("hi.html").render(today=now.strftime("%Y%m%d"),
                 sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home if h["key"] in APT_SIDOS]))
