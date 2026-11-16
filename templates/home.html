@@ -64,19 +64,17 @@
   .card .sub b{color:var(--ink);white-space:nowrap}.card .sub .d30{color:var(--muted);font-size:11px}
   .bar{height:5px;background:#eef1f6;border-radius:3px;margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--blue);border-radius:3px}
   /* 메뉴 박스 (즐겨찾기 · 단지 검색 · 최고가 · 거래활발도) */
-  .menu{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
-  .mb{background:#fff;border:1px solid #dfe5ea;border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px;height:62px;min-width:0;font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
-  .mb:hover{filter:brightness(.98)}
-  .mb .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none}.mb .ic svg{width:20px;height:20px}
-  .mb .tx{min-width:0}.mb b{font-size:16px;font-weight:800;display:block;white-space:nowrap}
-  .mb small{font-size:11.5px;color:var(--muted);font-weight:600;display:block;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mb .go{margin-left:auto;color:#c3c9d2;font-size:18px;font-weight:700}
+  .menu{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:8px}
+  .mb{border-radius:18px;padding:13px 14px 12px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:8px;min-height:104px;min-width:0;font:inherit;text-align:left;cursor:pointer;width:100%}
+  .mb:hover{filter:brightness(.97)}
+  .mb .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none}.mb .ic svg{width:19px;height:19px}
+  .mb .tx{min-width:0;width:100%}.mb b{font-size:16px;font-weight:800;display:block;white-space:nowrap}
+  .mb small{font-size:11.5px;font-weight:600;display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* 메뉴 색: 즐겨찾기 노랑 · 단지 검색 파랑 · 최고가 빨강(신고가) · 거래활발도 초록 */
   .mb{border:0;color:#fff}
   .mb .ic{background:rgba(255,255,255,.2);color:#fff}
-  .mb.c-fav{background:#eea300}.mb.c-sch{background:#2754d6}.mb.c-hi{background:#e0472c}.mb.c-act{background:#12806b}
+  .mb.c-fav{background:#eea300}.mb.c-sch{background:#2754d6}.mb.c-hi{background:#e0472c}.mb.c-act{background:#12806b}.mb.c-sub{background:#7048e8}.mb.c-rate{background:#0e7490}
   .mb b{color:#fff}.mb small{color:rgba(255,255,255,.85)}
-  .mb .go{color:#fff;opacity:.7}
   .rtitle{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800;margin:18px 4px 10px}.rtitle svg{width:22px;height:22px;color:var(--navy)}
   .grid .card .row{white-space:nowrap}
   .foot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
@@ -126,7 +124,7 @@
     .top .dt{display:none}.card .sub .d30{display:none}
     .hero{grid-template-columns:1fr 1fr 1fr;padding:18px}.hero>div:first-child{grid-column:1/-1}.hero .v{font-size:24px}
     .grid{grid-template-columns:1fr 1fr;gap:8px}.card{padding:14px}.card .cnt{font-size:24px}
-    .menu{grid-template-columns:1fr 1fr}
+    .menu{grid-template-columns:repeat(3,1fr);gap:8px}.mb{padding:12px 12px 11px;min-height:100px}.mb b{font-size:15.5px}
     .lv2{grid-template-columns:1fr 1fr}.sheet{padding:12px 16px 24px}
     .all{padding:14px 16px}.all b{white-space:nowrap;font-size:16px}.all span{font-size:12px;text-align:right}
   }
@@ -140,10 +138,12 @@
     <div><div class="k">신고가</div><div class="v r">{{ "{:,}".format(tot.high) }}<span>건</span></div></div>
     <div><div class="k">신규 전월세</div><div class="v">{{ "{:,}".format(tot.rent) }}<span>건</span></div></div></div>
   <div class="menu">
-    <a class="mb c-fav" href="fav.html"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9L3.5 9.7l5.9-.8z"/></svg></span><span class="tx"><b>즐겨찾기</b><small>관심단지</small></span><span class="go">›</span></a>
-    <button class="mb c-sch" type="button" onclick="openSearch()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span><span class="tx"><b>단지 검색</b><small>아파트 이름으로</small></span><span class="go">›</span></button>
-    <button class="mb c-hi" type="button" onclick="soon()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-6 4 3 7-9"/><path d="M15 6h5v5"/></svg></span><span class="tx"><b>최고가</b><small>지역별 최고 거래</small></span><span class="go">›</span></button>
-    <button class="mb c-act" type="button" onclick="soon()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 20V12M12 20V5M18 20v-9"/></svg></span><span class="tx"><b>거래활발도</b><small>지역 · 지표단지</small></span><span class="go">›</span></button>
+    <a class="mb c-fav" href="fav.html"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9L3.5 9.7l5.9-.8z"/></svg></span><span class="tx"><b>즐겨찾기</b><small>관심단지</small></span></a>
+    <button class="mb c-sch" type="button" onclick="openSearch()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span><span class="tx"><b>단지 검색</b><small>아파트 이름으로</small></span></button>
+    <button class="mb c-hi" type="button" onclick="soon()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-6 4 3 7-9"/><path d="M15 6h5v5"/></svg></span><span class="tx"><b>최고가</b><small>지역별 최고 거래</small></span></button>
+    <button class="mb c-act" type="button" onclick="soon()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 20V12M12 20V5M18 20v-9"/></svg></span><span class="tx"><b>거래활발도</b><small>지역 · 지표단지</small></span></button>
+    <button class="mb c-sub" type="button" onclick="soon()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10l8-6 8 6v10z"/><path d="M9 13h6M9 16.5h6"/></svg></span><span class="tx"><b>청약단지</b><small>분양 · 청약 일정</small></span></button>
+    <button class="mb c-rate" type="button" onclick="soon()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18"/><circle cx="7.5" cy="7.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg></span><span class="tx"><b>금리</b><small>주담대 · 기준금리</small></span></button>
   </div>
   <div class="rtitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>지역 선택</div>
   <div class="grid">
