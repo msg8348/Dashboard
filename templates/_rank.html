@@ -1,0 +1,4 @@
+{% if ranks %}<section class="card" id="rank">
+  <div class="sec-t"><h2 style="white-space:nowrap">매매가 순위</h2><small>{{ sido_short }} · 최근 1년 최고가 · 분양권 포함</small></div>
+  <div class="rk">{% for g, r, avg, n, tot in ranks %}<a class="rki" href="../../hi.html?s={{ fav[2].split('/')[0] }}&amp;t={{ g }}&amp;k=s&amp;y=r1&amp;hl={{ fav[2]|urlencode }}"><span class="rty t{{ g }}">{{ g }}타입</span><b class="rkn">{{ r }}위{% if r <= 3 %}<img class="crown" alt="" width="16" height="16" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2248%22%20height%3D%2248%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M3%2018h18l1.5-10-5.5%204-5-7-5%207-5.5-4z%22%20fill%3D%22%23f5b301%22%20stroke%3D%22%23c98a00%22%20stroke-width%3D%221.2%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E">{% endif %}</b></a>{% endfor %}</div>
+</section>{% endif %}

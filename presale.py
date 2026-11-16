@@ -73,7 +73,7 @@ def moving(by, houses, now):
 
 
 def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, houses, match_house, store, site_url,
-          by=None, moved=None):
+          by=None, moved=None, ranks=None):
     """시도 하나의 분양권 페이지. moved {주택관리번호: 매매 단지번호}: 입주 후 매매 단지로 옮겨 간 곳 → 주소만 넘김.
     (주택관리번호 집합, 검색 목록, 주소 목록) 반환."""
     moved = moved or {}
@@ -156,7 +156,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         dong = next((w for w in h["addr"].split() if w[-1] in "동리가읍면" and not w[0].isdigit()), "")
         pm = {"p": f"{sdir}/{PRE_DIR}/{hid}.html", "n": h["name"], "s": sdir, "g": l2_name.get(l2k, gu) if l2k and len(sd["l2"]) > 1 else gu,
               "d": dong, "y": int(mv[:4]) if len(mv) == 6 else 0, "h": hh_all, "k": 1}   # 인기단지(실시간 검색)용
-        ctx = {"pm": pm, "poi": pp if pp.get("x") else None, "name": h["name"], "fav": [h["name"], f"{sd['short']} {gu} · 분양권", f"{sdir}/{PRE_DIR}/{hid}.html"], "addr": h["addr"].replace(sd["sido"], sd["short"]), "loc2": gu + (" " + next((w for w in h["addr"].split() if w[-1] in "동리가읍면" and not w[0].isdigit()), "") if gu else ""), "meta": meta, "crumbs": crumbs,
+        ctx = {"ranks": (ranks or {}).get(hid, []), "sido_short": sd["short"], "pm": pm, "poi": pp if pp.get("x") else None, "name": h["name"], "fav": [h["name"], f"{sd['short']} {gu} · 분양권", f"{sdir}/{PRE_DIR}/{hid}.html"], "addr": h["addr"].replace(sd["sido"], sd["short"]), "loc2": gu + (" " + next((w for w in h["addr"].split() if w[-1] in "동리가읍면" and not w[0].isdigit()), "") if gu else ""), "meta": meta, "crumbs": crumbs,
                "root": "../../", "today": now.strftime("%Y%m%d"), "data": data, "map_q": f"{h['addr']} {h['name']}",
                "info": {"gen": h.get("total") or gen, "total": total, "mv": f"{mv[:4]}.{mv[4:]}" if len(mv) == 6 else "-",
                         "pbl": (h.get("pbl") or "")[:7].replace("-", "."), "builder": h.get("builder") or "-", "n": len(trades),

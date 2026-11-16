@@ -201,25 +201,35 @@ RANK_TYPES = ("59", "74", "84")
 RANK_MIN = 1   # 최근 1년 해당 타입 거래 1건 이상이면 순위에 포함
 
 
-def price_ranks(apts, now):
-    """59·74(70~77㎡)·84 타입별 시도 내 매매가 순위 (최근 1년 개별 거래 최고가 기준, 20위까지). {단지번호: [[타입, 순위, '13.2억', 거래수, 비교 단지 수]]}"""
-    from datetime import timedelta
-    d365 = int((now - timedelta(days=365)).strftime("%Y%m%d"))
+PRE_RANKS = {}   # 분양권 단지 {주택관리번호: 순위} — presale.build 에서 씀
+
+
+def price_ranks(apts, now, pre_rows=None):
+    """59·74(70~77㎡)·84 타입별 시도 내 매매가 순위 (최근 1년 개별 거래 최고가 기준, 20위까지) — 분양권 포함.
+    pre_rows {주택관리번호: [[계약일, 금액, 층, 면적]]}: 매매 단지로 합쳐지지 않은 분양권 단지 (키 ('pre', 주택관리번호)).
+    최근 1년 = 최고가 페이지 '최근1년'과 같은 월 단위 (작년 다음 달 ~ 이번 달).
+    {단지번호: [[타입, 순위, '13.2억', 거래수, 비교 단지 수]]}"""
+    y, m = now.year - 1, now.month + 1
+    if m == 13:
+        y, m = y + 1, 1
+    d365 = (y * 100 + m) * 100
     pool = {g: [] for g in RANK_TYPES}
-    for k, a in apts.items():
+    src = [(k, [(t[0], t[1], t[4]) for t in a["s"]]) for k, a in apts.items()]
+    src += [(("pre", hid), [(r[0], r[1], r[3]) for r in rows]) for hid, rows in (pre_rows or {}).items()]
+    for k, rows in src:
         by = defaultdict(list)
-        for t in a["s"]:
-            if t[0] >= d365 and not (len(t) > 6 and t[6]):   # 분양권(입주 후 합친 거래)은 제외
-                ai = int(t[4])
+        for dt, p, area in rows:
+            if dt >= d365:
+                ai = int(area)
                 g = "59" if ai == 59 else "74" if 70 <= ai <= 77 else "84" if ai == 84 else ""   # 74 타입 = 전용 70~77㎡
                 if g in pool:
-                    by[g].append(t[1])
+                    by[g].append(p)
         for g, ps in by.items():
             if len(ps) >= RANK_MIN:
                 pool[g].append((max(ps), k, len(ps)))   # 개별 거래 중 최고가 기준
     out = defaultdict(list)
     for g in RANK_TYPES:
-        lst = sorted(pool[g], reverse=True)
+        lst = sorted(pool[g], key=lambda x: -x[0])
         for i, (avg, k, n) in enumerate(lst[:20]):
             out[k].append([g, i + 1, f"{avg / 10000:.1f}억", n, len(lst)])
     return out
@@ -239,7 +249,7 @@ def type_labels(sd, houses, ckey):
     return out
 
 
-def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, ckey, site_url, store="store", pre=None, houses=None):
+def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, ckey, site_url, store="store", pre=None, houses=None, pre_all=None):
     """pre {주택관리번호: (청약홈 단지, 분양권 거래)}: 입주예정월이 지난 분양권 — 같은 시군구·같은 이름의 매매 단지가
     있으면 그 단지 거래에 분양권 거래를 합친다. 반환: (단지번호 집합, 검색 목록, 주소 목록, {주택관리번호: 단지번호})."""
     """시도 하나의 단지 페이지를 만들고 (단지번호 집합, 검색 목록, 주소 목록) 반환."""
@@ -276,7 +286,9 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
     poi.assign(pcache, order, zones, "z3")
     poi.amen(pcache, order, "a1", budget=int(os.environ.get("AMEN_MAX", "1500")))   # 학원가·상권 (나의 예산)
     poi.save(ppath, pcache)
-    ranks = price_ranks(apts, now)
+    ranks = price_ranks(apts, now, {hid: rows for hid, rows in (pre_all or {}).items() if hid not in moved})
+    PRE_RANKS.clear()
+    PRE_RANKS.update({k[1]: v for k, v in ranks.items() if isinstance(k, tuple)})
     tlab = type_labels(sd, houses, ckey)
     tpl = env.get_template("apt.html")
     out_dir = os.path.join(site, sdir, APT_DIR)
