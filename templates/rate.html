@@ -20,7 +20,7 @@
   .hero .k{font-size:13px;opacity:.8;font-weight:700}.hero .v{font-size:38px;font-weight:900;margin-top:2px}.hero .v small{font-size:18px}
   .hero .s{font-size:12.5px;opacity:.85;margin-top:4px;line-height:1.5}
   .g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
-  .b[hidden]{display:none}.b.us .v{color:#5b3cc4}
+  .b[hidden]{display:none}.b.us .v{color:#5b3cc4}#uv{font-size:19px}
   .b{background:#fff;border:1px solid #e3e8ee;border-radius:14px;padding:11px 12px 10px}.b .k{font-size:12px;color:var(--ink-2);font-weight:700}.b .k small{font-weight:600;color:var(--muted);margin-left:3px}
   .b .v{font-size:22px;font-weight:900;margin-top:2px}.b .c{font-size:12px;font-weight:800;margin-top:1px}
   .dn{color:var(--blue)}.up{color:var(--red)}.eq{color:var(--muted)}
@@ -60,7 +60,7 @@
   <div class="row"><span>월 상환액</span><b id="cM"></b></div>
   <div class="row"><span>금리 0.25%p 내리면</span><b class="dn" id="cD"></b></div>
   <div class="row"><span>총 이자</span><b id="cT" style="color:var(--ink-2)"></b></div></div>
-<div class="note">출처: 한국은행 경제통계시스템(ECOS) · 주담대 평균 = 예금은행 신규취급액 가중평균 · 미국 = 연준 정책금리(월별) · {{ rate.date[2:4] }}.{{ rate.date[4:6] }}.{{ rate.date[6:] }} 갱신</div>
+<div class="note">출처: 한국은행 경제통계시스템(ECOS) · 주담대 평균 = 예금은행 신규취급액 가중평균 · 미국 = 연준 목표금리 범위(월별) · 한미 금리차는 상단 기준 · {{ rate.date[2:4] }}.{{ rate.date[4:6] }}.{{ rate.date[6:] }} 갱신</div>
 <script>
 const R = {{ rate|tojson }};
 const dlab = d => `${d.slice(2, 4)}.${d.slice(4, 6)}${d.length > 6 ? '.' + d.slice(6, 8) : ''}`;
@@ -78,13 +78,15 @@ document.getElementById('bv').innerHTML = last[1].toFixed(2) + '<small>%</small>
 }
 const M = R.mort || [], K = R.kb3 || [];
 const U = R.us || [];
+const usRange = v => Math.abs(v * 8 - Math.round(v * 8)) < 1e-6 && Math.round(v * 8) % 2 ? `${(v - .125).toFixed(2)}~${(v + .125).toFixed(2)}%` : pct(v);   // ECOS 는 연준 목표 범위의 가운데 값
+const usTop = v => Math.round(v * 8) % 2 ? v + .125 : v;   // 상단 (한미 금리차는 상단 기준)
 if (U.length) {   // 미국 기준금리 (상단값) · 한미 금리차
   const a = U[U.length - 1], b = U[U.length - 2];
   document.getElementById('usb').hidden = document.getElementById('gapb').hidden = document.getElementById('usl').hidden = false;
-  document.getElementById('uv').textContent = pct(a[1]);
+  document.getElementById('uv').textContent = usRange(a[1]);
   document.getElementById('um').textContent = `${(R.us_last || a[0]).slice(2, 4)}년 ${+(R.us_last || a[0]).slice(4, 6)}월`;
   document.getElementById('uc').innerHTML = b ? `${a[1] > b[1] ? '<span class="up">▲' : '<span class="dn">▼'}${Math.abs(a[1] - b[1]).toFixed(2)}</span> <span class="eq">${a[0].slice(2, 4)}.${a[0].slice(4, 6)} ${a[1] > b[1] ? '인상' : '인하'}</span>` : '';
-  const gap = +(last[1] - a[1]).toFixed(2);
+  const gap = +(last[1] - usTop(a[1])).toFixed(2);
   document.getElementById('gv').textContent = (gap > 0 ? '+' : gap < 0 ? '−' : '') + Math.abs(gap).toFixed(2) + '%p';
   document.getElementById('gc').innerHTML = `<span class="eq">${gap < 0 ? '미국이 더 높음' : gap > 0 ? '한국이 더 높음' : '같음'}</span>`;
 }
