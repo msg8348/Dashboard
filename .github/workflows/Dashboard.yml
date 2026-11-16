@@ -66,6 +66,7 @@ jobs:
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           KAKAO_API_KEY: ${{ secrets.KAKAO_API_KEY }}
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
           STORE_DIR: store
           HIST_DIR: hist
           R2_OUT: ${{ secrets.R2_ACCESS_KEY_ID != '' && 'r2out' || '' }}

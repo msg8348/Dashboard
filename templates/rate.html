@@ -1,0 +1,134 @@
+{% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>금리 | 옆집얼마</title>
+<meta name="description" content="한국은행 기준금리 추이와 주택담보대출 평균 금리, 국고채 3년 금리, 대출 이자 계산 — 옆집얼마">
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root { --ink:#17202c; --ink-2:#4a5566; --muted:#8a94a3; --navy:#2b3a67; --blue:#2754d6; --red:#e0472c; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#eef1f4;color:var(--ink);padding:0 14px 40px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:0 auto}
+{{ brand_css() }}
+  .topbar{position:sticky;top:0;z-index:15;background:rgba(238,241,244,.95);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:12px 0 8px;display:flex;align-items:center;justify-content:space-between}
+  .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}.menu-btn svg{width:22px;height:22px}
+  h1{font-size:23px;font-weight:900;margin:8px 2px 12px}
+  .hero{background:var(--navy);color:#fff;border-radius:20px;padding:16px 18px;margin-bottom:10px}
+  .hero .k{font-size:13px;opacity:.8;font-weight:700}.hero .v{font-size:38px;font-weight:900;margin-top:2px}.hero .v small{font-size:18px}
+  .hero .s{font-size:12.5px;opacity:.85;margin-top:4px;line-height:1.5}
+  .g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+  .b{background:#fff;border:1px solid #e3e8ee;border-radius:14px;padding:11px 12px 10px}.b .k{font-size:12px;color:var(--ink-2);font-weight:700}.b .k small{font-weight:600;color:var(--muted);margin-left:3px}
+  .b .v{font-size:22px;font-weight:900;margin-top:2px}.b .c{font-size:12px;font-weight:800;margin-top:1px}
+  .dn{color:var(--blue)}.up{color:var(--red)}.eq{color:var(--muted)}
+  .sec{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:14px 16px 10px;margin-bottom:10px}
+  .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.sh b{font-size:16px;font-weight:800}
+  .per{display:flex;gap:4px}.per button{font:inherit;font-size:12px;font-weight:800;padding:5px 9px;border-radius:999px;background:#f2f4f7;color:var(--ink-2);border:0;cursor:pointer}.per button.on{background:var(--navy);color:#fff}
+  .lg{display:flex;gap:12px;font-size:12px;font-weight:700;color:var(--ink-2);margin:2px 0 4px}.lg i{display:inline-block;width:14px;height:3px;margin-right:4px;vertical-align:3px;border-radius:2px}
+  #chart{width:100%;display:block;font-size:9.5px;fill:var(--muted)}
+  .hr{display:flex;align-items:center;padding:9px 2px;border-top:1px solid #f0f2f5;font-size:14px}.hr span{flex:1;color:var(--ink-2)}.hr b{width:70px;text-align:right}.hr em{font-style:normal;font-weight:800;width:62px;text-align:right}
+  .more{display:block;width:100%;font:inherit;font-size:13px;font-weight:700;color:var(--ink-2);background:none;border:0;border-top:1px solid #f0f2f5;padding:9px 0 3px;cursor:pointer}
+  .in{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:6px;margin:4px 0 8px}
+  .in label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--muted);font-weight:700}
+  .in input{font:inherit;font-size:15px;font-weight:800;color:var(--ink);border:1px solid #d6dbe2;border-radius:10px;padding:8px 10px;width:100%;min-width:0}
+  .row{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;padding:6px 0}.row b{font-size:17px}
+  .note{font-size:11px;color:var(--muted);text-align:right;padding:4px 2px}
+  .empty{text-align:center;color:var(--muted);padding:40px 0;font-size:14px}
+</style>
+</head>
+<body><div class="wrap">
+<div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
+<h1>💹 금리</h1>
+{% if rate and rate.base %}
+<div class="hero"><div class="k">한국은행 기준금리</div><div class="v" id="bv"></div><div class="s" id="bs"></div></div>
+<div class="g">
+  <div class="b"><div class="k">주담대 평균<small id="mm"></small></div><div class="v" id="mv"></div><div class="c" id="mc"></div></div>
+  <div class="b"><div class="k">국고채 3년<small id="km"></small></div><div class="v" id="kv"></div><div class="c" id="kc"></div></div>
+</div>
+<div class="sec"><div class="sh"><b>금리 추이</b><span class="per" id="per"><button type="button" data-y="1">1년</button><button type="button" data-y="3">3년</button><button type="button" data-y="5" class="on">5년</button><button type="button" data-y="0">전체</button></span></div>
+  <div class="lg"><span><i style="background:#2754d6"></i>기준금리</span><span><i style="background:#e0472c"></i>주담대 평균</span><span><i style="background:#9aa3b0"></i>국고채 3년</span></div>
+  <svg id="chart" viewBox="0 0 350 200"></svg></div>
+<div class="sec"><div class="sh"><b>기준금리 변경 이력</b></div><div id="hist"></div></div>
+<div class="sec"><div class="sh"><b>내 대출 이자 계산</b><small style="color:var(--muted);font-size:12px">원리금균등</small></div>
+  <div class="in"><label>대출금(억)<input id="cA" type="number" inputmode="decimal" step="0.1" value="4"></label><label>금리(%)<input id="cR" type="number" inputmode="decimal" step="0.01"></label><label>기간(년)<input id="cY" type="number" inputmode="numeric" value="30"></label></div>
+  <div class="row"><span>월 상환액</span><b id="cM"></b></div>
+  <div class="row"><span>금리 0.25%p 내리면</span><b class="dn" id="cD"></b></div>
+  <div class="row"><span>총 이자</span><b id="cT" style="color:var(--ink-2)"></b></div></div>
+<div class="note">출처: 한국은행 경제통계시스템(ECOS) · 주담대 평균 = 예금은행 신규취급액 가중평균 · {{ rate.date[2:4] }}.{{ rate.date[4:6] }}.{{ rate.date[6:] }} 갱신</div>
+<script>
+const R = {{ rate|tojson }};
+const dlab = d => `${d.slice(2, 4)}.${d.slice(4, 6)}${d.length > 6 ? '.' + d.slice(6, 8) : ''}`;
+const pct = v => v.toFixed(2) + '%';
+const chg = (a, b, u) => { const d = +(a - b).toFixed(2); return d > 0 ? `<span class="up">▲${d.toFixed(2)} ${u}</span>` : d < 0 ? `<span class="dn">▼${(-d).toFixed(2)} ${u}</span>` : `<span class="eq">- ${u}</span>`; };
+const B = R.base, last = B[B.length - 1];
+document.getElementById('bv').innerHTML = last[1].toFixed(2) + '<small>%</small>';
+{   // 마지막 변경 · 최근 1년 변화
+  const prev = B[B.length - 2];
+  const yago = new Date(); yago.setFullYear(yago.getFullYear() - 1);
+  const ys = yago.toISOString().slice(0, 10).replace(/-/g, '');
+  const at = [...B].reverse().find(x => x[0] <= ys) || B[0];
+  const d1 = +(last[1] - at[1]).toFixed(2);
+  document.getElementById('bs').textContent = `${dlab(last[0])} ${prev ? (last[1] > prev[1] ? '인상' : '인하') + ' ' + Math.abs(last[1] - prev[1]).toFixed(2) + '%p' : ''} 이후 ${(R.base_last || '') > last[0] ? '동결' : ''} · 최근 1년 ${d1 ? (d1 > 0 ? '+' : '−') + Math.abs(d1).toFixed(2) + '%p' : '변동 없음'}`;
+}
+const M = R.mort || [], K = R.kb3 || [];
+if (M.length) { const a = M[M.length - 1], b = M[M.length - 2] || a; document.getElementById('mv').textContent = pct(a[1]); document.getElementById('mm').textContent = `${a[0].slice(2, 4)}년 ${+a[0].slice(4, 6)}월`; document.getElementById('mc').innerHTML = chg(a[1], b[1], '전월'); }
+if (K.length) { const a = K[K.length - 1], b = K[K.length - 2] || a; document.getElementById('kv').textContent = pct(a[1]); document.getElementById('km').textContent = dlab(a[0]); document.getElementById('kc').innerHTML = chg(a[1], b[1], '전주'); }
+// 이력
+let hn = 6;
+function hist() {
+  const rs = B.slice(1).map((x, i) => [x[0], x[1], x[1] - B[i][1]]).reverse();
+  document.getElementById('hist').innerHTML = rs.slice(0, hn).map(([d, v, c]) => `<div class="hr"><span>${dlab(d)}</span><b>${pct(v)}</b><em class="${c > 0 ? 'up' : 'dn'}">${c > 0 ? '▲' : '▼'}${Math.abs(c).toFixed(2)}</em></div>`).join('')
+    + (rs.length > hn ? `<button class="more" type="button" onclick="hn += 10; hist()">더 보기 (${rs.length - hn}건)</button>` : '');
+}
+hist();
+// 그래프
+const toT = d => +d.slice(0, 4) + ((+d.slice(4, 6) || 1) - 1) / 12 + (d.length > 6 ? (+d.slice(6, 8) - 1) / 365 : 0);
+function chart(yrs) {
+  const now = new Date(), t1 = now.getFullYear() + now.getMonth() / 12 + now.getDate() / 365;
+  const t0 = yrs ? t1 - yrs : toT(B[0][0]);
+  const W = 350, H = 200, L = 28, Rr = 8, T = 10, Bt = 24;
+  const inR = s => s.filter(x => toT(x[0]) >= t0);
+  const m = inR(M), k = inR(K);
+  const bIn = B.filter(x => toT(x[0]) >= t0), b0 = [...B].reverse().find(x => toT(x[0]) < t0);
+  const bs = (b0 ? [[null, b0[1]]] : []).concat(bIn);
+  const vals = [...bs.map(x => x[1]), ...m.map(x => x[1]), ...k.map(x => x[1])];
+  const lo = Math.max(0, Math.floor(Math.min(...vals) - .3)), hi = Math.ceil(Math.max(...vals) + .3);
+  const x = t => L + (t - t0) / (t1 - t0) * (W - L - Rr), y = v => T + (hi - v) / (hi - lo) * (H - T - Bt);
+  let g = '';
+  const step = hi - lo > 6 ? 2 : 1;
+  for (let v = lo; v <= hi; v += step) g += `<line x1="${L}" x2="${W - Rr}" y1="${y(v)}" y2="${y(v)}" stroke="#eef0f4"/><text x="${L - 4}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
+  const ys = Math.max(1, Math.round((t1 - t0) / 6));
+  for (let yy = Math.ceil(t0); yy <= t1; yy += ys) g += `<text x="${x(yy)}" y="${H - 7}" text-anchor="middle">${String(yy).slice(2)}년</text>`;
+  const line = (s, c, w, dash) => s.length ? `<path d="M${s.map(p => x(toT(p[0])).toFixed(1) + ',' + y(p[1]).toFixed(1)).join(' L')}" fill="none" stroke="${c}" stroke-width="${w}" ${dash ? 'stroke-dasharray="4 3"' : ''} stroke-linejoin="round"/>` : '';
+  let st = `M${x(t0).toFixed(1)},${y(bs[0][1]).toFixed(1)}`;
+  for (let i = 1; i < bs.length; i++) st += ` H${x(toT(bs[i][0])).toFixed(1)} V${y(bs[i][1]).toFixed(1)}`;
+  st += ` H${x(t1).toFixed(1)}`;
+  g += line(k, '#9aa3b0', 1.4) + line(m, '#e0472c', 2, true) + `<path d="${st}" fill="none" stroke="#2754d6" stroke-width="2.6"/><circle cx="${x(t1)}" cy="${y(last[1])}" r="3.8" fill="#2754d6"/>`;
+  document.getElementById('chart').innerHTML = g;
+}
+document.getElementById('per').onclick = e => { const b = e.target.closest('button'); if (!b) return; document.querySelectorAll('#per button').forEach(x => x.classList.toggle('on', x === b)); chart(+b.dataset.y); };
+chart(5);
+// 이자 계산
+const won = v => { v = Math.round(v / 1000) * 1000; const e = Math.floor(v / 1e8), m = Math.floor(v % 1e8 / 1e4), c = Math.round(v % 1e4 / 1000); return (e ? e + '억 ' : '') + (m ? m.toLocaleString() + '만' : '') + (c && !e ? ' ' + c + '천' : '') + '원'; };
+const pay = (a, r, n) => r ? a * (r / 12) / (1 - Math.pow(1 + r / 12, -n)) : a / n;
+document.getElementById('cR').value = M.length ? M[M.length - 1][1].toFixed(2) : '4.00';
+function calc() {
+  const a = +document.getElementById('cA').value * 1e8, r = +document.getElementById('cR').value / 100, n = +document.getElementById('cY').value * 12;
+  if (!(a > 0 && n > 0 && r >= 0)) return;
+  const p = pay(a, r, n), p2 = pay(a, Math.max(0, r - .0025), n);
+  document.getElementById('cM').textContent = won(p);
+  document.getElementById('cD').textContent = '−' + won(p - p2);
+  document.getElementById('cT').textContent = won(p * n - a);
+}
+document.querySelectorAll('.in input').forEach(i => i.oninput = calc);
+calc();
+</script>
+{% else %}
+<div class="sec"><div class="empty">금리 정보를 준비하고 있어요</div></div>
+{% endif %}
+</div>
+<script src="search.js?v={{ today }}"></script>
+</body>
+</html>
