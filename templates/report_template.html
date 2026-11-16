@@ -66,7 +66,7 @@
   {{ notices_box() }}
   <div class="cards c2 lsum" id="lsum">
     <div class="cd b go" role="button" onclick="goTrade('sale')"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
-    <div class="cd t go" role="button" onclick="goTrade('rent')"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">전세 신고가 {{ rent.high_cnt }}건</div></div></div>
+    <div class="cd t go" role="button" onclick="goTrade('rent')"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">신고가 {{ rent.high_cnt }}건</div></div></div>
   </div>
   <div class="tf1" id="tf1"><button class="all on" data-k="all">전체</button><button class="sale" data-k="sale">매매</button><button class="rent" data-k="rent">전월세</button><button class="hi" id="tfhi">신고가만</button></div>
   <div class="tf2"><div class="tft" id="tft"><button class="on" data-t="all">전체</button><button data-t="84타입">84</button><button data-t="59타입">59</button><button data-t="기타">기타</button></div>
