@@ -18,6 +18,7 @@
   h1{font-size:23px;font-weight:900;margin:8px 2px 12px}
   .hero{background:var(--navy);color:#fff;border-radius:20px;padding:16px 18px;margin-bottom:10px}
   .hero .k{font-size:13px;opacity:.8;font-weight:700}.hero .v{font-size:38px;font-weight:900;margin-top:2px}.hero .v small{font-size:18px}
+  .hero .nx{margin-top:10px;background:rgba(255,255,255,.14);border-radius:10px;padding:8px 10px;font-size:13px;font-weight:700}
   .hero .s{font-size:12.5px;opacity:.85;margin-top:4px;line-height:1.5}
   .g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
   .b[hidden]{display:none}.b.us .v{color:#5b3cc4}#uv{font-size:19px}
@@ -44,7 +45,7 @@
 <div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
 <h1>금리</h1>
 {% if rate and rate.base %}
-<div class="hero"><div class="k">한국은행 기준금리</div><div class="v" id="bv"></div><div class="s" id="bs"></div></div>
+<div class="hero"><div class="k">한국은행 기준금리</div><div class="v" id="bv"></div><div class="s" id="bs"></div><div class="nx" id="nx" hidden></div></div>
 <div class="g">
   <div class="b"><div class="k">주담대 평균<small id="mm"></small></div><div class="v" id="mv"></div><div class="c" id="mc"></div></div>
   <div class="b"><div class="k">국고채 3년<small id="km"></small></div><div class="v" id="kv"></div><div class="c" id="kc"></div></div>
@@ -77,6 +78,18 @@ document.getElementById('bv').innerHTML = last[1].toFixed(2) + '<small>%</small>
   document.getElementById('bs').textContent = `${dlab(last[0])} ${prev ? (last[1] > prev[1] ? '인상' : '인하') + ' ' + Math.abs(last[1] - prev[1]).toFixed(2) + '%p' : ''} 이후 ${(R.base_last || '') > last[0] ? '동결' : ''} · 최근 1년 ${d1 ? (d1 > 0 ? '+' : '−') + Math.abs(d1).toFixed(2) + '%p' : '변동 없음'}`;
 }
 const M = R.mort || [], K = R.kb3 || [];
+// 금통위 통화정책방향 결정회의 (한국은행 발표 일정 — 해마다 추가)
+const MPC = ['20261126', '20270114', '20270225', '20270409', '20270527', '20270715', '20270826', '20271015', '20271125'];
+{
+  const t = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '');
+  const nx = MPC.find(d => d >= t);
+  if (nx) {
+    const dd = new Date(+nx.slice(0, 4), +nx.slice(4, 6) - 1, +nx.slice(6));
+    const n = Math.round((dd - new Date(+t.slice(0, 4), +t.slice(4, 6) - 1, +t.slice(6))) / 864e5);
+    const el = document.getElementById('nx'); el.hidden = false;
+    el.textContent = `📅 다음 금통위 ${nx.slice(2, 4)}.${nx.slice(4, 6)}.${nx.slice(6)} (${'일월화수목금토'[dd.getDay()]}) · ${n ? 'D-' + n : '오늘'}`;
+  }
+}
 const U = R.us || [];
 const usRange = v => Math.abs(v * 8 - Math.round(v * 8)) < 1e-6 && Math.round(v * 8) % 2 ? `${(v - .125).toFixed(2)}~${(v + .125).toFixed(2)}%` : pct(v);   // ECOS 는 연준 목표 범위의 가운데 값
 const usTop = v => Math.round(v * 8) % 2 ? v + .125 : v;   // 상단 (한미 금리차는 상단 기준)

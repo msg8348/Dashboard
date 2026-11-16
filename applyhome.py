@@ -16,7 +16,7 @@ from datetime import datetime
 import requests
 
 BASE = "https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1"
-REFRESH_DAYS = 7
+REFRESH_DAYS = 1   # 청약 일정(청약단지 메뉴) 때문에 매일
 
 
 def _pages(op, key, per=1000, max_pages=200):
@@ -52,6 +52,20 @@ def _num(v):
         return 0
 
 
+SCH = {   # 청약홈 접수 일정 필드
+    "sp1": "SPSPLY_RCEPT_BGNDE", "sp2": "SPSPLY_RCEPT_ENDDE",
+    "r1a": "GNRL_RNK1_CRSPAREA_RCPTDE", "r1b": "GNRL_RNK1_ETC_AREA_RCPTDE", "r2": "GNRL_RNK2_CRSPAREA_RCPTDE",
+    "rc1": "RCEPT_BGNDE", "rc2": "RCEPT_ENDDE", "win": "PRZWNER_PRESNATN_DE",
+    "ct1": "CNTRCT_CNCLS_BGNDE", "ct2": "CNTRCT_CNCLS_ENDDE",
+}
+
+
+def _d(v):
+    """'2026-11-18' → '20261118'"""
+    v = re.sub(r"\D", "", str(v or ""))[:8]
+    return v if len(v) == 8 else ""
+
+
 def fetch(key):
     det = _pages("getAPTLttotPblancDetail", key)
     mdl = _pages("getAPTLttotPblancMdl", key)
@@ -66,7 +80,7 @@ def fetch(key):
         letter = re.sub(r"[^A-Za-z]", "", ty[mt.end():])
         # [전용면적, 세대수, 약식표기(84A · 글자가 없으면 99), 최고 분양가(만원), 전용면적(소수 넷째 자리)]
         types.setdefault(hid, []).append([round(float(mt.group(1)), 2), n, f"{int(float(mt.group(1)))}{letter.upper()}",
-                                          _num(m.get("LTTOT_TOP_AMOUNT")), float(mt.group(1))])
+                                          _num(m.get("LTTOT_TOP_AMOUNT")), float(mt.group(1)), _num(m.get("SPSPLY_HSHLDCO"))])
     out = []
     for d in det:
         hid = str(d.get("HOUSE_MANAGE_NO") or "")
@@ -75,7 +89,12 @@ def fetch(key):
         out.append({"id": hid, "name": str(d.get("HOUSE_NM") or ""), "addr": str(d.get("HSSPLY_ADRES") or ""),
                     "total": _num(d.get("TOT_SUPLY_HSHLDCO")), "mvn": re.sub(r"\D", "", str(d.get("MVN_PREARNGE_YM") or ""))[:6],
                     "types": types.get(hid, []), "url": str(d.get("PBLANC_URL") or ""),
-                    "builder": str(d.get("CNSTRCT_ENTRPS_NM") or "").strip(), "pbl": str(d.get("RCRIT_PBLANC_DE") or "")})
+                    "builder": str(d.get("CNSTRCT_ENTRPS_NM") or "").strip(), "pbl": str(d.get("RCRIT_PBLANC_DE") or ""),
+                    # 청약 일정 · 규제 (청약단지 메뉴)
+                    "sch": {k: _d(d.get(f)) for k, f in SCH.items() if _d(d.get(f))},
+                    "kind": str(d.get("HOUSE_DTL_SECD_NM") or ""), "hp": str(d.get("HMPG_ADRES") or ""),
+                    "reg": [x for x, f in (("투기과열지구", "SPECLT_RDN_EARTH_AT"), ("조정대상지역", "MDAT_TRGET_AREA_SECD"), ("분양가상한제", "PARCPRC_ULS_AT"))
+                            if str(d.get(f) or "").upper() in ("Y", "1")]})
     return out
 
 
@@ -85,12 +104,12 @@ def load(path, key, today=None):
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             st = json.load(f)
-    fresh = st and st.get("v") == 2 and (today.date() - datetime.strptime(st["date"], "%Y%m%d").date()).days < REFRESH_DAYS
+    fresh = st and st.get("v") == 3 and (today.date() - datetime.strptime(st["date"], "%Y%m%d").date()).days < REFRESH_DAYS
     if key and not fresh:
         try:
             rows = fetch(key)
             if rows:
-                st = {"v": 2, "date": today.strftime("%Y%m%d"), "houses": rows}
+                st = {"v": 3, "date": today.strftime("%Y%m%d"), "houses": rows}
                 os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
                 with open(path, "w", encoding="utf-8") as f:
                     json.dump(st, f, ensure_ascii=False, separators=(",", ":"))
