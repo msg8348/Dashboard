@@ -73,7 +73,13 @@
   .menu .it:hover .ib{background:#e7ebf1}
   .menu .ib svg{width:30px;height:30px}
   .menu .lb{font-size:13px;font-weight:700;letter-spacing:-.2px;white-space:nowrap}
-  .rtitle{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800;margin:18px 4px 10px}.rtitle svg{width:22px;height:22px;color:var(--navy)}
+  .rtitle{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800;margin:18px 4px 10px}.rtitle>svg{width:22px;height:22px;color:var(--navy)}
+  .rtitle .q{width:24px;height:24px;border-radius:50%;border:1.5px solid #c3cad5;background:#fff;color:var(--muted);font:inherit;font-size:13px;font-weight:800;display:grid;place-items:center;cursor:pointer;padding:0}
+  /* 지역 즐겨찾기 (한 곳): 카드 맨 앞 + 지역명 옆 별, 상단 박스가 그 지역으로 */
+  .card .nm .fv{color:#f5b301;font-size:15px;margin-left:4px;vertical-align:1px}
+  .sheet h2 .bt{display:flex;gap:8px;align-items:center}
+  .fvb{width:34px;height:34px;border-radius:50%;background:#eef1f5;border:0;display:grid;place-items:center;cursor:pointer;color:#a3acb9;padding:0}.fvb svg{width:19px;height:19px}
+  .fvb.on{background:#fff4c7;color:#f5b301}
   .grid .card .row{white-space:nowrap}
   .foot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
   .fb{display:flex;align-items:center;justify-content:center;gap:8px;height:42px;border-radius:13px;background:transparent;border:1px dashed #c4ccd6;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink-2);cursor:pointer}
@@ -86,6 +92,7 @@
   .ah .grab{width:44px;height:5px;background:#d9dee6;border-radius:3px;margin:0 auto 14px}
   .ah h3{font-size:19px;font-weight:800;display:flex;align-items:center;gap:10px}
   .ah h3 img{width:40px;height:40px;border-radius:10px}
+  .ah p.d,.ah li{word-break:keep-all}
   .ah p.d{font-size:13.5px;color:var(--ink-2);margin:8px 0 14px;line-height:1.5}
   .ah ol{list-style:none;display:grid;gap:10px}
   .ah li{display:flex;align-items:center;gap:12px;background:#f4f6f9;border-radius:14px;padding:12px 14px;font-size:15px;font-weight:600;line-height:1.4}
@@ -131,10 +138,10 @@
 <div class="wrap">
   <div class="top">{{ brand("index.html") }}<span class="tr"><span class="dt">{{ date_label }} 신규 공개</span><a class="menu-btn" href="fav.html" aria-label="관심단지"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></a><button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button class="menu-btn" type="button" aria-label="메뉴" onclick="openMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></span></div>
   {%- set n = daily|length %}{% set known = daily|selectattr(1)|map(attribute=1)|list %}{% set mx = (known|max if known else 1) * 1.05 %}{% set avg = (known|sum) / (known|length or 1) %}
-  <div class="hero"><div class="t"><h1>전국 아파트 실거래</h1><small>최근 30일 신규 공개 매매</small></div>
-    <div class="bd"><div class="l"><div class="k">신규 매매 · {{ date_label[3:] }}</div><div class="v">{{ "{:,}".format(tot.cnt) }}<span>건</span></div>
-      <div class="s">신고가 <b class="r">{{ "{:,}".format(tot.high) }}</b> · 전월세 <b>{{ "{:,}".format(tot.rent) }}</b></div></div>
-    <div class="c"><svg class="ch" viewBox="0 0 {{ n * 10 }} 62" preserveAspectRatio="none" aria-label="최근 30일 날짜별 신규 공개 매매 건수">
+  <div class="hero"><div class="t"><h1 id="hTitle">전국 아파트 실거래</h1><small>최근 30일 신규 공개 매매</small></div>
+    <div class="bd"><div class="l"><div class="k">신규 매매 · {{ date_label[3:] }}</div><div class="v"><b id="hCnt">{{ "{:,}".format(tot.cnt) }}</b><span>건</span></div>
+      <div class="s">신고가 <b class="r" id="hHigh">{{ "{:,}".format(tot.high) }}</b> · 전월세 <b id="hRent">{{ "{:,}".format(tot.rent) }}</b></div></div>
+    <div class="c"><svg class="ch" id="hCh" viewBox="0 0 {{ n * 10 }} 62" preserveAspectRatio="none" aria-label="최근 30일 날짜별 신규 공개 매매 건수">
       {%- if known|length > 1 %}<line x1="0" x2="{{ n * 10 }}" y1="{{ '%.1f'|format(62 - avg / mx * 58) }}" y2="{{ '%.1f'|format(62 - avg / mx * 58) }}" stroke="#fff" stroke-opacity=".35" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>{% endif %}
       {%- for d, v in daily %}<rect x="{{ loop.index0 * 10 + 1.5 }}" y="{{ '%.1f'|format(62 - (v or 0) / mx * 58) if v else 59 }}" width="7" height="{{ '%.1f'|format(v / mx * 58) if v else 3 }}" rx="1" fill="{{ '#fff' if loop.last and v else '#8fa2ff' }}" fill-opacity="{{ '1' if loop.last and v else ('.75' if v else '.15') }}"><title>{{ d[4:6]|int }}.{{ d[6:]|int }} {{ "{:,}".format(v) ~ '건' if v else '공개 없음' }}</title></rect>{% endfor %}</svg>
       <div class="ax"><span>{{ daily[0][0][4:6]|int }}.{{ daily[0][0][6:]|int }}</span><span>{{ daily[-1][0][4:6]|int }}.{{ daily[-1][0][6:]|int }}</span></div></div></div></div>
@@ -148,11 +155,11 @@
     <a class="it" href="rate.html"><span class="ib"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="#cdeef5"/><path d="M21.5 10.5l-11 11" stroke="#0e7490" stroke-width="2.8" stroke-linecap="round"/><circle cx="11.5" cy="11.5" r="2.6" fill="#0e7490"/><circle cx="20.5" cy="20.5" r="2.6" fill="#0e7490"/></svg></span><span class="lb">금리</span></a>
     <a class="it" href="budget.html"><span class="ib"><svg viewBox="0 0 32 32"><rect x="4" y="9" width="24" height="17" rx="3.5" fill="#f6dfb9"/><path d="M7 9l13-4 2 4" fill="none" stroke="#c27512" stroke-width="2" stroke-linejoin="round"/><rect x="18" y="14" width="10" height="7" rx="2.5" fill="#c27512"/><circle cx="22" cy="17.5" r="1.5" fill="#fff"/></svg></span><span class="lb">나의 예산</span></a>
   </div>
-  <div class="rtitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>지역 선택</div>
-  <div class="grid">
+  <div class="rtitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>지역 선택<button class="q" type="button" aria-label="지역 즐겨찾기 안내" onclick="fvHelp()">?</button></div>
+  <div class="grid" id="rgrid">
     {% for s in sidos %}
-    <button class="card" onclick="openSheet({{ loop.index0 }})">
-      <div class="nm">{{ '전남광주' if s.short == '광주전남' else s.short }}<i>›</i></div>
+    <button class="card" data-k="{{ s.key }}" onclick="openSheet({{ loop.index0 }})">
+      <div class="nm"><span>{{ '전남광주' if s.short == '광주전남' else s.short }}<span class="fv" hidden>★</span></span><i>›</i></div>
       <div class="row"><div class="cnt">{{ "{:,}".format(s.cnt) }}<span>건</span></div>{% if not s.ready %}<span class="wait">수집 중</span>{% elif s.high %}<span class="hi">신고가 {{ s.high }}</span>{% endif %}</div>
     </button>
     {% endfor %}
@@ -170,7 +177,7 @@
 {% for s in sidos %}
 <template id="sh{{ loop.index0 }}">
   <div class="grab"></div>
-  <h2><span>{{ s.sido }}{% if s.chips %}<small>{{ s.chips|length }}개 {{ s.l2_word }}</small>{% endif %}</span><button class="x" onclick="closeSheet()">✕</button></h2>
+  <h2><span>{{ s.sido }}{% if s.chips %}<small>{{ s.chips|length }}개 {{ s.l2_word }}</small>{% endif %}</span><span class="bt"><button class="fvb" type="button" data-k="{{ s.key }}" aria-label="지역 즐겨찾기" onclick="toggleFav(this.dataset.k)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></button><button class="x" onclick="closeSheet()">✕</button></span></h2>
   <a class="all" href="{{ s.href }}"><b>{{ s.sido }} 전체 보기</b><span>신규 {{ "{:,}".format(s.cnt) }}건 · 신고가 {{ s.high }}건 ›</span></a>
   {% if s.chips %}<div class="lv2">{% for c in s.chips %}<a class="chip" href="{{ c.href }}"><b>{{ c.name }}</b><span>{{ c.cnt }}건{% if c.high %}<em>▲{{ c.high }}</em>{% endif %}</span></a>{% endfor %}</div>{% endif %}
 </template>
@@ -183,12 +190,61 @@
   <div class="dr-list">{% for s in sidos %}<a class="dr-it" href="{{ s.href }}"><span>{{ s.sido }}</span><em>{{ "{:,}".format(s.cnt) }}건</em></a>{% endfor %}</div>
 </aside>
 <div class="sheet" id="sheet" hidden></div>
+<script type="application/json" id="hData">{"d":{{ daily|map(attribute=0)|list|tojson }},"by":{{ daily_by|tojson }},"tot":{{ tot|tojson }},"rg":{ {%- for s in sidos %}{{ s.key|tojson }}:[{{ ('전남광주' if s.short == '광주전남' else s.short)|tojson }},{{ s.cnt }},{{ s.high }},{{ s.rent }}]{{ ',' if not loop.last }}{% endfor %}}}</script>
 <script>
 function openSheet(i) {
   const s = document.getElementById('sheet');
   s.innerHTML = document.getElementById('sh' + i).innerHTML;
   s.hidden = false; document.getElementById('dim').hidden = false;
+  fvPaint();
 }
+// ── 지역 즐겨찾기 (한 곳만) ──
+// 시트의 별을 누르면 설정·해제. 설정하면 그 지역 카드가 맨 앞으로 오고, 상단 박스(숫자·30일 그래프)가 그 지역 기준으로 바뀐다.
+const HD = JSON.parse(document.getElementById('hData').textContent);
+const FV_KEY = 'ndp_region_fav';
+const getFav = () => { try { const k = localStorage.getItem(FV_KEY); return k && HD.rg[k] ? k : ''; } catch (e) { return ''; } };
+function hBars(vals) {
+  const n = vals.length, known = vals.filter(v => v), mx = (known.length ? Math.max(...known) : 1) * 1.05;
+  const avg = known.reduce((a, b) => a + b, 0) / (known.length || 1), y = v => (62 - v / mx * 58).toFixed(1);
+  let h = known.length > 1 ? `<line x1="0" x2="${n * 10}" y1="${y(avg)}" y2="${y(avg)}" stroke="#fff" stroke-opacity=".35" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>` : '';
+  vals.forEach((v, i) => {
+    const d = HD.d[i], last = i === n - 1, lab = `${+d.slice(4, 6)}.${+d.slice(6)} ${v ? v.toLocaleString() + '건' : '공개 없음'}`;
+    h += `<rect x="${i * 10 + 1.5}" y="${v ? y(v) : 59}" width="7" height="${v ? (v / mx * 58).toFixed(1) : 3}" rx="1" fill="${last && v ? '#fff' : '#8fa2ff'}" fill-opacity="${last && v ? 1 : v ? .75 : .15}"><title>${lab}</title></rect>`;
+  });
+  return h;
+}
+function fvPaint() {
+  const k = getFav(), r = k ? HD.rg[k] : null;
+  document.getElementById('hTitle').textContent = r ? `${r[0]} 아파트 실거래` : '전국 아파트 실거래';
+  const [c, hi, re] = r ? r.slice(1) : [HD.tot.cnt, HD.tot.high, HD.tot.rent];
+  document.getElementById('hCnt').textContent = c.toLocaleString();
+  document.getElementById('hHigh').textContent = hi.toLocaleString();
+  document.getElementById('hRent').textContent = re.toLocaleString();
+  document.getElementById('hCh').innerHTML = hBars(HD.by[k || '_'] || []);
+  const g = document.getElementById('rgrid'), cards = [...g.querySelectorAll('.card')];
+  cards.sort((a, b) => (+a.getAttribute('onclick').match(/\d+/)[0]) - (+b.getAttribute('onclick').match(/\d+/)[0]));
+  const fc = cards.find(e => e.dataset.k === k);
+  if (fc) cards.splice(cards.indexOf(fc), 1), cards.unshift(fc);
+  cards.forEach(e => { g.appendChild(e); e.querySelector('.fv').hidden = e.dataset.k !== k; });
+  document.querySelectorAll('#sheet .fvb').forEach(b => { const on = b.dataset.k === k; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+}
+function toggleFav(k) {
+  const on = getFav() === k;
+  try { on ? localStorage.removeItem(FV_KEY) : localStorage.setItem(FV_KEY, k); } catch (e) {}
+  fvPaint();
+  toast(on ? '지역 즐겨찾기를 해제했어요' : `즐겨찾기 지역: ${HD.rg[k][0]}`);
+}
+function fvHelp() {
+  const el = document.getElementById('ah'), star = '<svg viewBox="0 0 24 24" fill="#f5b301" style="color:#f5b301"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>';
+  el.innerHTML = `<div class="grab"></div><h3>지역 즐겨찾기</h3><p class="d">자주 보는 지역 한 곳을 정해 두면 홈에서 바로 볼 수 있어요.</p><ol>`
+    + `<li><span class="n">1</span><span>지역 카드를 누르고, 열린 창 위쪽의 ${star}<b>별</b>을 누르세요</span></li>`
+    + `<li><span class="n">2</span><span>그 지역 카드가 <b>맨 앞</b>으로 오고 이름 옆에 <b style="color:#f5b301">★</b>가 붙어요</span></li>`
+    + `<li><span class="n">3</span><span>맨 위 박스의 건수와 <b>30일 그래프</b>가 그 지역 기준으로 바뀌어요</span></li>`
+    + `<li><span class="n">4</span><span>한 곳만 정할 수 있어요. 다른 지역 별을 누르면 바뀌고, 같은 별을 다시 누르면 해제돼요</span></li></ol>`
+    + `<div class="row2"><button type="button" class="p" onclick="closeAH()">확인</button></div>`;
+  el.hidden = false; document.getElementById('ahDim').hidden = false;
+}
+if (getFav()) fvPaint();
 function openMenu() { document.getElementById('mdim').hidden = false; document.getElementById('drawer').classList.add('open'); }
 function closeMenu() { document.getElementById('mdim').hidden = true; document.getElementById('drawer').classList.remove('open'); }
 let toastT;
