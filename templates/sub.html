@@ -81,7 +81,7 @@ function status(h) {
   if (s.win && TODAY < s.win) return ['res', '발표 대기'];
   return ['res', s.win ? '발표' : '공고'];
 }
-const tagsOf = h => [...(h.reg && h.reg.length ? h.reg : ['비규제']), h.kind].filter(Boolean);
+const tagsOf = h => [h.cr ? `1순위 평균 ${h.cr} : 1` : '', ...(h.reg && h.reg.length ? h.reg : ['비규제']), h.kind].filter(Boolean);
 async function data(s) { return C[s] = C[s] || await fetch(`sub/${s}.json?v={{ today }}`).then(r => r.json()); }
 async function render() {
   try { sessionStorage.setItem('ndp_sub', JSON.stringify(S)); } catch (e) {}
@@ -134,6 +134,9 @@ async function detail(id) {
       <div>규모<b>${h.bd ? h.bd + '개동' : '-'}${h.fl ? ' · 최고 ' + h.fl + '층' : ''}</b></div></div></div>
     <div class="sec"><h2>타입별 분양가<small>최고가 · 평당</small></h2><table><tr><th>타입</th><th>공급(특별)</th><th>분양가</th><th>평당</th></tr>
       ${h.ty.map(t => `<tr><td><b style="color:#17202c">${esc(t[0])}</b><br><small>${t[1]}㎡</small></td><td>${t[2]}${t[3] != null ? ` (특${t[3]})` : ''}</td><td><b>${t[4] ? eok(t[4]) : '-'}</b></td><td>${t[4] ? Math.round(t[4] / (t[1] * 1.3 / 3.3058)).toLocaleString() + '만' : '-'}</td></tr>`).join('')}</table></div>
+    ${Object.keys(h.cmp || {}).length ? `<div class="sec"><h2>경쟁률 · 당첨 가점<small>1순위 해당지역</small></h2><table><tr><th>타입</th><th>공급</th><th>접수</th><th>경쟁률</th><th>가점(최저~최고)</th></tr>
+      ${Object.entries(h.cmp).map(([k, v]) => { const sc = (h.score || {})[k]; return `<tr><td><b style="color:#17202c">${esc(k)}</b></td><td>${v[2] || '-'}</td><td>${v[1] ? v[1].toLocaleString() : '-'}</td><td><b>${v[0] != null ? v[0] + ' : 1' : '-'}</b></td><td>${sc ? sc[0] + '~' + sc[1] + '점' : '-'}</td></tr>`; }).join('')}</table>
+      ${h.cr ? `<div class="cmp">전체 1순위 평균 <b>${h.cr} : 1</b></div>` : ''}</div>` : ''}
     ${poi.length ? `<div class="sec"><h2>주변 정보</h2><div class="poi">${poi.map(x => `<div>${x}</div>`).join('')}</div><div class="note">학원·음식점·카페는 반경 500m, 대형마트는 가장 가까운 곳</div></div>` : ''}
     ${nearTy.length ? `<div class="sec"><h2>주변 시세<small>${esc(h.g)} · 최근 1년 최고가 순</small></h2>
       <div class="seg2">${nearTy.map(t => `<button type="button" data-t="${t}" class="${t === NT ? 'on' : ''}">${t}타입</button>`).join('')}</div>

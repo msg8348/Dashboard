@@ -79,6 +79,14 @@ def build(site, store, sd, sdir, sale, houses, now, alias, apt_pages, notices):
                 if ty:
                     by[ty].append(t[3])
         avg = {ty: round(sum(v) / len(v)) for ty, v in by.items()}
+        cm = h.get("cmp") or {}
+
+        def lab(ty):
+            m = re.match(r"\s*0*(\d+(?:\.\d+)?)", ty)
+            return f"{int(float(m.group(1)))}{re.sub(r'[^A-Za-z]', '', ty[m.end():]).upper()}" if m else ty
+        cmpd = {lab(k): v for k, v in (cm.get("c") or {}).items()}
+        score = {lab(k): v for k, v in (cm.get("s") or {}).items()}
+        req = sum((v[1] or 0) for v in cmpd.values()); sup = sum((v[2] or 0) for v in cmpd.values())
         p = pc.get(f"sub:{h['id']}") or {}
         nt = notices.get(h["id"]) or {}
         out.append({
@@ -87,6 +95,7 @@ def build(site, store, sd, sdir, sale, houses, now, alias, apt_pages, notices):
             "reg": h.get("reg") or [], "sch": h.get("sch") or {}, "pbl": (h.get("pbl") or "").replace("-", ""), "url": h.get("url") or "",
             "avg": avg, "ty": [[t[2], round(t[0], 2), t[1], t[5] if len(t) > 5 else None, t[3]] for t in h.get("types", []) if len(t) >= 4],
             "bd": nt.get("bd", 0), "fl": nt.get("fl", 0),
+            "cmp": cmpd, "score": score, "cr": round(req / sup, 1) if sup and req else None,   # 1순위 해당지역 경쟁률 · 당첨 가점
             "poi": {k: p.get(k) for k in ("sc", "st", "bus", "ac", "fd", "mt") if p.get(k) is not None},
             "near": {ty: sorted(near[code][ty].values(), key=lambda x: -x[2])[:5] for ty in ("59", "84")} if code else {},
         })
