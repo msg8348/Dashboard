@@ -41,6 +41,7 @@ SOURCES = {
 }
 TYPE_LABEL = None   # (거래) → '84A' 같은 청약홈 약식표기 (national.py 가 시도마다 설정)
 APT_PAGES = set()   # 단지 페이지가 만들어진 단지번호 (national.py 가 채움)
+APT_ALIAS = {}   # 1·2·3단지를 합친 단지: {단지번호: (대표 단지번호, 합친 이름)}
 PRE_PAGES = set()   # 분양권 페이지가 만들어진 청약홈 주택관리번호
 PRE_MOVED = {}   # 입주 후 매매 단지로 옮겨 간 분양권 {주택관리번호: 단지번호}
 WINDOW_MONTHS = 13   # DB 에 보관할 개월 수 (1년 회전율 계산용)
@@ -411,7 +412,10 @@ def trade_card(t, cnt3, jeon1, cinfo, sale1=None):
         tl = TYPE_LABEL(t)
         if tl:
             r["tl"] = tl
-    if t.get("s") and t["s"] in APT_PAGES:
+    if t.get("s") and t["s"] in APT_ALIAS:   # 합친 단지: 대표 페이지 · 합친 이름
+        r["h"] = f"apt/{APT_ALIAS[t['s']][0]}"
+        r["n"] = APT_ALIAS[t["s"]][1]
+    elif t.get("s") and t["s"] in APT_PAGES:
         r["h"] = f"apt/{t['s']}"   # 단지 페이지 있음
     if t.get("up"):
         r["up"] = 1
