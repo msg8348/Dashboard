@@ -39,7 +39,7 @@ IND_PATH = os.path.join(STORE, "indicators.json")
 HIST = os.environ.get("HIST_DIR", "hist")
 BUSAN = "26"
 WORKERS = int(os.environ.get("FETCH_WORKERS", "8"))   # 동시 요청 수
-APT_SIDOS = {"26"}   # 단지 페이지를 먼저 여는 시도 (부산)
+APT_SIDOS = {"26", "11"}   # 단지 페이지를 연 시도 (부산 · 서울) — 과거 수집이 끝난 시도부터
 
 
 # ---------------------------------------------------------------- 저장소
@@ -571,6 +571,7 @@ def main():
     home = []
     act_nat, act_sidos = {"s": [], "g": []}, []   # 홈 '거래활발도'
     bud_sidos = []   # 나의 예산
+    sub_sidos = []   # 청약단지
     # 알림 서버(cloudflare/push)가 읽는 오늘의 알림 재료: 관심단지별 신규 거래 문구, 지역별 요약 숫자
     push = {"date": now.strftime("%Y%m%d"), "new": not fallback, "apts": {}, "regions": {}}
 
@@ -752,6 +753,11 @@ def main():
         push["regions"][f"{sdir}/index.html"] = {"n": nm, "c": sale_ctx["cnt"], "h": sale_ctx["high_cnt"], "r": rent_ctx["cnt"]}
         for c in chips:
             push["regions"][c["href"]] = {"n": f"{nm} {c['name']}", "c": c["cnt"], "h": c["high"]}
+        import subscr, notice as NT   # 청약단지: 최근 60일 모집공고 단지 (전 시도)
+        nsub = subscr.build(SITE, STORE, sd, sdir, sdb["sale"]["trades"], houses, now, D.APT_ALIAS, D.APT_PAGES,
+                            NT.load(os.path.join(STORE, "notice.json")))
+        if nsub:
+            sub_sidos.append(["전남광주" if sd["short"] == "광주전남" else sd["short"], sdir, nsub])
         if key in APT_SIDOS:   # 최고가: 연도별 단지·타입·월 최고 거래 (과거 데이터 있는 해부터)
             hi_build(sd, sdir, sdb, cinfo, l2_of, l2_name)
             import budget, poi as POI   # 나의 예산: 예산 맞춤 추천용 단지 목록
@@ -817,6 +823,8 @@ def main():
     with open(os.path.join(SITE, "budget.html"), "w", encoding="utf-8") as f:   # 나의 예산 (예산 계산 + 맞춤 추천)
         f.write(env.get_template("budget.html").render(today=now.strftime("%Y%m%d"), rules=budget.RULES, sidos=bud_sidos,
                 mort={"v": mort[1], "m": mort[0] or ""}))
+    with open(os.path.join(SITE, "sub.html"), "w", encoding="utf-8") as f:   # 청약단지
+        f.write(env.get_template("sub.html").render(today=now.strftime("%Y%m%d"), sidos=sub_sidos))
     with open(os.path.join(SITE, "hi.html"), "w", encoding="utf-8") as f:   # 최고가 (기간·지역·평형별)
         f.write(env.get_template("hi.html").render(today=now.strftime("%Y%m%d"),
                 sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home if h["key"] in APT_SIDOS]))
