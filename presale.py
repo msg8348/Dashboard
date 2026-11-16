@@ -40,7 +40,7 @@ def _fl(f):
 
 
 def group(sd, sdb, hist_dir, oldest_ym, houses, match_house):
-    """분양권 거래 → {주택관리번호: [[계약일, 금액, 층, 면적]]} (최근 13개월 + 과거)."""
+    """분양권 거래 → {주택관리번호: [[계약일, 금액, 층, 면적]]} (최근 13개월 + 과거). 모집공고일 이전 거래는 같은 이름의 옛 단지라 뺌."""
     by = defaultdict(list)
     for t in sdb["pre"]["trades"]:
         h = match_house(houses, sd, t)
@@ -51,6 +51,11 @@ def group(sd, sdb, hist_dir, oldest_ym, houses, match_house):
         h = match_house(houses, sd, t)
         if h:
             by[h["id"]] += [[int(x[0]), x[1], _fl(x[2]), x[4]] for x in a["t"] if str(x[0])[:6] < oldest_ym]
+    pbl = {h["id"]: int(re.sub(r"\D", "", h.get("pbl") or "")[:8] or 0) for h in houses}
+    for hid in list(by):
+        by[hid] = [r for r in by[hid] if r[0] >= pbl.get(hid, 0)]
+        if not by[hid]:
+            del by[hid]
     return by
 
 
