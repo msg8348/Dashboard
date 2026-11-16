@@ -1,0 +1,107 @@
+{% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>주요거래 | 옆집얼마</title>
+<meta name="description" content="오늘 새로 공개된 아파트 매매 — 84타입·59타입·기타 금액순 Top 15, 신고가, 분양권 — 시도·구군별 — 옆집얼마">
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root { --ink:#17202c; --ink-2:#4a5566; --muted:#8a94a3; --navy:#2b3a67; --blue:#2754d6; --teal:#0f6b5c; --red:#e0472c; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#eef1f4;color:var(--ink);padding:0 14px 40px;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:960px;margin:0 auto}
+{{ brand_css() }}
+  .topbar{position:sticky;top:0;z-index:15;background:rgba(238,241,244,.95);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:12px 0 8px;display:flex;align-items:center;justify-content:space-between}
+  .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}.menu-btn svg{width:22px;height:22px}
+  .head{display:flex;align-items:center;gap:8px;margin:8px 2px 12px}.head h1{font-size:23px;font-weight:900;letter-spacing:-.4px}
+  .sels{display:flex;gap:6px;margin-bottom:10px}
+  .sels select{font:inherit;font-size:14px;font-weight:700;height:38px;border:1px solid #d6dbe2;border-radius:10px;padding:0 8px;background:#fff;color:var(--ink)}
+  .sheet{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:16px}
+  .ttl{display:flex;align-items:baseline;gap:8px;padding-bottom:10px;border-bottom:1px solid #e9edf2;margin-bottom:10px}
+  .ttl b{font-size:19px;font-weight:900;letter-spacing:-.3px}.ttl small{font-size:13px;color:var(--ink-2);font-weight:700}
+  .cards{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px}
+  .cd{border-radius:14px;padding:10px 12px}.cd.b{background:#eaf0fb}.cd.r{background:#fdeee9}
+  .cd .l{font-size:12.5px;font-weight:800}.cd.b .l{color:var(--blue)}.cd.r .l{color:var(--red)}
+  .cd .v{font-size:24px;font-weight:900;text-align:right;line-height:1.2}.cd .v span{font-size:13px;margin-left:1px}.cd.r .v{color:var(--red)}
+  .cd .h{font-size:11.5px;color:var(--ink-2);font-weight:600;text-align:right}
+  .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.sec,.cd{min-width:0}
+  .sec{background:#f6f8fa;border:1px solid #e9edf2;border-radius:14px;padding:10px 12px 6px;margin-bottom:8px}
+  .sec h2{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .chip{font-size:12.5px;font-weight:800;color:#fff;border-radius:999px;padding:3px 10px}
+  .sec h2 .n{font-size:11.5px;color:var(--muted);font-weight:600}
+  .list.wide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-auto-flow:column;column-gap:16px}
+  .row{display:flex;align-items:center;gap:7px;padding:7px 0;border-top:1px solid #eceff3;font-size:13.5px}
+  .rkc{width:20px;height:20px;border-radius:50%;font-size:10.5px;font-weight:800;display:grid;place-items:center;flex:none;color:#fff}
+  .rkc.cs{background:var(--blue)}.rkc.cj{background:var(--teal)}.rkc.cx{background:#6b7686}
+  .rkc.lt.cs{background:#e3eafb;color:var(--blue)}.rkc.lt.cj{background:#dcefe9;color:var(--teal)}.rkc.lt.cx{background:#e8ebef;color:#6b7686}
+  .nm{flex:1;min-width:0;display:flex;align-items:center;gap:4px;font-weight:700;white-space:nowrap;overflow:hidden}
+  .nm .nt{overflow:hidden;text-overflow:ellipsis}
+  a.row .nt{text-decoration:underline;text-decoration-color:#d3d9e2;text-underline-offset:3px}
+  .pyg{font-size:11px;color:var(--ink-2);font-weight:700;flex:none}
+  .ptag{font-size:10px;font-weight:800;color:#d12f62;background:#fde8ee;border-radius:5px;padding:1px 5px;flex:none}
+  .stk{font-size:10px;font-weight:800;color:#fff;background:var(--red);border-radius:5px;padding:1px 5px;flex:none}
+  .gu{font-size:11px;color:var(--muted);font-weight:500;flex:none}
+  .fl{font-size:11.5px;color:var(--muted);flex:none;width:34px;text-align:right}
+  .pr{font-size:14px;font-weight:800;color:var(--blue);flex:none;min-width:74px;text-align:right}
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:22px 0;border-top:1px solid #eceff3}
+  .note{font-size:11.5px;color:var(--muted);text-align:right;padding:8px 2px 0}
+  @media(max-width:720px){.two,.list.wide{grid-template-columns:minmax(0,1fr)}.list.wide{grid-template-rows:none!important;grid-auto-flow:row}.gu{display:none}.cd .v{font-size:22px}}
+</style>
+</head>
+<body><div class="wrap">
+<div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
+<div class="head"><h1>주요거래</h1></div>
+<div class="sels"><select id="sido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select><select id="gu" aria-label="구·군"></select></div>
+<div class="sheet" id="out"><div class="empty">불러오는 중…</div></div>
+<div class="note">국토부 실거래 · 그날 새로 공개된 매매(분양권 포함) · 타입별 금액순 15건</div>
+</div>
+<script>
+const FV = (() => { try { return localStorage.getItem('ndp_region_fav_dir') || ''; } catch (e) { return ''; } })();   // 홈 지역 즐겨찾기 (없으면 서울)
+const S = { s: '', g: '' };
+try { Object.assign(S, JSON.parse(sessionStorage.getItem('ndp_major')) || {}); } catch (e) {}
+const sel = document.getElementById('sido'), guSel = document.getElementById('gu');
+const has = v => !!v && [...sel.options].some(o => o.value === v);
+if (S.fv !== FV) { S.fv = FV; S.s = ''; S.g = ''; }
+S.s = has(S.s) ? S.s : has(FV) ? FV : has('seoul') ? 'seoul' : sel.value;
+sel.value = S.s;
+const cache = {};
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const eok = p => { const e = Math.floor(p / 1e4), r = p % 1e4; return (e ? e + '억' : '') + (r ? r.toLocaleString() : '') || '0'; };
+const COL = { '84타입': ['cs', 'var(--blue)'], '59타입': ['cj', 'var(--teal)'], '기타': ['cx', '#6b7686'] };
+function section(k, rows, wide) {
+  const [cc, bg] = COL[k];
+  return `<div class="sec"><h2><span class="chip" style="background:${bg}">${k}</span><span class="n">금액순 · ${rows.length}건</span></h2><div class="list${wide ? ' wide' : ''}"${wide ? ` style="grid-template-rows:repeat(${Math.max(1, Math.ceil(rows.length / 2))},auto)"` : ''}>`
+    + (rows.length ? rows.map((r, i) => {
+      const [n, gu, ty, py, f, p, pre, up, h] = r;
+      const inner = `<span class="rkc ${cc}${i >= 3 ? ' lt' : ''}">${i + 1}</span><span class="nm"><span class="nt">${esc(n)}</span>${ty === '기타' && py ? `<span class="pyg">${py}평</span>` : ''}${pre ? '<span class="ptag">분양권</span>' : ''}${up ? '<span class="stk">신고가</span>' : ''}${S.g ? '' : `<span class="gu">${esc(gu)}</span>`}</span><span class="fl">${/^-?\d+$/.test(f) ? f + '층' : esc(f || '-')}</span><span class="pr">${eok(p)}</span>`;
+      return h ? `<a class="row" href="${esc(S.s + '/' + h + '.html')}">${inner}</a>` : `<div class="row">${inner}</div>`;
+    }).join('') : '<div class="empty">해당 거래가 없어요</div>') + '</div></div>';
+}
+async function render() {
+  try { sessionStorage.setItem('ndp_major', JSON.stringify(S)); } catch (e) {}
+  const out = document.getElementById('out');
+  let d = cache[S.s];
+  if (!d) { out.innerHTML = '<div class="empty">불러오는 중…</div>'; d = cache[S.s] = await fetch(`major/${S.s}.json?v={{ today }}`).then(r => r.ok ? r.json() : { d: '', c: [] }).catch(() => ({ d: '', c: [] })); }
+  const gus = [...new Set(d.c.map(r => r[1]).filter(Boolean))].sort();
+  if (S.g && !gus.includes(S.g)) S.g = '';
+  guSel.hidden = gus.length < 2;
+  guSel.innerHTML = '<option value="">구·군 전체</option>' + gus.map(g => `<option${g === S.g ? ' selected' : ''}>${esc(g)}</option>`).join('');
+  const rows = d.c.filter(r => !S.g || r[1] === S.g).sort((a, b) => b[5] - a[5]);
+  const by = k => rows.filter(r => r[2] === k);
+  const cnt = k => by(k).length, pre = rows.filter(r => r[6]).length, hi = rows.filter(r => r[7]).length;
+  const name = (sel.selectedOptions[0] || {}).textContent + (S.g ? ' ' + S.g : '');
+  out.innerHTML = `<div class="ttl"><b>${esc(name)} 아파트 매매</b><small>${esc(d.d)} 신규 실거래</small></div>`
+    + `<div class="cards"><div class="cd b"><div class="l">신규 실거래</div><div class="v">${rows.length.toLocaleString()}<span>건</span></div><div class="h">84타입 ${cnt('84타입')} · 59타입 ${cnt('59타입')} · 기타 ${cnt('기타')}${pre ? ` · 분양권 ${pre} 포함` : ''}</div></div>`
+    + `<div class="cd r"><div class="l">신고가</div><div class="v">${hi}<span>건</span></div><div class="h">동일 단지·타입 최고가 경신</div></div></div>`
+    + `<div class="two">${section('84타입', by('84타입').slice(0, 15))}${section('59타입', by('59타입').slice(0, 15))}</div>${section('기타', by('기타').slice(0, 15), true)}`;
+}
+sel.onchange = () => { S.s = sel.value; S.g = ''; render(); };
+guSel.onchange = () => { S.g = guSel.value; render(); };
+render();
+</script>
+<script src="search.js?v={{ today }}"></script>
+</body>
+</html>

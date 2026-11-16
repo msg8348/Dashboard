@@ -688,6 +688,13 @@ def main():
             return ""
         D.TYPE_LABEL = tlabel
         sale_ctx, rent_ctx, highs_s, highs_r = D.build_trades(subset(sdb, set(sd["codes"])), now, cinfo)
+        # 홈 '주요거래': 오늘 신규 매매·분양권 (타입별 금액순은 화면에서) — site/major/{시도}.json
+        os.makedirs(os.path.join(SITE, "major"), exist_ok=True)
+        with open(os.path.join(SITE, "major", f"{sdir}.json"), "w", encoding="utf-8") as f:
+            json.dump({"d": now.strftime("%y.%m.%d"), "c": [[c["n"], c["gu"], c["ty"], c.get("py") or 0, str(c.get("f", "")), c["p"],
+                                                            1 if c["k"] == "pre" else 0, 1 if c.get("up") else 0, c.get("h", "")]
+                                                           for c in sale_ctx["cards"] if c["k"] in ("sale", "pre")]},
+                      f, ensure_ascii=False, separators=(",", ":"))
         favc = [c for c in sale_ctx["cards"] if c.get("h")]   # 관심단지 화면용 (최근 7일, 단지 페이지 있는 거래)
         if not fallback:   # 날짜별 기준값도 보관 (최근 3일) — 신규 공개가 없는 날 전날 기준으로 다시 보여줄 때 사용
             for src, h in (("sale", highs_s), ("rent", highs_r)):
@@ -854,6 +861,9 @@ def main():
           "max_cnt": max([h["cnt"] for h in home] + [1])}
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
         f.write(env.get_template("home.html").render(hc))
+    with open(os.path.join(SITE, "major.html"), "w", encoding="utf-8") as f:   # 주요거래 (시도·구군별 오늘 신규 매매 타입별 Top 15)
+        f.write(env.get_template("major.html").render(today=now.strftime("%Y%m%d"),
+                sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home]))
     with open(os.path.join(SITE, "pop.html"), "w", encoding="utf-8") as f:   # 인기단지 (많이 산 단지 · 실시간 검색)
         f.write(env.get_template("pop.html").render(today=now.strftime("%Y%m%d"),
                 sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home if h["key"] in APT_SIDOS]))
