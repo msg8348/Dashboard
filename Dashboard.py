@@ -243,6 +243,10 @@ def parse_item(src, item, district, deal_ym):
         if dep is None:
             return None
         t.update(p=dep, m=mon, ct=_text(item, "contractType", "계약구분"))
+        for k, tags in (("j", ("jibun", "지번")), ("by", ("buildYear", "건축년도"))):   # 과거 전월세 단지 묶기용
+            v = _text(item, *tags)
+            if v:
+                t[k] = v
     else:
         p = _num(_text(item, "dealAmount", "거래금액"))
         if not p:

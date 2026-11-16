@@ -1,6 +1,6 @@
 name: HISTORY
 
-# 과거 매매 실거래(2006년~) 수집 — 단지 페이지용. 받은 데까지 'history' 브랜치에 저장하고,
+# 과거 실거래 수집 (매매 2006년~ · 분양권 2020년~ · 전월세 2011년~, 전월세는 매매가 끝난 뒤) — 단지 페이지용. 받은 데까지 'history' 브랜치에 저장하고,
 # 시간 제한으로 끊기면 스스로 다시 실행해 이어 받는다. 하루 호출 예산(--daily)을 넘기면 다음 날 이어 받음.
 on:
   schedule:
@@ -57,6 +57,18 @@ jobs:
           STORE_DIR: store
         run: python history.py --minutes 180 --daily 7000
 
+      - name: 과거 전월세 수집 (2011년~, 전국) — 매매 과거 수집이 끝난 뒤부터
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          HIST_DIR: hist
+          STORE_DIR: store
+        run: |
+          if [ "$(cat HIST_STATUS_sale 2>/dev/null)" = "done" ]; then
+            python history.py --src rent --minutes 150 --daily 7000
+          else
+            echo "매매 과거 수집이 아직 남아 전월세는 다음에"; echo wait > HIST_STATUS_rent
+          fi
+
       - name: 저장 (history 브랜치, 매번 한 커밋으로 교체)
         if: always()
         env:
@@ -77,9 +89,9 @@ jobs:
         env:
           TOKEN: ${{ github.token }}
         run: |
-          a=$(cat HIST_STATUS_sale 2>/dev/null || echo done); b=$(cat HIST_STATUS_pre 2>/dev/null || echo done)
-          echo "상태: 매매 $a · 분양권 $b"
-          if [ "$a" = "more" ] || [ "$b" = "more" ]; then
+          a=$(cat HIST_STATUS_sale 2>/dev/null || echo done); b=$(cat HIST_STATUS_pre 2>/dev/null || echo done); c=$(cat HIST_STATUS_rent 2>/dev/null || echo done)
+          echo "상태: 매매 $a · 분양권 $b · 전월세 $c"
+          if [ "$a" = "more" ] || [ "$b" = "more" ] || [ "$c" = "more" ]; then
             curl -sS -X POST -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
               "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/History.yml/dispatches" \
               -d '{"ref":"main"}'
