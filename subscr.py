@@ -28,7 +28,7 @@ def _ty(a):
     return "59" if ai == 59 else "74" if 70 <= ai <= 77 else "84" if ai == 84 else ""
 
 
-def build(site, store, sd, sdir, sale, houses, now, alias, apt_pages, notices):
+def build(site, store, sd, sdir, sale, houses, now, alias, apt_pages, notices, cinfo=None):
     today = now.strftime("%Y%m%d")
     d60 = (now - timedelta(days=60)).strftime("%Y-%m-%d")
     d1y = (now - timedelta(days=365)).strftime("%Y%m%d")
@@ -55,8 +55,10 @@ def build(site, store, sd, sdir, sale, houses, now, alias, apt_pages, notices):
         k = to or nm
         cur = near[t.get("c")][ty].get(k)
         if not cur or t["p"] > cur[2]:
+            hh, ap = cinfo(t) if cinfo else (0, "")
+            ym = f"{str(ap)[2:4]}.{str(ap)[4:6]}" if ap and len(str(ap)) >= 6 else ""
             near[t.get("c")][ty][k] = [nm, t.get("u", ""), t["p"], str(t["dt"]),
-                                      f"{sdir}/apt/{to}.html" if to and to in apt_pages else ""]
+                                      f"{sdir}/apt/{to}.html" if to and to in apt_pages else "", hh or 0, ym]
     # 주변 정보 (카카오)
     ppath = os.path.join(store, "poi.json")
     pc = poi.load(ppath)

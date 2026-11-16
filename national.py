@@ -755,7 +755,7 @@ def main():
             push["regions"][c["href"]] = {"n": f"{nm} {c['name']}", "c": c["cnt"], "h": c["high"]}
         import subscr, notice as NT   # 청약단지: 최근 60일 모집공고 단지 (전 시도)
         nsub = subscr.build(SITE, STORE, sd, sdir, sdb["sale"]["trades"], houses, now, D.APT_ALIAS, D.APT_PAGES,
-                            NT.load(os.path.join(STORE, "notice.json")))
+                            NT.load(os.path.join(STORE, "notice.json")), cinfo)
         if nsub:
             sub_sidos.append(["전남광주" if sd["short"] == "광주전남" else sd["short"], sdir, nsub])
         if key in APT_SIDOS:   # 최고가: 연도별 단지·타입·월 최고 거래 (과거 데이터 있는 해부터)
