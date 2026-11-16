@@ -55,7 +55,7 @@
 <script>
 const PUSH_API = 'https://nextdoorprice-push.newreds22.workers.dev';
 const SIDO_NAME = {{ sidos|tojson }};
-const S = { t: 'buy', p: 'tm', s: '', g: '' };
+const S = { t: 'buy', p: 'lm', s: '', g: '' };   // 기본: 지난달 (이번달은 신고 기간 30일이라 아직 집계 중)
 try { Object.assign(S, JSON.parse(sessionStorage.getItem('ndp_pop')) || {}); } catch (e) {}
 const cache = {};
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -89,7 +89,7 @@ async function render() {
     list.innerHTML = rs.length ? rs.map(([k, n], i) => { const m = d.m[k] || [k, '', '', 0, 0, 0];
       return row(i, k.endsWith('.html') ? k : '', m[0], sub(m[0], m[1], m[2], m[3], m[4], m[5]), m[5], `<span class="v">${n}<small>건</small></span>`); }).join('')
       : '<div class="empty">이 기간에 거래가 없어요</div>';
-    note.textContent = `국토부 실거래 · ${['tw', 'lw'].includes(per[0]) ? '공개일' : '계약일'} 기준 (${range})`;
+    note.textContent = `국토부 실거래 · ${['tw', 'lw'].includes(per[0]) ? '공개일' : '계약일'} 기준 (${range})${['tm', 'ty', 'tw'].includes(per[0]) ? ' · 계약 후 30일 안에 신고돼 최근 거래는 아직 집계 중' : ''}`;
   } else {
     document.getElementById('sub').textContent = '옆집얼마 단지 조회 순';
     list.innerHTML = '<div class="empty">불러오는 중…</div>';
