@@ -65,7 +65,7 @@ async function data(s) {
   return cache[s];
 }
 function sub(name, l2, dong, yr, hh, pre) {   // 지역 전체: 구·군 / 구·군 선택: 동
-  const y = yr ? `${String(yr).slice(2)}년 ${pre ? '입주예정' : '입주'}` : '';
+  const y = yr ? (String(yr).slice(2) + '년' + (pre ? ' 예정' : '')) : '';
   return [S.g ? dong : l2, y, hh ? `${(+hh).toLocaleString()}세대` : ''].filter(Boolean).join(' · ');
 }
 function row(i, href, name, small, pre, right) {
