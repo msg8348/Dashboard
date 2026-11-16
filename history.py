@@ -1,4 +1,4 @@
-"""과거 매매 실거래 수집기 (단지 페이지용).
+"""과거 실거래 수집기 (단지 페이지용) — 매매(2006~) · 분양권(2020~) · 전월세(2011~, hist/rent_{시도}.json.gz).
 
     python history.py --minutes 280 --max-calls 8000
 
@@ -24,7 +24,7 @@ import regions
 
 HIST = os.environ.get("HIST_DIR", "hist")
 START = "200601"            # 국토부 실거래 공개 시작
-STARTS = {"sale": "200601", "pre": "202001"}   # 분양권은 청약홈 분양정보가 있는 2020년부터
+STARTS = {"sale": "200601", "pre": "202001", "rent": "201101"}   # 분양권은 청약홈 분양정보가 있는 2020년부터, 전월세는 공개 시작 2011년부터
 SRC = "sale"
 WORKERS = int(os.environ.get("FETCH_WORKERS", "8"))
 FIRST = ["26", "11", "41", "28"]   # 부산 · 서울 · 경기 · 인천 먼저
@@ -73,14 +73,15 @@ def add(db, code, ym, trades):
         if t.get("by") and not a.get("by"):
             a["by"] = t["by"]
         f = t.get("f", "")
+        # 매매·분양권: [계약일, 금액, 층, 동, 전용면적, 등기일] / 전월세: [계약일, 보증금, 층, 동, 전용면적, 월세]
         a["t"].append([int(t["dt"]), t["p"], int(f) if str(f).lstrip("-").isdigit() else f,
-                       t.get("dong", ""), t["a"], t.get("rg", "")])
+                       t.get("dong", ""), t["a"], t.get("m", 0) if SRC == "rent" else t.get("rg", "")])
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--minutes", type=float, default=280)
-    ap.add_argument("--src", default="sale", choices=["sale", "pre"])
+    ap.add_argument("--src", default="sale", choices=["sale", "pre", "rent"])
     ap.add_argument("--daily", type=int, default=7000, help="하루(KST) 과거 수집 호출 한도 — 매일 갱신용 한도는 남겨 둠")
     ap.add_argument("--only", default="")
     args = ap.parse_args()
