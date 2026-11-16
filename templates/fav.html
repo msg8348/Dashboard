@@ -115,6 +115,7 @@ const F = { k: 'all', hi: false };
 let CARDS = [];
 const favs = () => NDPFav.get();
 async function loadCards() {
+  if (!loadCards.mig) { loadCards.mig = true; await NDPFav.migrate('').catch(() => {}); }
   const list = favs(), dirs = [...new Set(list.map(f => f[2].split('/')[0]))];
   const want = new Set(list.map(f => f[2]));
   const all = await Promise.all(dirs.map(d => fetch(`fav/${d}.json?v=${DATE}`).then(r => r.ok ? r.json() : []).catch(() => [])

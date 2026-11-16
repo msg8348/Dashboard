@@ -35,7 +35,27 @@
     remove(p) { Fav.set(Fav.get().filter(x => x[2] !== p)); },
     toggle(it) { if (Fav.has(it[2])) { Fav.remove(it[2]); return false; } Fav.add(it); return true; },
   };
+  // 입주 후 매매 단지로 옮겨 간 분양권: 관심단지에 남은 예전 분양권 주소를 새 단지 주소·이름으로 바꿈 (하루 한 번)
+  const SJS = (document.currentScript && document.currentScript.src) || '';
+  Fav.migrate = async (root) => {
+    const l = Fav.get();
+    if (!l.some(x => x[2].includes('/pre/'))) return false;
+    const day = new Date().toISOString().slice(0, 10);
+    let mv;
+    const url = SJS ? new URL(`moved.json?v=${day}`, SJS).href : `${root || ''}moved.json?v=${day}`;
+    try { mv = await fetch(url).then(r => r.ok ? r.json() : {}); } catch (e) { return false; }
+    let ch = false;
+    const out = [];
+    for (const x of l) {
+      const m = mv[x[2]];
+      if (m) { ch = true; if (!out.some(y => y[2] === m[0]) && !l.some(y => y[2] === m[0])) out.push([m[1], m[2], m[0]]); }
+      else out.push(x);
+    }
+    if (ch) Fav.set(out);
+    return ch;
+  };
   window.NDPFav = Fav;
+  try { if (sessionStorage.getItem('ndp_mig') !== new Date().toDateString()) { sessionStorage.setItem('ndp_mig', new Date().toDateString()); Fav.migrate().then(ch => { if (ch) window.dispatchEvent(new Event('ndpfav')); }); } } catch (e) {}
   // ---- 알림: 이 기기의 선택(ndp_notify)과 관심단지를 알림 서버에 저장 (cloudflare/push)
   const PUSH_API = 'https://nextdoorprice-push.newreds22.workers.dev';
   const nGet = () => { try { return JSON.parse(localStorage.getItem('ndp_notify')) || {}; } catch (e) { return {}; } };
@@ -84,6 +104,7 @@
     const it = JSON.parse(b.dataset.fav);
     const paint = () => { const on = Fav.has(it[2]); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', on ? '관심단지 해제' : '관심단지 추가'); };
     b.onclick = () => { Fav.toggle(it); paint(); };
+    window.addEventListener('ndpfav', paint);   // 예전 분양권 주소가 새 단지 주소로 바뀌었을 때
     paint();
   });
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);

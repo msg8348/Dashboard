@@ -582,6 +582,7 @@ def main():
         fl = f" {c['f']}층" if str(c.get("f", "")).lstrip("-").isdigit() else ""
         return f"{kind} {c.get('tl') or str(round(c['a'])) + '㎡'} {price}{fl}" + (" 신고가" if c.get("up") else "")
     search = []
+    moved_paths = {}
     for sd in sidos:
         key = sd["key"]
         sdb = {src: dbs[src][key] for src in D.SOURCES}
@@ -608,6 +609,11 @@ def main():
             D.APT_PAGES |= done
             D.APT_ALIAS.update(alias)
             D.PRE_MOVED.update(moved)
+            sm = {x[2]: x for x in srch}   # 입주 후 매매 단지로 옮겨 간 분양권: 관심단지에 남은 예전 주소 → 새 주소 (moved.json)
+            for hid, k in moved.items():
+                np_ = f"{sdir}/apt/{k}.html"
+                if np_ in sm:
+                    moved_paths[f"{sdir}/pre/{hid}.html"] = [np_, sm[np_][0], sm[np_][1]]
             search += srch
             urls += aurls
             done, srch, aurls = PS.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, houses, match_house, STORE, SITE_URL,
@@ -841,6 +847,8 @@ def main():
     ddays.reverse()
     daily = [[d, hist_d.get(d, {}).get("_")] for d in ddays]
     daily_by = {k: [hist_d.get(d, {}).get(k) for d in ddays] for k in ["_"] + [h["key"] for h in home]}
+    with open(os.path.join(SITE, "moved.json"), "w", encoding="utf-8") as f:
+        json.dump(moved_paths, f, ensure_ascii=False, separators=(",", ":"))
     hc = {"date_label": now.strftime("%y.%m.%d"), "sidos": home, "site_url": SITE_URL, "daily": daily, "daily_by": daily_by,
           "tot": {k: sum(h[k] for h in home) for k in ("cnt", "high", "rent")},
           "max_cnt": max([h["cnt"] for h in home] + [1])}
