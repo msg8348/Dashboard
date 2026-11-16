@@ -73,6 +73,7 @@
 <script>const TODAY = '{{ today }}';</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="{{ root }}pre.js?v={{ today }}"></script>
+<script>window.PAGE_META = {{ pm|tojson }};</script>
 <script src="{{ root }}search.js?v={{ today }}"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "abacec54a0cc4c2a9c18d8b390e67068"}'></script><!-- End Cloudflare Web Analytics -->
 </body>

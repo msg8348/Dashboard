@@ -56,7 +56,7 @@ def group(sd, sdb, hist_dir, oldest_ym, houses, match_house):
 
 def code_of(sd, house):
     """청약홈 주소 → 시군구 코드."""
-    gu = next((n for c, n in sd["codes"].items() if n.split()[-1] in house["addr"]), "")
+    gu = max((n for c, n in sd["codes"].items() if n.split()[-1] in house["addr"].split()), key=len, default="")   # '강서구'를 '서구'로 오인하지 않게
     return next((c for c, n in sd["codes"].items() if n == gu), "")
 
 
@@ -130,7 +130,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
             trades.append([dt, p, f, t[2], base or est.get(t[2]) or t[3], 1 if base else 0])
         if not trades:
             continue
-        gu = next((n for c, n in sd["codes"].items() if n.split()[-1] in h["addr"]), "")
+        gu = max((n for c, n in sd["codes"].items() if n.split()[-1] in h["addr"].split()), key=len, default="")   # '강서구'를 '서구'로 오인하지 않게
         code = next((c for c, n in sd["codes"].items() if n == gu), "")
         crumbs = [("전국", "../../index.html"), (sd["short"], "../index.html")]
         l2k = l2_of.get(code)
@@ -148,7 +148,10 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, hou
         data = {"ty": [[t[2], t[1], t[3]] for t in types], "t": trades, "scan": sorted(prices), "est": est, "hh": hh_all, "gen": gen_n,
                 "rng": {l: [min(r[2] for r in v), max(r[2] for r in v)] for l, v in (prices or {}).items()}}
         pp = pcache.get(f"pre:{hid}") or {}
-        ctx = {"poi": pp if pp.get("x") else None, "name": h["name"], "fav": [h["name"], f"{sd['short']} {gu} · 분양권", f"{sdir}/{PRE_DIR}/{hid}.html"], "addr": h["addr"].replace(sd["sido"], sd["short"]), "loc2": gu + (" " + next((w for w in h["addr"].split() if w[-1] in "동리가읍면" and not w[0].isdigit()), "") if gu else ""), "meta": meta, "crumbs": crumbs,
+        dong = next((w for w in h["addr"].split() if w[-1] in "동리가읍면" and not w[0].isdigit()), "")
+        pm = {"p": f"{sdir}/{PRE_DIR}/{hid}.html", "n": h["name"], "s": sdir, "g": l2_name.get(l2k, gu) if l2k and len(sd["l2"]) > 1 else gu,
+              "d": dong, "y": int(mv[:4]) if len(mv) == 6 else 0, "h": hh_all, "k": 1}   # 인기단지(실시간 검색)용
+        ctx = {"pm": pm, "poi": pp if pp.get("x") else None, "name": h["name"], "fav": [h["name"], f"{sd['short']} {gu} · 분양권", f"{sdir}/{PRE_DIR}/{hid}.html"], "addr": h["addr"].replace(sd["sido"], sd["short"]), "loc2": gu + (" " + next((w for w in h["addr"].split() if w[-1] in "동리가읍면" and not w[0].isdigit()), "") if gu else ""), "meta": meta, "crumbs": crumbs,
                "root": "../../", "today": now.strftime("%Y%m%d"), "data": data, "map_q": f"{h['addr']} {h['name']}",
                "info": {"gen": h.get("total") or gen, "total": total, "mv": f"{mv[:4]}.{mv[4:]}" if len(mv) == 6 else "-",
                         "pbl": (h.get("pbl") or "")[:7].replace("-", "."), "builder": h.get("builder") or "-", "n": len(trades),

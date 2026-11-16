@@ -36,6 +36,14 @@ jobs:
           [ -n "$id" ] || { echo "KV 를 만들지 못했습니다"; exit 1; }
           sed -i "s/__KV_ID__/$id/" wrangler.toml
           echo "KV: $id"
+      - name: 조회 수 DB(D1) 준비
+        run: |
+          find() { $WRANGLER d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const a=JSON.parse(s.slice(s.indexOf("[")));const n=a.find(x=>x.name==="nextdoorprice-hits");process.stdout.write(n?n.uuid:"")})'; }
+          id=$(find)
+          [ -n "$id" ] || { $WRANGLER d1 create nextdoorprice-hits; id=$(find); }
+          [ -n "$id" ] || { echo "D1 을 만들지 못했습니다 (토큰에 D1 권한 필요)"; exit 1; }
+          sed -i "s/__D1_ID__/$id/" wrangler.toml
+          echo "D1: $id"
       - name: 배포
         run: $WRANGLER deploy
       - name: 확인

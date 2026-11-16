@@ -291,6 +291,54 @@ def same_type(area, ref):
     return D.area_type(area) == t if t != "기타" else abs(area - ref) <= 1.5
 
 
+def pop_periods(today):
+    """인기단지 기간: (키, 이름, 시작, 끝, 기준) — 주는 월요일 시작, 기준 'seen'=공개일 · 'dt'=계약일."""
+    mon = today - timedelta(days=today.weekday())
+    f = lambda d: d.strftime("%Y%m%d")
+    m1 = today.replace(day=1)
+    pm_end = m1 - timedelta(days=1)
+    return [("tw", "이번주", f(mon), f(today), "seen"), ("lw", "지난주", f(mon - timedelta(days=7)), f(mon - timedelta(days=1)), "seen"),
+            ("tm", "이번달", f(m1), f(today), "dt"), ("lm", "지난달", f(pm_end.replace(day=1)), f(pm_end), "dt"),
+            ("ty", "올해", f(today.replace(month=1, day=1)), f(today), "dt")]
+
+
+def pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name):
+    """site/pop/{시도}.json — {"p": 기간 [[키, 이름, 시작, 끝]], "m": {단지키: [이름, 구·군, 동, 입주년, 세대수, 분양권]},
+    "r": {기간키: {"": [[단지키, 건수]...], 구·군: [...]}} (상위 10)}. 단지키 = 페이지 주소(시도/apt/…) 또는 '이름|구·군'."""
+    today = datetime.now(D.KST)
+    periods = pop_periods(today)
+    meta, rows = {}, []
+    for src in ("sale", "pre"):
+        for t in sdb[src]["trades"]:
+            l2 = l2_name.get(l2_of.get(t.get("c")), (t.get("d") or "").split()[-1] if t.get("d") else "")
+            if src == "sale":
+                hh, ap = cinfo(t)
+                k = f"{sdir}/apt/{t['s']}.html" if t.get("s") and t["s"] in D.APT_PAGES else f"{t['n']}|{l2}"
+                yr = int(ap[:4]) if ap and ap[:4].isdigit() else (int(t["by"]) if str(t.get("by", "")).isdigit() else 0)
+            else:
+                hh, mv, extra = cinfo(dict(t, src="pre"))
+                k = f"{sdir}/{extra['h']}.html" if extra.get("h") else f"{t['n']}|{l2}"
+                yr = int(str(mv)[:4]) if mv else 0
+            if k not in meta:
+                meta[k] = [t["n"], l2, t.get("u", ""), yr, hh or 0, 1 if src == "pre" else 0]
+            rows.append((k, l2, str(t.get("dt", "")), t.get("seen") or ""))
+    out = {"p": [[pk, nm, a, b] for pk, nm, a, b, _ in periods], "m": {}, "r": {}}
+    for pk, nm, a, b, basis in periods:
+        by = defaultdict(lambda: defaultdict(int))
+        for k, l2, dt, seen in rows:
+            d = seen if basis == "seen" else dt
+            if a <= d <= b:
+                by[""][k] += 1
+                by[l2][k] += 1
+        out["r"][pk] = {g: sorted(c.items(), key=lambda kv: (-kv[1], kv[0]))[:10] for g, c in by.items()}
+    used = {k for per in out["r"].values() for lst in per.values() for k, _ in lst}
+    out["m"] = {k: meta[k] for k in used}
+    out["g"] = [l["name"] for l in sd["l2"]] if len(sd["l2"]) > 1 else []
+    os.makedirs(os.path.join(SITE, "pop"), exist_ok=True)
+    with open(os.path.join(SITE, "pop", f"{sdir}.json"), "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+
+
 def match_house(houses, sd, t):
     """분양권 거래 → 청약홈 분양 단지 (같은 시군구 + 단지명)."""
     gu = t["d"].split()[-1]
@@ -601,6 +649,8 @@ def main():
         push["regions"][f"{sdir}/index.html"] = {"n": nm, "c": sale_ctx["cnt"], "h": sale_ctx["high_cnt"], "r": rent_ctx["cnt"]}
         for c in chips:
             push["regions"][c["href"]] = {"n": f"{nm} {c['name']}", "c": c["cnt"], "h": c["high"]}
+        if key in APT_SIDOS:   # 인기단지 '많이 산 단지': 기간·지역별 거래 많은 단지 (주 단위는 공개일, 월·연 단위는 계약일)
+            pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name)
         # --- 지난 날짜 (최근 7일 중 신규 공개가 있었던 날) — /{시도}/d{날짜}/
         for dd in days[1:]:
             day = now.replace(year=int(dd[:4]), month=int(dd[4:6]), day=int(dd[6:]))
@@ -642,6 +692,9 @@ def main():
           "max_cnt": max([h["cnt"] for h in home] + [1])}
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
         f.write(env.get_template("home.html").render(hc))
+    with open(os.path.join(SITE, "pop.html"), "w", encoding="utf-8") as f:   # 인기단지 (많이 산 단지 · 실시간 검색)
+        f.write(env.get_template("pop.html").render(today=now.strftime("%Y%m%d"),
+                sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home if h["key"] in APT_SIDOS]))
     with open(os.path.join(SITE, "push.json"), "w", encoding="utf-8") as f:
         json.dump(push, f, ensure_ascii=False, separators=(",", ":"))
     with open(os.path.join(SITE, "fav.html"), "w", encoding="utf-8") as f:   # 관심단지 (기기에 저장한 단지의 최근 7일 거래)
