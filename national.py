@@ -854,6 +854,16 @@ def main():
     ddays.reverse()
     daily = [[d, hist_d.get(d, {}).get("_")] for d in ddays]
     daily_by = {k: [hist_d.get(d, {}).get(k) for d in ddays] for k in ["_"] + [h["key"] for h in home]}
+    # 주요거래 이미지의 '거래량 추이': 시도별 최근 60일 공개일 신규 매매 → major/{시도}.json 에 덧붙임
+    d60 = (now - timedelta(days=59)).strftime("%Y%m%d")
+    for h in home:
+        mp = os.path.join(SITE, "major", f"{h['href'].split('/')[0]}.json")
+        if os.path.exists(mp):
+            with open(mp, encoding="utf-8") as f:
+                mj = json.load(f)
+            mj["t"] = [[d, v[h["key"]]] for d, v in sorted(hist_d.items()) if d >= d60 and d <= today_d and v.get(h["key"])]
+            with open(mp, "w", encoding="utf-8") as f:
+                json.dump(mj, f, ensure_ascii=False, separators=(",", ":"))
     with open(os.path.join(SITE, "moved.json"), "w", encoding="utf-8") as f:
         json.dump(moved_paths, f, ensure_ascii=False, separators=(",", ":"))
     hc = {"date_label": now.strftime("%y.%m.%d"), "sidos": home, "site_url": SITE_URL, "daily": daily, "daily_by": daily_by,
