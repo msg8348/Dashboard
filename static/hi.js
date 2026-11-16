@@ -121,7 +121,7 @@
             c.querySelectorAll('.sels2, .seg, .h-sh').forEach(x => { x.style.display = 'none'; });
             const cap = c.querySelector('.h-cap');
             cap.style.display = 'block';
-            cap.innerHTML = `<div style="font-size:20px;font-weight:900;color:#17202c">👑 ${esc(t1)}</div><div style="font-size:13px;font-weight:700;color:#4a5566;margin:4px 0 10px">${esc(t2)}</div>`;
+            cap.innerHTML = `<div style="font-size:20px;font-weight:900;color:#17202c">${esc(t1)}</div><div style="font-size:13px;font-weight:700;color:#4a5566;margin:4px 0 10px">${esc(t2)}</div>`;
             const mk = doc.createElement('div'); mk.textContent = 'nextdoorprice.com';
             Object.assign(mk.style, { textAlign: 'center', fontSize: '10px', color: '#a3abb7', letterSpacing: '.6px', padding: '4px 0 2px' });
             c.appendChild(mk);
