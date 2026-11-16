@@ -47,7 +47,7 @@
 <div class="sec" id="hi"></div>
 </div>
 <script src="hi.js?v={{ today }}"></script>
-<script>NDPHi(document.getElementById('hi'), { root: '', sidos: {{ sidos|tojson }}, v: '{{ today }}' });</script>
+<script>NDPHi(document.getElementById('hi'), { root: '', url: true, sidos: {{ sidos|tojson }}, v: '{{ today }}' });</script>
 <script src="search.js?v={{ today }}"></script>
 </body>
 </html>

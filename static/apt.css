@@ -64,7 +64,7 @@ table{width:100%;border-collapse:collapse}
 .sharebtn svg{width:19px;height:19px}
 .cap-brand{display:flex;margin:0 0 12px}
 .rk{display:flex;gap:8px}
-.rki{position:relative;flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;background:#f6f8fa;border-radius:10px;padding:8px 4px}
+.rki{text-decoration:none;color:inherit;cursor:pointer;position:relative;flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;background:#f6f8fa;border-radius:10px;padding:8px 4px}
 .rty{font-size:12px;font-weight:800;border-radius:6px;padding:2px 6px}
 .rty.t84{background:#ebf1ff;color:var(--blue)}.rty.t59{background:#e5f4f0;color:var(--teal)}.rty.t74{background:#eef1f5;color:var(--ink-2)}
 .rkn{position:relative;font-size:15px;font-weight:900;color:var(--ink)}

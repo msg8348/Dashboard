@@ -27,7 +27,8 @@
 .hiw .h-sh{display:flex;justify-content:flex-end;padding:4px 0 6px}
 .hiw .h-sh button{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:13px;font-weight:700;color:#17202c;background:#fff;border:1.5px solid #c9d0da;border-radius:10px;padding:5px 11px;cursor:pointer}
 .hiw .h-sh button:disabled{opacity:.55}.hiw .h-sh svg{width:14px;height:14px}
-.hiw .h-cap{display:none}`;
+.hiw .h-cap{display:none}
+.hiw .r.me{background:#fff7d6;border-radius:10px;box-shadow:inset 0 0 0 2px #f5c64d}`;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const eok = p => { const e = Math.floor(p / 1e4), r = p % 1e4; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() : '') || '0'; };
@@ -39,6 +40,11 @@
     const root = o.root || '', key = 'ndp_hi' + (o.s ? ':' + o.s + ':' + (o.g || '') : '');
     const S = { s: o.s || '', g: o.g || '', d: '', y: '', m: '', k: 's', t: 84 };
     try { Object.assign(S, JSON.parse(sessionStorage.getItem(key)) || {}); } catch (e) {}
+    if (o.url) {   // 단지 페이지 '매매가 순위'에서 들어올 때: ?s=시도&t=84&k=s&y=r1&hl=단지 페이지
+      const q = new URLSearchParams(location.search);
+      if (q.get('s')) Object.assign(S, { s: q.get('s'), g: '', d: '', m: '', k: q.get('k') || 's', t: +(q.get('t') || 84), y: q.get('y') || '' });
+      o.hl = q.get('hl') || '';
+    }
     if (o.s) S.s = o.s;
     if (o.g) S.g = o.g;
     el.classList.add('hiw');
@@ -53,7 +59,7 @@
     async function render() {
       try { sessionStorage.setItem(key, JSON.stringify(S)); } catch (e) {}
       const ix = idx[S.s] = idx[S.s] || await getj(`${root}hi/${S.s}.json?v=${o.v || ''}`);
-      if (!ix.y.includes(S.y)) S.y = ix.y[ix.y.length - 1] || '';   // 기본: 올해
+      if (S.y !== 'r1' && !ix.y.includes(S.y)) S.y = ix.y[ix.y.length - 1] || '';   // 기본: 올해
       const gu = $('.h-gu'), dong = $('.h-dong');
       gu.hidden = !ix.g.length || !!o.g;
       gu.innerHTML = opt('', '구전체', !S.g) + ix.g.map(g => opt(g, g, g === S.g)).join('');
@@ -62,44 +68,55 @@
       dong.hidden = !S.g;
       el.querySelector('.sels2').classList.toggle('five', !S.g ? false : !o.g && !o.s);
       dong.innerHTML = opt('', '동전체', !S.d) + ds.map(d => opt(d, d, d === S.d)).join('');
-      $('.h-yr').innerHTML = ix.y.slice().reverse().map(y => opt(y, y.slice(2) + '년', y === S.y)).join('');
+      $('.h-yr').innerHTML = opt('r1', '최근1년', S.y === 'r1') + ix.y.slice().reverse().map(y => opt(y, y.slice(2) + '년', y === S.y)).join('');
+      $('.h-mo').hidden = S.y === 'r1';
       $('.h-mo').innerHTML = opt('', '월전체', !S.m) + Array.from({ length: 12 }, (_, i) => opt(String(i + 1), (i + 1) + '월', String(i + 1) === S.m)).join('');
       el.querySelectorAll('.h-kind button').forEach(b => b.classList.toggle('on', b.dataset.k === S.k));
       el.querySelectorAll('.h-ty button').forEach(b => b.classList.toggle('on', +b.dataset.t === +S.t));
       const list = $('.h-list');
       if (!S.y) { list.innerHTML = '<div class="empty">데이터가 없어요</div>'; return; }
-      const ck = S.s + S.y;
-      if (!yc[ck]) list.innerHTML = '<div class="empty">불러오는 중…</div>';
-      const d = yc[ck] = yc[ck] || await getj(`${root}hi/${S.s}/${S.y}.json?v=${o.v || ''}`);
+      // 최근 1년: 올해 + 작년(이번 달 다음 달부터) 두 파일을 합쳐 봄
+      const now = new Date(), cy = String(now.getFullYear()), cm = now.getMonth() + 1;
+      const yrs = S.y === 'r1' ? [String(+cy - 1), cy].filter(y => ix.y.includes(y)) : [S.y];
+      const files = [];
+      for (const y of yrs) {
+        const ck = S.s + y;
+        if (!yc[ck]) list.innerHTML = '<div class="empty">불러오는 중…</div>';
+        yc[ck] = yc[ck] || await getj(`${root}hi/${S.s}/${y}.json?v=${o.v || ''}`);
+        files.push([y, yc[ck]]);
+      }
       const best = new Map();
-      for (const r of d.t) {
+      for (const [y, d] of files) for (const r of d.t) {
         const [mi, kind, ty, mo, p] = r;
         if ((S.k === 'j') !== (kind === 2)) continue;
         if (+S.t && ty !== +S.t) continue;
-        if (S.m && mo !== +S.m) continue;
+        if (S.y === 'r1' ? (y === cy ? mo > cm : mo <= cm) : (S.m && mo !== +S.m)) continue;
         const m = d.m[mi];
         if (S.g && m[2] !== S.g) continue;
         if (S.d && m[3] !== S.d) continue;
-        const k = mi + ':' + kind;
-        if (!best.has(k) || p > best.get(k)[4]) best.set(k, r);
+        const k = m[0] + ':' + kind;
+        if (!best.has(k) || p > best.get(k)[1][4]) best.set(k, [m, r, y]);
       }
-      const rs = [...best.values()].sort((a, b) => b[4] - a[4]).slice(0, 20);
-      list.innerHTML = rs.length ? rs.map(([mi, kind, ty, mo, p, f, dd, a], i) => {
-        const m = d.m[mi], pre = kind === 1;
+      const rs = [...best.values()].sort((a, b) => b[1][4] - a[1][4]).slice(0, 20);
+      list.innerHTML = rs.length ? rs.map(([m, [mi, kind, ty, mo, p, f, dd, a], ry], i) => {
+        const pre = kind === 1;
         const loc = S.d ? '' : S.g ? m[3] : m[2];   // 전체: 구·군 / 구·군 선택: 동 / 동 선택: 생략
         const sub = [loc, m[4] ? String(m[4]).slice(2) + '년' + (pre ? ' 예정' : '') : ''].filter(Boolean).join(' · ');
-        const when = `${S.y.slice(2)}.${String(mo).padStart(2, '0')}.${String(dd).padStart(2, '0')}`;
+        const when = `${ry.slice(2)}.${String(mo).padStart(2, '0')}.${String(dd).padStart(2, '0')}`;
         const inner = `<span class="rk ${i < 3 ? 't3' : ''}">${i + 1}</span><span class="nm"><b><span>${esc(m[1])}</span>${pre ? '<i class="pt">분양권</i>' : ''}</b><small>${esc(sub)}</small></span>`
           + `<span class="pr ${kind === 2 ? 'j' : ''}"><b>${eok(p)}</b><small>${ty || Math.round(a) + '㎡'} · ${/^-?\d+$/.test(f) ? f + '층' : esc(f)} · ${when}</small></span>`;
-        return m[0].endsWith('.html') ? `<a class="r" href="${esc(root + m[0])}">${inner}</a>` : `<div class="r">${inner}</div>`;
+        const me = o.hl && m[0] === o.hl ? ' me' : '';
+        return m[0].endsWith('.html') ? `<a class="r${me}" href="${esc(root + m[0])}">${inner}</a>` : `<div class="r${me}">${inner}</div>`;
       }).join('') : '<div class="empty">이 조건에 맞는 거래가 없어요</div>';
+      const meEl = o.hl && list.querySelector('.r.me');
+      if (meEl && !o.scrolled) { o.scrolled = true; setTimeout(() => meEl.scrollIntoView({ block: 'center', behavior: 'smooth' }), 150); }
       $('.h-note').textContent = `국토부 실거래 · 계약일 기준 · 기간 중 단지별 최고 거래${S.k === 'j' ? ' (전세는 최근 1년)' : ''}`;
     }
     // 공유: 지금 보이는 순위를 이미지 한 장으로 (필터 대신 조건을 글로)
     const capTitle = () => {
       const sn = o.name || ((o.sidos || []).find(x => x[1] === S.s) || [''])[0];
       const reg = [sn, S.g, S.d].filter(Boolean).join(' ');
-      const cond = [`${S.y}년${S.m ? ' ' + S.m + '월' : ''}`, S.k === 'j' ? '전세' : '매매', +S.t ? S.t + '타입' : '전체 평형'].join(' · ');
+      const cond = [S.y === 'r1' ? '최근 1년' : `${S.y}년${S.m ? ' ' + S.m + '월' : ''}`, S.k === 'j' ? '전세' : '매매', +S.t ? S.t + '타입' : '전체 평형'].join(' · ');
       return [reg + ' 최고가', cond];
     };
     const loadH2C = () => window.html2canvas ? Promise.resolve() : new Promise((ok, no) => {
@@ -134,7 +151,7 @@
               c.appendChild(mk);
             } });
           const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-          files.push(new File([blob], `${t1.replace(/\s+/g, '_')}_${S.y}${S.m ? '_' + S.m + '월' : ''}${parts.length > 1 ? `_${from + 1}-${to}위` : ''}.png`, { type: 'image/png' }));
+          files.push(new File([blob], `${t1.replace(/\s+/g, '_')}_${S.y === 'r1' ? '최근1년' : S.y}${S.m ? '_' + S.m + '월' : ''}${parts.length > 1 ? `_${from + 1}-${to}위` : ''}.png`, { type: 'image/png' }));
         }
         if (typeof shareFiles === 'function') shareFiles(files);   // 지역 페이지: 공용 공유(미리보기 포함)
         else if (navigator.canShare && navigator.canShare({ files })) await navigator.share({ files }).catch(() => {});
