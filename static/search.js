@@ -65,6 +65,19 @@
     },
   };
   window.NDPPush = Push;
+  // ---- 인기단지 '실시간 검색': 단지·분양권 페이지를 보면 서버에 1회 기록 (같은 기기·같은 단지는 하루 한 번, 개인 정보 없음)
+  (function hit() {
+    const m = window.PAGE_META;
+    if (!m || !m.p || !navigator.sendBeacon) return;
+    const day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10), k = 'ndp_hit';
+    let seen = {};
+    try { seen = JSON.parse(localStorage.getItem(k)) || {}; } catch (e) {}
+    if (seen.d !== day) seen = { d: day, p: [] };
+    if (seen.p.includes(m.p)) return;
+    seen.p.push(m.p);
+    try { localStorage.setItem(k, JSON.stringify(seen)); } catch (e) {}
+    navigator.sendBeacon(PUSH_API + '/hit', new Blob([JSON.stringify(m)], { type: 'text/plain' }));
+  })();
   window.NDPRoot = ROOT;
   // 단지·분양권 페이지의 별 버튼 (data-fav='[이름, 위치, 주소]')
   document.querySelectorAll('[data-fav]').forEach(b => {

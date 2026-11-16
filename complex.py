@@ -258,7 +258,9 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
                     tl[str(ar)] = m[1]
             if tl:
                 data["tl"] = tl
-        ctx = {"ranks": ranks.get(k, []), "sido_short": sd["short"], "name": a["n"], "loc": loc, "loc2": " ".join(x for x in (gu, a["u"]) if x), "poi": pcache.get(k) if (pcache.get(k) or {}).get("x") else None, "fav": [a["n"], f"{sd['short']} {gu} {a['u']}".strip(), f"{sdir}/{APT_DIR}/{k}.html"], "jibun": a["j"], "road": info.get("road", ""), "info": info,
+        l2n = l2_name[l2k] if l2k and len(sd["l2"]) > 1 else gu   # 인기단지(실시간 검색)용: 지역 2단계 이름
+        pm = {"p": f"{sdir}/{APT_DIR}/{k}.html", "n": a["n"], "s": sdir, "g": l2n, "d": a["u"], "y": year, "h": info.get("hh", 0), "k": 0}
+        ctx = {"pm": pm, "ranks": ranks.get(k, []), "sido_short": sd["short"], "name": a["n"], "loc": loc, "loc2": " ".join(x for x in (gu, a["u"]) if x), "poi": pcache.get(k) if (pcache.get(k) or {}).get("x") else None, "fav": [a["n"], f"{sd['short']} {gu} {a['u']}".strip(), f"{sdir}/{APT_DIR}/{k}.html"], "jibun": a["j"], "road": info.get("road", ""), "info": info,
                "meta": " · ".join(x for x in ("" if (info.get("kind") or "아파트") == "아파트" else info["kind"], built, age) if x),
                "crumbs": crumbs, "root": "../../", "data": data, "today": now.strftime("%Y%m%d"),
                "map_q": f"{sd['short']} {gu} {a['u']} {a['n']}".replace("  ", " "),

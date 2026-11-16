@@ -1,0 +1,119 @@
+{% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>인기단지 | 옆집얼마</title>
+<meta name="description" content="많이 산 단지와 실시간 검색 단지 순위 — 이번주·지난주·이번달·지난달·올해, 시도·구군별 — 옆집얼마">
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root { --ink:#17202c; --ink-2:#4a5566; --muted:#8a94a3; --navy:#2b3a67; --blue:#2754d6; --red:#e0472c; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#eef1f4;color:var(--ink);padding:0 14px 40px;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:720px;margin:0 auto}
+{{ brand_css() }}
+  .topbar{position:sticky;top:0;z-index:15;background:rgba(238,241,244,.95);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:12px 0 8px;display:flex;align-items:center;justify-content:space-between}
+  .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}.menu-btn svg{width:22px;height:22px}
+  .head{display:flex;align-items:center;gap:8px;margin:8px 2px 12px}.head h1{font-size:23px;font-weight:900;letter-spacing:-.4px}
+  .tabs{display:flex;background:#e2e6ec;border-radius:14px;padding:4px;margin-bottom:12px}
+  .tabs button{flex:1;font:inherit;font-size:15px;font-weight:800;color:var(--ink-2);border:0;background:none;border-radius:11px;padding:10px 0;cursor:pointer}
+  .tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(20,30,60,.12)}
+  .sec{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:14px 16px 8px}
+  .per{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}.per::-webkit-scrollbar{display:none}
+  .per button{flex:none;font:inherit;font-size:13px;font-weight:800;padding:7px 12px;border-radius:999px;background:#f2f4f7;color:var(--ink-2);border:0;cursor:pointer}
+  .per button.on{background:var(--navy);color:#fff}
+  .f{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+  .f .sels{display:flex;gap:6px}
+  .f select{font:inherit;font-size:14px;font-weight:700;height:36px;border:1px solid #d6dbe2;border-radius:10px;padding:0 8px;background:#fff;color:var(--ink)}
+  .f .sub{font-size:12px;color:var(--muted);font-weight:600;text-align:right}
+  .r{display:flex;align-items:center;gap:10px;padding:10px 2px;border-top:1px solid #f0f2f5}
+  .rk{width:24px;height:24px;border-radius:50%;background:#eef1f6;color:var(--ink-2);font-size:12.5px;font-weight:800;display:grid;place-items:center;flex:none}.rk.t3{background:#f97316;color:#fff}
+  .nm{flex:1;min-width:0}
+  .nm b{display:flex;align-items:center;gap:5px;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden}
+  .nm b span{overflow:hidden;text-overflow:ellipsis}
+  .nm small{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pt{font-style:normal;font-size:11px;font-weight:800;color:#d12f62;background:#fde8ee;border-radius:6px;padding:1px 6px;flex:none}
+  .v{font-size:17px;font-weight:800;color:#c2410c;flex:none}.v small{font-size:12px;color:var(--muted);margin-left:1px;font-weight:600}
+  .chg{font-size:12.5px;font-weight:800;min-width:34px;text-align:right;flex:none}.chg.up{color:var(--red)}.chg.dn{color:var(--blue)}.chg.eq{color:#b4bcc8}.chg.nw{color:#f97316}
+  .empty{text-align:center;color:var(--muted);font-size:14px;padding:34px 0;line-height:1.6;border-top:1px solid #f0f2f5}
+  .note{font-size:11.5px;color:var(--muted);text-align:right;padding:6px 0 4px}
+</style>
+</head>
+<body><div class="wrap">
+<div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
+<div class="head"><h1>🔥 인기단지</h1></div>
+<div class="tabs" id="tabs"><button type="button" data-t="buy" class="on">많이 산 단지</button><button type="button" data-t="live">실시간 검색</button></div>
+<div class="sec">
+  <div class="per" id="per"></div>
+  <div class="f"><span class="sels"><select id="sido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select><select id="gu" aria-label="구·군"></select></span><span class="sub" id="sub"></span></div>
+  <div id="list"></div>
+  <div class="note" id="note"></div>
+</div>
+</div>
+<script>
+const PUSH_API = 'https://nextdoorprice-push.newreds22.workers.dev';
+const SIDO_NAME = {{ sidos|tojson }};
+const S = { t: 'buy', p: 'tm', s: '', g: '' };
+try { Object.assign(S, JSON.parse(sessionStorage.getItem('ndp_pop')) || {}); } catch (e) {}
+const cache = {};
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const dlab = d => `${+d.slice(4, 6)}.${+d.slice(6)}`;
+async function data(s) {
+  if (!cache[s]) cache[s] = fetch(`pop/${s}.json?v={{ today }}`).then(r => r.json());
+  return cache[s];
+}
+function sub(name, l2, dong, yr, hh, pre) {   // 지역 전체: 구·군 / 구·군 선택: 동
+  const y = yr ? `${String(yr).slice(2)}년 ${pre ? '입주예정' : '입주'}` : '';
+  return [S.g ? dong : l2, y, hh ? `${(+hh).toLocaleString()}세대` : ''].filter(Boolean).join(' · ');
+}
+function row(i, href, name, small, pre, right) {
+  const inner = `<span class="rk ${i < 3 ? 't3' : ''}">${i + 1}</span><span class="nm"><b><span>${esc(name)}</span>${pre ? '<i class="pt">분양권</i>' : ''}</b><small>${esc(small)}</small></span>${right}`;
+  return href ? `<a class="r" href="${esc(href)}">${inner}</a>` : `<div class="r">${inner}</div>`;
+}
+async function render() {
+  try { sessionStorage.setItem('ndp_pop', JSON.stringify(S)); } catch (e) {}
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === S.t));
+  const d = await data(S.s);
+  const per = d.p.find(x => x[0] === S.p) || d.p[2];
+  document.getElementById('per').innerHTML = d.p.map(x => `<button type="button" data-p="${x[0]}" class="${x[0] === per[0] ? 'on' : ''}">${x[1]}</button>`).join('');
+  const gu = document.getElementById('gu');
+  gu.hidden = !d.g.length;
+  gu.innerHTML = `<option value="">전체</option>` + d.g.map(g => `<option ${g === S.g ? 'selected' : ''}>${esc(g)}</option>`).join('');
+  const list = document.getElementById('list'), note = document.getElementById('note');
+  const range = per[2] === per[3] ? dlab(per[2]) : `${dlab(per[2])}~${dlab(per[3])}`;
+  if (S.t === 'buy') {
+    document.getElementById('sub').textContent = '매매·분양권 · 거래 건수 순';
+    const rs = (d.r[per[0]] || {})[S.g] || [];
+    list.innerHTML = rs.length ? rs.map(([k, n], i) => { const m = d.m[k] || [k, '', '', 0, 0, 0];
+      return row(i, k.endsWith('.html') ? k : '', m[0], sub(m[0], m[1], m[2], m[3], m[4], m[5]), m[5], `<span class="v">${n}<small>건</small></span>`); }).join('')
+      : '<div class="empty">이 기간에 거래가 없어요</div>';
+    note.textContent = `국토부 실거래 · ${['tw', 'lw'].includes(per[0]) ? '공개일' : '계약일'} 기준 (${range})`;
+  } else {
+    document.getElementById('sub').textContent = '옆집얼마 단지 조회 순';
+    list.innerHTML = '<div class="empty">불러오는 중…</div>';
+    let items = [];
+    try {
+      const q = new URLSearchParams({ s: S.s, from: per[2], to: per[3] });
+      if (S.g) q.set('g', S.g);
+      items = (await (await fetch(`${PUSH_API}/rank?${q}`)).json()).items || [];
+    } catch (e) {}
+    list.innerHTML = items.length ? items.map((r, i) => {
+      const c = r.chg === 'new' ? '<span class="chg nw">NEW</span>' : r.chg == null ? '' : r.chg > 0 ? `<span class="chg up">▲${r.chg}</span>` : r.chg < 0 ? `<span class="chg dn">▼${-r.chg}</span>` : '<span class="chg eq">-</span>';
+      return row(i, r.path, r.name, sub(r.name, r.l2, r.dong, r.yr, r.hh, r.pre), r.pre, c);
+    }).join('') : '<div class="empty">아직 집계된 조회가 없어요<br><small>단지 페이지를 볼 때마다 순위가 쌓여요</small></div>';
+    note.textContent = `${range} · 순위 변동은 어제 대비`;
+  }
+}
+document.getElementById('tabs').onclick = e => { const b = e.target.closest('button'); if (b) { S.t = b.dataset.t; render(); } };
+document.getElementById('per').onclick = e => { const b = e.target.closest('button'); if (b) { S.p = b.dataset.p; render(); } };
+const sel = document.getElementById('sido');
+if (S.s && [...sel.options].some(o => o.value === S.s)) sel.value = S.s; else S.s = sel.value;
+sel.onchange = () => { S.s = sel.value; S.g = ''; render(); };
+document.getElementById('gu').onchange = e => { S.g = e.target.value; render(); };
+render();
+</script>
+<script src="search.js?v={{ today }}"></script>
+</body>
+</html>

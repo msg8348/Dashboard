@@ -8,5 +8,10 @@ workers_dev = true
 binding = "SUBS"
 id = "__KV_ID__"
 
+[[d1_databases]]
+binding = "HITS"
+database_name = "nextdoorprice-hits"
+database_id = "__D1_ID__"
+
 [triggers]
 crons = ["*/5 * * * *"]

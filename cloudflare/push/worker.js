@@ -4,6 +4,7 @@
 //     ① 새 공개일이면: 관심단지에 새 거래가 있는 기기에 '관심단지 실거래' 알림
 //     ② 한국시간 07시 이후 하루 한 번: 아침 요약을 켠 기기에 관심지역 요약 알림 (누르면 지역 페이지)
 //   기기가 많으면 한 번에 BATCH 개씩 나눠 보내고 다음 실행에서 이어 보냄.
+// - 단지·분양권 페이지 조회 수(/hit) → D1, 인기단지 '실시간 검색' 순위(/rank)
 // - 알림 서명 키(VAPID)는 처음 요청 때 만들어 KV 에 보관 (밖으로 나가는 건 공개키뿐)
 // 배포: .github/workflows/Push.yml (wrangler)
 
@@ -47,6 +48,42 @@ export default {
         const b = await req.json();
         if (b && typeof b.endpoint === 'string') await env.SUBS.delete(await subKey(b.endpoint));
         return json({ ok: true });
+      }
+      if (url.pathname === '/hit' && req.method === 'POST') {   // 단지·분양권 페이지 조회 1회 (기기마다 하루 한 번)
+        if (!env.HITS) return json({ ok: false });
+        const b = JSON.parse(await req.text() || '{}');
+        const p = String(b.p || '');
+        if (!/^[a-z-]+\/(apt|pre)\/[\w-]+\.html$/.test(p)) return json({ ok: false }, 400);
+        const day = kstDate(), sido = p.split('/')[0];
+        await ensureTables(env);
+        await env.HITS.batch([
+          env.HITS.prepare('INSERT INTO hits (day, path, sido, n) VALUES (?1, ?2, ?3, 1) ON CONFLICT(day, path) DO UPDATE SET n = n + 1').bind(day, p, sido),
+          env.HITS.prepare('INSERT INTO meta (path, name, sido, l2, dong, yr, hh, pre) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) ON CONFLICT(path) DO UPDATE SET name = ?2, l2 = ?4, dong = ?5, yr = ?6, hh = ?7, pre = ?8')
+            .bind(p, String(b.n || '').slice(0, 60), sido, String(b.g || '').slice(0, 30), String(b.d || '').slice(0, 20), +b.y || 0, +b.h || 0, b.k ? 1 : 0),
+        ]);
+        return json({ ok: true });
+      }
+      if (url.pathname === '/rank') {   // 실시간 검색 순위: ?s=busan&from=YYYYMMDD&to=YYYYMMDD&g=해운대구
+        if (!env.HITS) return json({ items: [] });
+        const cache = caches.default, ck = new Request(url.toString());
+        const hit = await cache.match(ck);
+        if (hit) return new Response(hit.body, { headers: { ...cors, 'Content-Type': 'application/json' } });
+        const s = url.searchParams.get('s') || '', g = url.searchParams.get('g') || '';
+        const from = url.searchParams.get('from') || '', to = url.searchParams.get('to') || '';
+        if (!/^[a-z-]+$/.test(s) || !/^\d{8}$/.test(from) || !/^\d{8}$/.test(to)) return json({ items: [] }, 400);
+        await ensureTables(env);
+        const q = (t) => env.HITS.prepare(`SELECT h.path, SUM(h.n) AS n, m.name, m.l2, m.dong, m.yr, m.hh, m.pre FROM hits h JOIN meta m ON m.path = h.path
+          WHERE h.sido = ?1 AND h.day BETWEEN ?2 AND ?3 ${g ? 'AND m.l2 = ?4' : ''} GROUP BY h.path ORDER BY n DESC, h.path LIMIT 10`).bind(...[s, from, t, ...(g ? [g] : [])]).all();
+        const now = (await q(to)).results;
+        const today = kstDate(), y = kstDate(-1);
+        let prev = null;
+        if (to >= today && y >= from) prev = new Map((await q(y)).results.map((r, i) => [r.path, i]));
+        const items = now.map((r, i) => ({ ...r, chg: prev ? (prev.has(r.path) ? prev.get(r.path) - i : 'new') : null }));
+        const res = json({ items, at: Date.now() });
+        const out = new Response(res.body, res);
+        out.headers.set('Cache-Control', 'public, max-age=60');
+        await cache.put(ck, out.clone());
+        return out;
       }
       if (url.pathname === '/kick') {   // 매일 갱신이 끝나면 GitHub Actions 가 호출 → 바로 확인 (중복 발송은 날짜로 막음)
         ctx.waitUntil(run(env));
@@ -123,9 +160,19 @@ function sumMsg(rec, data) {
   return { title: `${name} 아침 요약 · ${dl} 기준`, body, url: rec.region, tag: 'sum' };
 }
 
+let tablesReady = false;
+async function ensureTables(env) {
+  if (tablesReady) return;
+  await env.HITS.batch([
+    env.HITS.prepare('CREATE TABLE IF NOT EXISTS hits (day TEXT NOT NULL, path TEXT NOT NULL, sido TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, path))'),
+    env.HITS.prepare('CREATE INDEX IF NOT EXISTS hits_sido_day ON hits (sido, day)'),
+    env.HITS.prepare('CREATE TABLE IF NOT EXISTS meta (path TEXT PRIMARY KEY, name TEXT, sido TEXT, l2 TEXT, dong TEXT, yr INTEGER, hh INTEGER, pre INTEGER)'),
+  ]);
+  tablesReady = true;
+}
 const kstNow = () => new Date(Date.now() + 9 * 3600e3);
 const kstHour = () => kstNow().getUTCHours();
-const kstDate = () => kstNow().toISOString().slice(0, 10).replace(/-/g, '');
+const kstDate = (d = 0) => new Date(Date.now() + 9 * 3600e3 + d * 864e5).toISOString().slice(0, 10).replace(/-/g, '');
 
 async function subKey(endpoint) {
   const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(endpoint));
