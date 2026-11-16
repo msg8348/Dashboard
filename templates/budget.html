@@ -104,12 +104,12 @@
 
 <div class="sec"><div class="st">STEP 2 · 지역</div><div class="sh">어디를 보시나요?</div>
   <div class="sels"><select id="sido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select><select id="gus" aria-label="구·군"></select></div>
-  <div class="gap8"></div><div class="chips" id="ty"><button type="button" data-v="84">84타입</button><button type="button" data-v="59">59타입</button><button type="button" data-v="74">74타입</button></div>
+  <div class="gap8"></div><div class="chips" id="ty"><button type="button" data-v="59">59</button><button type="button" data-v="74">74</button><button type="button" data-v="84">84</button><button type="button" data-v="all">전체</button></div>
 </div>
 
 <div class="sec"><div class="st">STEP 3 · 우선순위</div><div class="sh">중요한 순서대로 눌러 주세요</div>
-  <div class="pr" id="pri"><button type="button" data-k="brand"><em></em>1군 브랜드</button><button type="button" data-k="subway"><em></em>역세권</button><button type="button" data-k="big"><em></em>대단지</button><button type="button" data-k="new"><em></em>신축</button><button type="button" disabled><em>-</em>평지<small>준비 중</small></button><button type="button" data-k="school"><em></em>초등학교</button><button type="button" data-k="acad"><em></em>학원가</button><button type="button" data-k="shop"><em></em>상권</button></div>
-  <div class="hint">1순위 ×3 · 2순위 ×2.5 · 3순위 ×2 · 4순위 ×1.5 · 그다음 ×1 · 안 누른 항목은 점수에 넣지 않아요. 다시 누르면 빠져요. 추천은 예산에 가까운 순이고, 우선순위 점수가 너무 낮은 단지(1등의 60% 미만)는 빼요.</div>
+  <div class="pr" id="pri"><button type="button" data-k="brand"><em></em>1군 브랜드</button><button type="button" data-k="subway"><em></em>역세권</button><button type="button" data-k="big"><em></em>대단지</button><button type="button" data-k="new"><em></em>신축</button><button type="button" data-k="school"><em></em>초등학교</button><button type="button" data-k="acad"><em></em>학원가</button><button type="button" data-k="shop"><em></em>상권</button></div>
+  <div class="hint">1순위 ×3 · 2순위 ×2.5 · 3순위 ×2 · 4순위 ×1.5 · 그다음 ×1 · 안 누른 항목은 점수에 넣지 않아요. 다시 누르면 빠져요. 추천은 예산 −1억 안에서 예산에 가까운 순으로 5곳이고, 우선순위 점수가 너무 낮은 단지(1등의 60% 미만)는 빼요.</div>
 </div>
 <div id="out"></div>
 <div class="note">기본값 ({{ rules.asof }} 기준, 일반 무주택·은행권): DSR {{ rules.dsr }}% · {% for k, r in rules.regions.items() %}{{ r.name }} LTV {{ r.ltv }}%(생애최초 {{ r.ltv1 }}%)·스트레스 +{{ r.stress }}%p{% if not loop.last %} / {% endif %}{% endfor %} · 수도권·규제지역 주담대 상한(규제지역 15억 이하 6억·25억 이하 4억·초과 2억, 수도권 6억) · 취득세 1~3%+지방교육세(생애최초 12억 이하 {{ rules.acq_first_cut }}만원 감면) · 중개수수료 법정 상한 요율 · 추천 예상가 = 최근 6개월 실거래 중간값 · 1군 브랜드 = 시공능력평가 상위 10개사 대표 브랜드 · 학원가 = 반경 500m 학원 수, 상권 = 반경 500m 음식점·카페 수와 대형마트 거리(카카오 지도, 같은 시도 안에서 상대 비교).<br>계산은 참고용이에요. 실제 대출 한도와 세금은 은행 심사, 개인 조건, 정책 변경에 따라 달라요. 입력값은 이 기기에만 저장돼요.</div>
@@ -118,7 +118,7 @@
 const RU = {{ rules|tojson }};
 const KEY = 'ndp_budget';
 const V = Object.assign({ cash: 10000, stock: 0, sell: 0, debt: 0, gift: 0, marry: false, etc: 0, first: '1', region: '', income: 6000, other: 0,
-  rate: {{ mort.v }}, years: '30', method: 'eq', sido: '', gu: '', ty: '84', pri: ['subway', 'school'] }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })());
+  rate: {{ mort.v }}, years: '30', method: 'eq', sido: '', gu: '', tys: ['84'], pri: ['subway', 'school'] }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })());
 const $ = id => document.getElementById(id);
 const num = v => { const n = +String(v).replace(/[^\d.]/g, ''); return isFinite(n) ? n : 0; };
 const won = v => { v = Math.round(v); const neg = v < 0; v = Math.abs(v); const e = Math.floor(v / 10000), m = v % 10000; return (neg ? '−' : '') + ((e ? e + '억' : '') + (m ? (e ? ' ' : '') + m.toLocaleString() + '만' : '') || '0'); };
@@ -222,9 +222,14 @@ async function recommend() {
   const acs = d._acs = d._acs || sorted('ac'), fds = d._fds = d._fds || sorted('fd');
   const pctl = (arr, v) => { if (!arr.length) return 0; let lo = 0, hi = arr.length; while (lo < hi) { const m = (lo + hi) >> 1; arr[m] < v ? lo = m + 1 : hi = m; } return lo / arr.length * 100; };
   const list = [];
+  const tys = V.tys && V.tys.length ? V.tys : ['59', '74', '84'];
   for (const a of d.a) {
-    const t = a.t[V.ty]; if (!t) continue;
     if (V.gu && a.g !== V.gu) continue;
+    // 고른 평형 중 예산 안에서 가장 비싼(예산에 가까운) 평형, 없으면 가장 싼 평형 (조금만 더 보태면 후보)
+    const cand = tys.map(ty => a.t[ty] ? [ty, a.t[ty]] : null).filter(Boolean);
+    if (!cand.length) continue;
+    const inC = cand.filter(c => c[1][0] <= maxP).sort((x, y) => y[1][0] - x[1][0]);
+    const [ty, t] = inC[0] || cand.sort((x, y) => x[1][0] - y[1][0])[0];
     const p = t[0]; if (p > maxP * 1.05) continue;
     const s = {
       acad: a.ac == null ? 0 : pctl(acs, a.ac),
@@ -237,10 +242,10 @@ async function recommend() {
     };
     let sum = 0, wt = 0;
     V.pri.filter(k => k in s).forEach((k, i) => { sum += s[k] * W[i]; wt += W[i]; });
-    list.push({ a, p, n: t[1], tr: t[2], score: wt ? sum / wt : 50, fit: Math.abs(maxP * .95 - p) });
+    list.push({ a, p, ty, n: t[1], tr: t[2], score: wt ? sum / wt : 50, fit: Math.abs(maxP * .95 - p) });
   }
   // 기본은 예산에 가까운(비싼) 순 — 우선순위 점수가 너무 낮은 단지(1등 점수의 60% 미만 또는 35점 미만)만 뺌
-  const inB = list.filter(x => x.p <= maxP);
+  const inB = list.filter(x => x.p <= maxP && x.p >= maxP - 10000);   // 예산 −1억 ~ 예산
   const top = Math.max(0, ...inB.map(x => x.score));
   const cut = V.pri.length ? Math.max(35, top * .6) : 0;
   const ok = inB.filter(x => x.score >= cut).sort((x, y) => y.p - x.p || y.score - x.score);
@@ -259,14 +264,14 @@ async function recommend() {
     const need = Math.max(0, x.p + buyCost(x.p, RES.first) - RES.eq);
     const loan = Math.min(need, x.p * RES.ltv, capFor(RES.region, x.p), RES.dl);
     return `<a class="rc" href="${a.p}"><div class="t"><span class="rk">${i}</span><b>${a.n}</b>${V.pri.length ? `<span class="sc">${Math.round(x.score)}점</span>` : ''}</div>
-      <div class="m">${[a.d, a.y ? String(a.y).slice(2) + '년' : '', a.h ? a.h.toLocaleString() + '세대' : '', V.ty + '타입'].filter(Boolean).join(' · ')}</div>
+      <div class="m">${[a.d, a.y ? String(a.y).slice(2) + '년' : '', a.h ? a.h.toLocaleString() + '세대' : '', x.ty + '타입'].filter(Boolean).join(' · ')}</div>
       <div class="p"><span>예상가</span><b>${won(x.p)}</b>${diff >= 0 ? `<span class="ok">예산보다 ${won(diff)} 여유</span>` : `<span class="ov">+${won(-diff)} 필요</span>`}</div>
       <div class="ch">${ch.map(c => `<i>${c}</i>`).join('')}</div>
       <div class="ln">${need ? `대출 ${won(loan)} 필요 · 월 ${won(firstPay(loan, RES.r, RES.y, RES.m))}원` : '대출 없이 가능'} · 최근 6개월 ${x.n}건</div></a>`;
   };
   const gl = V.gu || ($('sido').selectedOptions[0] || {}).textContent;
-  out.innerHTML = `<div class="sub">${gl} · ${V.ty}타입 · ${won(maxP)} 이하 · 예산에 가까운 순 ${ok.length}곳${ok.length > 10 ? ' 중 10곳' : ''}${cutN ? `<br><small style="font-weight:600;color:var(--muted)">우선순위 점수가 낮은 ${cutN}곳은 뺐어요</small>` : ''}</div>`
-    + (ok.length ? ok.slice(0, 10).map((x, i) => card(x, i + 1)).join('') : '<div class="sec"><div class="empty">이 예산에 맞는 거래가 최근 6개월에 없어요<br>다른 지역·평형을 골라 보세요</div></div>')
+  out.innerHTML = `<div class="sub">${gl} · ${tys.length === 3 ? '전체 평형' : tys.join('·') + '타입'} · ${won(Math.max(0, maxP - 10000))}~${won(maxP)} · 추천 ${Math.min(5, ok.length)}곳${ok.length > 5 ? ` (후보 ${ok.length}곳)` : ''}${cutN ? `<br><small style="font-weight:600;color:var(--muted)">우선순위 점수가 낮은 ${cutN}곳은 뺐어요</small>` : ''}</div>`
+    + (ok.length ? ok.slice(0, 5).map((x, i) => card(x, i + 1)).join('') : '<div class="sec"><div class="empty">예산 −1억 안에 맞는 거래가 최근 6개월에 없어요<br>다른 지역·평형을 골라 보세요</div></div>')
     + (over.length ? `<div class="sub">조금만 더 보태면</div>` + over.map(x => card(x, '+')).join('') : '');
 }
 // ── 입력 연결
@@ -279,7 +284,19 @@ function seg(id, key) {
   paint();
 }
 function onSeg(key) {}
-seg('first', 'first'); seg('region', 'region'); seg('years', 'years'); seg('method', 'method'); seg('ty', 'ty');
+seg('first', 'first'); seg('region', 'region'); seg('years', 'years'); seg('method', 'method');
+const tyEl = $('ty');
+if (!Array.isArray(V.tys)) V.tys = ['84'];
+function paintTy() { const all = V.tys.length === 3; tyEl.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === 'all' ? all : !all && V.tys.includes(b.dataset.v))); }
+tyEl.onclick = e => {   // 59·74·84 는 여러 개, 전체는 셋 다
+  const b = e.target.closest('button'); if (!b) return;
+  const v = b.dataset.v;
+  if (v === 'all') V.tys = ['59', '74', '84'];
+  else if (V.tys.length === 3) V.tys = [v];
+  else V.tys = V.tys.includes(v) ? (V.tys.length > 1 ? V.tys.filter(x => x !== v) : V.tys) : [...V.tys, v].sort();
+  paintTy(); calc();
+};
+paintTy();
 const sidoEl = $('sido');
 sidoEl.onchange = async () => {
   V.sido = sidoEl.value; V.gu = '';
