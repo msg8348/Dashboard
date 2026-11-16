@@ -151,7 +151,7 @@ RANK_MIN = 1   # 최근 1년 해당 타입 거래 1건 이상이면 순위에 �
 
 
 def price_ranks(apts, now):
-    """59·74(70~77㎡)·84 타입별 시도 내 매매가 순위 (최근 1년 개별 거래 최고가 기준, 10위까지). {단지번호: [[타입, 순위, '13.2억', 거래수, 비교 단지 수]]}"""
+    """59·74(70~77㎡)·84 타입별 시도 내 매매가 순위 (최근 1년 개별 거래 최고가 기준, 20위까지). {단지번호: [[타입, 순위, '13.2억', 거래수, 비교 단지 수]]}"""
     from datetime import timedelta
     d365 = int((now - timedelta(days=365)).strftime("%Y%m%d"))
     pool = {g: [] for g in RANK_TYPES}
@@ -169,7 +169,7 @@ def price_ranks(apts, now):
     out = defaultdict(list)
     for g in RANK_TYPES:
         lst = sorted(pool[g], reverse=True)
-        for i, (avg, k, n) in enumerate(lst[:10]):
+        for i, (avg, k, n) in enumerate(lst[:20]):
             out[k].append([g, i + 1, f"{avg / 10000:.1f}억", n, len(lst)])
     return out
 
