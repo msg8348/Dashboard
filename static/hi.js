@@ -43,7 +43,7 @@
     if (o.g) S.g = o.g;
     el.classList.add('hiw');
     el.innerHTML = `<div class="sels2"><select class="h-sido" aria-label="시도"${o.s ? ' hidden' : ''}>${(o.sidos || []).map(x => opt(x[1], x[0])).join('')}</select><select class="h-gu" aria-label="구·군"></select><select class="h-dong" aria-label="동"></select><select class="h-yr" aria-label="연도"></select><select class="h-mo" aria-label="월"></select></div>
-      <div class="seg h-kind"><button type="button" data-k="s">매매·분양권</button><button type="button" data-k="j">전세</button></div>
+      <div class="seg h-kind"><button type="button" data-k="s">매매</button><button type="button" data-k="j">전세</button></div>
       <div class="seg h-ty"><button type="button" data-t="84">84</button><button type="button" data-t="59">59</button><button type="button" data-t="74">74</button><button type="button" data-t="0">전체</button></div>
       <div class="h-cap"></div><div class="h-list"></div><div class="note h-note"></div><div class="h-sh"><button type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>공유</button></div>`;
     const $ = c => el.querySelector(c);
@@ -99,7 +99,7 @@
     const capTitle = () => {
       const sn = o.name || ((o.sidos || []).find(x => x[1] === S.s) || [''])[0];
       const reg = [sn, S.g, S.d].filter(Boolean).join(' ');
-      const cond = [`${S.y}년${S.m ? ' ' + S.m + '월' : ''}`, S.k === 'j' ? '전세' : '매매·분양권', +S.t ? S.t + '타입' : '전체 평형'].join(' · ');
+      const cond = [`${S.y}년${S.m ? ' ' + S.m + '월' : ''}`, S.k === 'j' ? '전세' : '매매', +S.t ? S.t + '타입' : '전체 평형'].join(' · ');
       return [reg + ' 최고가', cond];
     };
     const loadH2C = () => window.html2canvas ? Promise.resolve() : new Promise((ok, no) => {
