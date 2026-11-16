@@ -306,6 +306,7 @@ sidoEl.onchange = async () => {
 };
 $('gus').onchange = e => { V.gu = e.target.value; calc(); };
 const priEl = $('pri');
+V.pri = (V.pri || []).filter((k, i, a) => priEl.querySelector(`[data-k="${k}"]`) && a.indexOf(k) === i);   // 예전에 저장된 '가격'·'평지' 등 없어진 항목은 빼고 1번부터
 function paintPri() { priEl.querySelectorAll('button[data-k]').forEach(b => { const i = V.pri.indexOf(b.dataset.k); b.classList.toggle('on', i >= 0); b.querySelector('em').textContent = i >= 0 ? i + 1 : ''; }); }
 priEl.onclick = e => { const b = e.target.closest('button[data-k]'); if (!b) return; const k = b.dataset.k; V.pri = V.pri.includes(k) ? V.pri.filter(x => x !== k) : [...V.pri, k]; paintPri(); calc(); };
 paintPri();
