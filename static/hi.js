@@ -113,24 +113,32 @@
         if (document.fonts && document.fonts.ready) await document.fonts.ready;
         const id = 'hi' + Date.now(); el.dataset.cap = id;
         const [t1, t2] = capTitle();
-        const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, windowWidth: 520, scrollX: 0, scrollY: -window.scrollY,
-          onclone: doc => {
-            const c = doc.querySelector(`[data-cap="${id}"]`);
-            const pg = c.closest('.page'); if (pg) pg.hidden = false;
-            Object.assign(c.style, { width: '500px', padding: '18px 18px 10px', background: '#fff', borderRadius: '0', border: '0' });
-            c.querySelectorAll('.sels2, .seg, .h-sh').forEach(x => { x.style.display = 'none'; });
-            const cap = c.querySelector('.h-cap');
-            cap.style.display = 'block';
-            cap.innerHTML = `<div style="font-size:20px;font-weight:900;color:#17202c">${esc(t1)}</div><div style="font-size:13px;font-weight:700;color:#4a5566;margin:4px 0 10px">${esc(t2)}</div>`;
-            const mk = doc.createElement('div'); mk.textContent = 'nextdoorprice.com';
-            Object.assign(mk.style, { textAlign: 'center', fontSize: '10px', color: '#a3abb7', letterSpacing: '.6px', padding: '4px 0 2px' });
-            c.appendChild(mk);
-          } });
-        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-        const file = new File([blob], `${t1.replace(/\s+/g, '_')}_${S.y}${S.m ? '_' + S.m + '월' : ''}.png`, { type: 'image/png' });
-        if (typeof shareFiles === 'function') shareFiles([file]);   // 지역 페이지: 공용 공유(미리보기 포함)
-        else if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file] }).catch(() => {});
-        else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; a.click(); }
+        const n = el.querySelectorAll('.h-list .r').length;
+        const parts = n > 10 ? [[0, 10], [10, 20]] : [[0, n]];   // 10위씩 나눠서
+        const files = [];
+        for (const [from, to] of parts) {
+          const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, windowWidth: 520, scrollX: 0, scrollY: -window.scrollY,
+            onclone: doc => {
+              const c = doc.querySelector(`[data-cap="${id}"]`);
+              const pg = c.closest('.page'); if (pg) pg.hidden = false;
+              Object.assign(c.style, { width: '500px', padding: '16px 18px 10px', background: '#fff', borderRadius: '0', border: '0' });
+              c.querySelectorAll('.sels2, .seg, .h-sh').forEach(x => { x.style.display = 'none'; });
+              c.querySelectorAll('.h-list .r').forEach((r, i) => { if (i < from || i >= to) r.style.display = 'none'; });
+              const cap = c.querySelector('.h-cap');
+              cap.style.display = 'block';
+              const br = doc.querySelector('.topbar .brand');   // 맨 위 옆집얼마 로고
+              cap.innerHTML = `<div class="cap-logo" style="margin:0 0 12px"></div><div style="font-size:20px;font-weight:900;color:#17202c">${esc(t1)}${parts.length > 1 ? ` <span style="font-size:14px;color:#8a94a3;font-weight:700">${from + 1}~${to}위</span>` : ''}</div><div style="font-size:13px;font-weight:700;color:#4a5566;margin:4px 0 10px">${esc(t2)}</div>`;
+              if (br) { const lg = br.cloneNode(true); lg.style.transform = 'scale(.82)'; lg.style.transformOrigin = 'left top'; lg.style.marginBottom = '-8px'; cap.querySelector('.cap-logo').appendChild(lg); }
+              const mk = doc.createElement('div'); mk.textContent = 'nextdoorprice.com';
+              Object.assign(mk.style, { textAlign: 'center', fontSize: '10px', color: '#a3abb7', letterSpacing: '.6px', padding: '4px 0 2px' });
+              c.appendChild(mk);
+            } });
+          const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+          files.push(new File([blob], `${t1.replace(/\s+/g, '_')}_${S.y}${S.m ? '_' + S.m + '월' : ''}${parts.length > 1 ? `_${from + 1}-${to}위` : ''}.png`, { type: 'image/png' }));
+        }
+        if (typeof shareFiles === 'function') shareFiles(files);   // 지역 페이지: 공용 공유(미리보기 포함)
+        else if (navigator.canShare && navigator.canShare({ files })) await navigator.share({ files }).catch(() => {});
+        else files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; a.click(); });
       } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); }
       finally { shBtn.disabled = false; shBtn.innerHTML = label; }
     };
