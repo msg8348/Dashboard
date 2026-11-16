@@ -1,0 +1,85 @@
+{% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>거래활발도 | 옆집얼마</title>
+<meta name="description" content="아파트 거래활발도(회전율) — 시도별·전국 시군구 순위, 지역 지표단지·구군별 — 옆집얼마">
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+{% include "_report_css.html" %}
+  body{padding:0 14px 40px}
+  .wrap{max-width:720px}
+  .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}.menu-btn svg{width:22px;height:22px}
+  .topbar{margin-top:0;padding-top:12px}
+  .ahead{margin:8px 2px 12px}.ahead h1{font-size:23px;font-weight:900;letter-spacing:-.4px}
+  .atabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(82px,1fr));gap:2px;background:#e2e6ec;border-radius:14px;padding:4px;margin-bottom:12px}
+  .atabs button{font:inherit;font-size:14px;font-weight:800;color:var(--ink-2);border:0;background:none;border-radius:11px;padding:10px 0;cursor:pointer;white-space:nowrap}
+  .atabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(20,30,60,.12)}
+  .apanel[hidden]{display:none}
+  .asec{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:14px 16px 8px}
+  .ahd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}.ahd b{font-size:16px;font-weight:800;white-space:nowrap}
+  .alg{display:flex;gap:10px;font-size:12px;font-weight:700;color:var(--ink-2);white-space:nowrap}.alg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+  .ar{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid #f0f2f5;color:inherit;text-decoration:none}
+  .ark{width:24px;height:24px;border-radius:50%;background:#eef1f6;color:var(--ink-2);font-size:12.5px;font-weight:800;display:grid;place-items:center;flex:none}.ark.t3{background:var(--navy);color:#fff}
+  .anm{flex:1;min-width:0}.anm b{display:block;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .anm .trend{display:inline-block;margin-top:3px}
+  .av{width:68px;text-align:right;font-size:15px;font-weight:800;flex:none}.av small{display:block;font-size:11px;color:var(--muted);font-weight:600}.av.m{color:var(--amber)}.av.y{color:var(--teal)}
+  .anote{font-size:11.5px;color:var(--muted);text-align:right;padding:6px 0 4px}
+  .actl{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+  .actl select{font:inherit;font-size:14px;font-weight:700;height:38px;border:1px solid #d6dbe2;border-radius:10px;padding:0 10px;background:#fff;color:var(--ink)}
+  #frag .v-apt-sum,#frag .v-apt-det,#frag .v-gu-sum,#frag .v-gu-det{display:none}
+  #frag[data-v="apt-sum"] .v-apt-sum,#frag[data-v="gu-sum"] .v-gu-sum{display:grid}
+  #frag[data-v="apt-det"] .v-apt-det,#frag[data-v="gu-det"] .v-gu-det{display:block}
+  #frag .ind-two{grid-template-columns:1fr}
+  .aempty{text-align:center;color:var(--muted);font-size:14px;padding:34px 0}
+</style>
+</head>
+<body><div class="wrap">
+<div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
+<div class="ahead"><h1>📊 거래활발도</h1></div>
+<div class="atabs" id="atabs"><button type="button" data-t="1" class="on">시도별</button><button type="button" data-t="2">전국 시군구</button><button type="button" data-t="3">지표단지</button><button type="button" data-t="4">구·군별</button></div>
+{% macro trendb(a) %}{% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}{% endmacro %}
+{% macro rows(list) %}{% for r in list %}{% if r.h %}<a class="ar" href="{{ r.h }}">{% else %}<div class="ar">{% endif %}<span class="ark {% if loop.index0 < 3 %}t3{% endif %}">{{ loop.index }}</span><span class="anm"><b>{{ r.n }}</b>{{ trendb(r) }}</span><span class="av m">{{ "%.2f"|format(r.r3) }}%<small>{{ "{:,}".format(r.c3) }}건</small></span><span class="av y">{{ "%.2f"|format(r.r1) }}%<small>{{ "{:,}".format(r.c1) }}건</small></span>{% if r.h %}</a>{% else %}</div>{% endif %}{% endfor %}{% endmacro %}
+<div class="apanel" id="p1"><div class="asec"><div class="ahd"><b>시도별</b><span class="alg"><span><i style="background:#f0a35e"></i>3개월</span><span><i style="background:#1f9b85"></i>1년</span></span></div>
+  {{ rows(nat.s) }}<div class="anote">아파트 매매 · 회전율 = 거래 건수 ÷ 세대수 · 최근 3개월 순 ({{ date_label }} 기준)</div></div></div>
+<div class="apanel" id="p2" hidden><div class="asec"><div class="ahd"><b>전국 시군구 Top 20</b><span class="alg"><span><i style="background:#f0a35e"></i>3개월</span><span><i style="background:#1f9b85"></i>1년</span></span></div>
+  {{ rows(nat.g) }}<div class="anote">아파트 3천세대 이상 시군구 · 최근 3개월 순 ({{ date_label }} 기준)</div></div></div>
+<div class="apanel" id="p34" hidden>
+  <div class="actl"><select id="asido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select>
+    <div class="tfv" id="avw"><button type="button" data-w="sum" class="on">요약</button><button type="button" data-w="det">상세</button></div></div>
+  <div id="frag"><div class="aempty">불러오는 중…</div></div>
+</div>
+</div>
+<script>
+const A = { t: '1', s: '', w: 'sum' };
+try { Object.assign(A, JSON.parse(sessionStorage.getItem('ndp_act')) || {}); } catch (e) {}
+const fc = {};
+const sel = document.getElementById('asido');
+if (!(A.s && [...sel.options].some(o => o.value === A.s))) A.s = [...sel.options].some(o => o.value === 'busan') ? 'busan' : sel.value;   // 기본 부산
+sel.value = A.s;
+async function render() {
+  try { sessionStorage.setItem('ndp_act', JSON.stringify(A)); } catch (e) {}
+  document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('on', b.dataset.t === A.t));
+  document.getElementById('p1').hidden = A.t !== '1';
+  document.getElementById('p2').hidden = A.t !== '2';
+  document.getElementById('p34').hidden = !['3', '4'].includes(A.t);
+  document.querySelectorAll('#avw button').forEach(b => b.classList.toggle('on', b.dataset.w === A.w));
+  if (!['3', '4'].includes(A.t)) return;
+  const fr = document.getElementById('frag');
+  fr.dataset.v = (A.t === '3' ? 'apt-' : 'gu-') + A.w;
+  if (fr.dataset.s !== A.s) {
+    fr.innerHTML = '<div class="aempty">불러오는 중…</div>';
+    try { fc[A.s] = fc[A.s] || await fetch(`act/${A.s}.html?v={{ today }}`).then(r => r.text()); fr.innerHTML = fc[A.s]; fr.dataset.s = A.s; }
+    catch (e) { fr.innerHTML = '<div class="aempty">불러오지 못했어요</div>'; }
+  }
+}
+document.getElementById('atabs').onclick = e => { const b = e.target.closest('button'); if (b) { A.t = b.dataset.t; render(); } };
+document.getElementById('avw').onclick = e => { const b = e.target.closest('button'); if (b) { A.w = b.dataset.w; render(); } };
+sel.onchange = () => { A.s = sel.value; render(); };
+render();
+</script>
+<script src="search.js?v={{ today }}"></script>
+</body>
+</html>
