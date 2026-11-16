@@ -604,14 +604,14 @@ def main():
         if key in APT_SIDOS:   # 단지 페이지 (과거 실거래가 있는 시도)
             pby = PS.group(sd, sdb, HIST, months[-1], houses, match_house)
             done, srch, aurls, moved, alias = CX.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, ckey, SITE_URL, STORE,
-                                                pre=PS.moving(pby, houses, now), houses=houses)
+                                                pre=PS.moving(pby, houses, now), houses=houses, pre_all=pby)
             D.APT_PAGES |= done
             D.APT_ALIAS.update(alias)
             D.PRE_MOVED.update(moved)
             search += srch
             urls += aurls
             done, srch, aurls = PS.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, houses, match_house, STORE, SITE_URL,
-                                         by=pby, moved=moved)
+                                         by=pby, moved=moved, ranks=CX.PRE_RANKS)
             D.PRE_PAGES |= done
             search += srch
             urls += aurls
