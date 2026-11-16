@@ -223,6 +223,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
                         for k in order if apts[k]["j"]}, now, budget=int(os.environ.get("POI_MAX", "1500")))
     zones = schoolzone.load(store, sd["key"], now.replace(tzinfo=None))   # 배정 초등학교 (통학구역)
     poi.assign(pcache, order, zones, "z3")
+    poi.amen(pcache, order, "a1", budget=int(os.environ.get("AMEN_MAX", "1500")))   # 학원가·상권 (나의 예산)
     poi.save(ppath, pcache)
     ranks = price_ranks(apts, now)
     tlab = type_labels(sd, houses, ckey)

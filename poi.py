@@ -142,6 +142,50 @@ def update(cache, targets, today, budget=1500, workers=6):
     return done
 
 
+def _kc(path, **p):
+    """카카오 검색 결과 수 (meta.total_count, 최대 45개 페이지 제한과 무관한 전체 개수)."""
+    for attempt in range(3):
+        try:
+            r = requests.get(f"{API}/{path}", headers={"Authorization": f"KakaoAK {KAKAO}"}, params=dict(p, size=1), timeout=15)
+            if r.status_code == 200:
+                js = r.json()
+                return js.get("meta", {}).get("total_count", 0), js.get("documents", [])
+            if r.status_code in (401, 403):
+                raise RuntimeError(f"카카오 {r.status_code} {r.text[:120]}")
+        except requests.RequestException:
+            pass
+        time.sleep(1 + attempt)
+    return None, []
+
+
+def amen(cache, keys, ver="a1", budget=1500, workers=6):
+    """학원가 · 상권: 단지 반경 500m 학원(AC5) 수, 음식점(FD6)+카페(CE7) 수, 1km 안 가장 가까운 대형마트(MT1).
+    {ac: 학원 수, fd: 음식점·카페 수, mt: [이름, 도보 분]} — 나의 예산 추천용."""
+    if not KAKAO:
+        return 0
+    todo = [k for k in keys if k in cache and cache[k].get("x") and cache[k].get("amv") != ver][:budget]
+
+    def job(k):
+        x, y = cache[k]["x"], cache[k]["y"]
+        ac, _ = _kc("search/category.json", category_group_code="AC5", x=x, y=y, radius=500)
+        fd, _ = _kc("search/category.json", category_group_code="FD6", x=x, y=y, radius=500)
+        ce, _ = _kc("search/category.json", category_group_code="CE7", x=x, y=y, radius=500)
+        mt = _k("search/category.json", category_group_code="MT1", x=x, y=y, radius=1000, sort="distance")
+        if ac is None or fd is None:
+            return k, None
+        return k, {"ac": ac, "fd": fd + (ce or 0), "mt": [mt[0]["place_name"], walk_min(mt[0]["distance"])] if mt else None}
+
+    n = 0
+    with ThreadPoolExecutor(workers) as ex:
+        for k, r in ex.map(job, todo):
+            if r:
+                cache[k].update(r, amv=ver)
+                n += 1
+    if todo:
+        print(f"🏫 학원가·상권 {n}/{len(todo)}곳 채움")
+    return n
+
+
 def load(path):
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:

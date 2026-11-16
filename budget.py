@@ -50,7 +50,8 @@ def build(site, sd, sdir, sale, cinfo, l2_of, l2_name, apt_pages, pcache, today)
             p = pcache.get(s) or {}
             sc = (p.get("as") or [p.get("sc")])[0]   # 배정 초등학교 우선, 없으면 가까운 초등학교
             meta[s] = {"n": t["n"], "g": l2_name.get(l2_of.get(t.get("c")), (t.get("d") or "").split()[-1]), "d": t.get("u", ""),
-                       "y": yr, "h": hh or 0, "sc": sc, "st": p.get("st"), "p": f"{sdir}/apt/{s}.html", "t": {}}
+                       "y": yr, "h": hh or 0, "sc": sc, "st": p.get("st"), "p": f"{sdir}/apt/{s}.html", "t": {},
+                       "ac": p.get("ac"), "fd": p.get("fd"), "mt": p.get("mt")}
     for (s, ty), ts in by.items():
         ts.sort(key=lambda x: -int(x["dt"]))
         meta[s]["t"][str(ty)] = [round(statistics.median(x["p"] for x in ts)), len(ts),
