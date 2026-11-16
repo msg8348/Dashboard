@@ -21,6 +21,8 @@
   .asec{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:14px 16px 8px}
   .ahd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}.ahd b{font-size:16px;font-weight:800;white-space:nowrap}
   .alg{display:flex;gap:10px;font-size:12px;font-weight:700;color:var(--ink-2);white-space:nowrap}.alg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+  .alg button{font:inherit;font-size:12px;font-weight:700;color:var(--ink-2);background:#f2f4f7;border:0;border-radius:999px;padding:5px 9px;cursor:pointer;display:inline-flex;align-items:center}
+  .alg button.on{background:var(--navy);color:#fff}.alg button em{font-style:normal;font-size:10px;margin-left:3px}
   .ar{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid #f0f2f5;color:inherit;text-decoration:none}
   .ark{width:24px;height:24px;border-radius:50%;background:#eef1f6;color:var(--ink-2);font-size:12.5px;font-weight:800;display:grid;place-items:center;flex:none}.ark.t3{background:var(--navy);color:#fff}
   .anm{flex:1;min-width:0}.anm b{display:block;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -41,11 +43,11 @@
 <div class="ahead"><h1>📊 거래활발도</h1></div>
 <div class="atabs" id="atabs"><button type="button" data-t="1" class="on">시도별</button><button type="button" data-t="2">전국 시군구</button><button type="button" data-t="3">지표단지</button><button type="button" data-t="4">구·군별</button></div>
 {% macro trendb(a) %}{% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}{% endmacro %}
-{% macro rows(list) %}{% for r in list %}{% if r.h %}<a class="ar" href="{{ r.h }}">{% else %}<div class="ar">{% endif %}<span class="ark {% if loop.index0 < 3 %}t3{% endif %}">{{ loop.index }}</span><span class="anm"><b>{{ r.n }}</b>{{ trendb(r) }}</span><span class="av m">{{ "%.2f"|format(r.r3) }}%<small>{{ "{:,}".format(r.c3) }}건</small></span><span class="av y">{{ "%.2f"|format(r.r1) }}%<small>{{ "{:,}".format(r.c1) }}건</small></span>{% if r.h %}</a>{% else %}</div>{% endif %}{% endfor %}{% endmacro %}
-<div class="apanel" id="p1"><div class="asec"><div class="ahd"><b>시도별</b><span class="alg"><span><i style="background:#f0a35e"></i>3개월</span><span><i style="background:#1f9b85"></i>1년</span></span></div>
-  {{ rows(nat.s) }}<div class="anote">아파트 매매 · 회전율 = 거래 건수 ÷ 세대수 · 최근 3개월 순 ({{ date_label }} 기준)</div></div></div>
-<div class="apanel" id="p2" hidden><div class="asec"><div class="ahd"><b>전국 시군구 Top 20</b><span class="alg"><span><i style="background:#f0a35e"></i>3개월</span><span><i style="background:#1f9b85"></i>1년</span></span></div>
-  {{ rows(nat.g) }}<div class="anote">아파트 3천세대 이상 시군구 · 최근 3개월 순 ({{ date_label }} 기준)</div></div></div>
+{% macro rows(list) %}{% for r in list %}{% if r.h %}<a class="ar" href="{{ r.h }}" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% else %}<div class="ar" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% endif %}<span class="ark {% if loop.index0 < 3 %}t3{% endif %}">{{ loop.index }}</span><span class="anm"><b>{{ r.n }}</b>{{ trendb(r) }}</span><span class="av m">{{ "%.2f"|format(r.r3) }}%<small>{{ "{:,}".format(r.c3) }}건</small></span><span class="av y">{{ "%.2f"|format(r.r1) }}%<small>{{ "{:,}".format(r.c1) }}건</small></span>{% if r.h %}</a>{% else %}</div>{% endif %}{% endfor %}{% endmacro %}
+<div class="apanel" id="p1"><div class="asec"><div class="ahd"><b>시도별</b><span class="alg"><button type="button" data-k="r3" class="on"><i style="background:#f0a35e"></i>3개월<em>▼</em></button><button type="button" data-k="r1"><i style="background:#1f9b85"></i>1년<em></em></button></span></div>
+  {{ rows(nat.s) }}<div class="anote">아파트 매매 · 회전율 = 거래 건수 ÷ 세대수 · <span class="sortlbl">최근 3개월 높은 순</span> ({{ date_label }} 기준)</div></div></div>
+<div class="apanel" id="p2" hidden><div class="asec"><div class="ahd"><b>전국 시군구 Top 20</b><span class="alg"><button type="button" data-k="r3" class="on"><i style="background:#f0a35e"></i>3개월<em>▼</em></button><button type="button" data-k="r1"><i style="background:#1f9b85"></i>1년<em></em></button></span></div>
+  {{ rows(nat.g) }}<div class="anote">아파트 3천세대 이상 시군구 · <span class="sortlbl">최근 3개월 높은 순</span> ({{ date_label }} 기준)</div></div></div>
 <div class="apanel" id="p34" hidden>
   <div class="actl"><select id="asido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select>
     <div class="tfv" id="avw"><button type="button" data-w="sum" class="on">요약</button><button type="button" data-w="det">상세</button></div></div>
@@ -75,6 +77,19 @@ async function render() {
     catch (e) { fr.innerHTML = '<div class="aempty">불러오지 못했어요</div>'; }
   }
 }
+// 3개월·1년 버튼: 누르면 그 기준으로 정렬, 한 번 더 누르면 오름차순/내림차순 전환
+document.querySelectorAll('.asec').forEach(sec => {
+  let key = 'r3', desc = true;
+  sec.querySelector('.alg').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.k === key) desc = !desc; else { key = b.dataset.k; desc = true; }
+    sec.querySelectorAll('.alg button').forEach(x => { const on = x.dataset.k === key; x.classList.toggle('on', on); x.querySelector('em').textContent = on ? (desc ? '▼' : '▲') : ''; });
+    const rows = [...sec.querySelectorAll('.ar')].sort((a, c) => (desc ? -1 : 1) * (+a.dataset[key] - +c.dataset[key]));
+    const note = sec.querySelector('.anote');
+    rows.forEach((r, i) => { const k = r.querySelector('.ark'); k.textContent = i + 1; k.classList.toggle('t3', i < 3); note.before(r); });
+    const sl = sec.querySelector('.sortlbl'); if (sl) sl.textContent = `최근 ${key === 'r3' ? '3개월' : '1년'} ${desc ? '높은' : '낮은'} 순`;
+  };
+});
 document.getElementById('atabs').onclick = e => { const b = e.target.closest('button'); if (b) { A.t = b.dataset.t; render(); } };
 document.getElementById('avw').onclick = e => { const b = e.target.closest('button'); if (b) { A.w = b.dataset.w; render(); } };
 sel.onchange = () => { A.s = sel.value; render(); };
