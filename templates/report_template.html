@@ -502,11 +502,13 @@ function setView(v) {   // 위쪽 [리스트형 | 카드형] 탭
 document.getElementById('vtabs').onclick = e => { const b = e.target.closest('button'); if (b && b.dataset.v !== TR.v) setView(b.dataset.v); };
 tSet('#tf1 [data-k]', 'k', 'k'); tSet('#tft [data-t]', 't', 't'); tSet('#tfv [data-v]', 'v', 'v');
 document.getElementById('tfhi').onclick = e => { TR.hi = !TR.hi; e.currentTarget.classList.toggle('on', TR.hi); tRender(); };
-function goTrade(k) {   // 요약 카드 → 실거래 탭 (매매/전월세 필터)
+function goTrade(k) {   // 건수 상자(매매/전월세) → 카드형으로, 그 종류만
   TR.k = k; TR.hi = false;
   document.querySelectorAll('#tf1 [data-k]').forEach(x => x.classList.toggle('on', x.dataset.k === k));
   document.getElementById('tfhi').classList.remove('on');
-  tRender(); showPage(2);
+  setView('card');
+  const t = document.getElementById('vtabs');
+  window.scrollTo({ top: Math.max(0, t.getBoundingClientRect().top + window.scrollY - 70), behavior: 'smooth' });
 }
 document.getElementById('tout').addEventListener('click', e => {   // 카드·리스트 → 단지 페이지
   if (e.target.closest('button')) return;
