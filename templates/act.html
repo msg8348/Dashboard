@@ -41,7 +41,7 @@
 </head>
 <body><div class="wrap">
 <div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
-<div class="ahead"><h1>📊 거래활발도</h1></div>
+<div class="ahead"><h1>거래활발도</h1></div>
 <div class="atabs" id="atabs"><button type="button" data-t="1" class="on">시도별</button><button type="button" data-t="2">전국 시군구</button><button type="button" data-t="3">지표단지</button><button type="button" data-t="4">구·군별</button></div>
 {% macro trendb(a) %}{% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}{% endmacro %}
 {% macro rows(list) %}{% for r in list %}{% if r.h %}<a class="ar" href="{{ r.h }}" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% else %}<div class="ar" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% endif %}<span class="ark {% if loop.index0 < 3 %}t3{% endif %}">{{ loop.index }}</span><span class="anm"><b>{{ r.n }}</b>{{ trendb(r) }}</span><span class="av m">{{ "%.2f"|format(r.r3) }}%<small>{{ "{:,}".format(r.c3) }}건</small></span><span class="av y">{{ "%.2f"|format(r.r1) }}%<small>{{ "{:,}".format(r.c1) }}건</small></span>{% if r.h %}</a>{% else %}</div>{% endif %}{% endfor %}{% endmacro %}
