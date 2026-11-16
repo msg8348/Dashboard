@@ -1,0 +1,127 @@
+{% from "_brand.html" import brand, brand_css %}<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>최고가 | 옆집얼마</title>
+<meta name="description" content="기간·지역·평형별 아파트 최고가 단지 순위 (매매·분양권·전세) — 옆집얼마">
+<link rel="icon" href="favicon.ico" sizes="any"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root { --ink:#17202c; --ink-2:#4a5566; --muted:#8a94a3; --navy:#2b3a67; --blue:#2754d6; --red:#e0472c; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#eef1f4;color:var(--ink);padding:0 14px 40px;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:720px;margin:0 auto}
+{{ brand_css() }}
+  .topbar{position:sticky;top:0;z-index:15;background:rgba(238,241,244,.95);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:12px 0 8px;display:flex;align-items:center;justify-content:space-between}
+  .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}.menu-btn svg{width:22px;height:22px}
+  .head{display:flex;align-items:center;gap:8px;margin:8px 2px 12px}.head h1{font-size:23px;font-weight:900;letter-spacing:-.4px}
+  .tabs{display:flex;background:#e2e6ec;border-radius:14px;padding:4px;margin-bottom:12px}
+  .tabs button{flex:1;font:inherit;font-size:15px;font-weight:800;color:var(--ink-2);border:0;background:none;border-radius:11px;padding:10px 0;cursor:pointer}
+  .tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(20,30,60,.12)}
+  .sec{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:14px 16px 8px}
+  .per{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}.per::-webkit-scrollbar{display:none}
+  .per button{flex:none;font:inherit;font-size:13px;font-weight:800;padding:7px 12px;border-radius:999px;background:#f2f4f7;color:var(--ink-2);border:0;cursor:pointer}
+  .per button.on{background:var(--navy);color:#fff}
+  .f{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+  .f .sels{display:flex;gap:6px}
+  .f select{font:inherit;font-size:14px;font-weight:700;height:36px;border:1px solid #d6dbe2;border-radius:10px;padding:0 8px;background:#fff;color:var(--ink)}
+  .f .sub{font-size:12px;color:var(--muted);font-weight:600;text-align:right}
+  .r{display:flex;align-items:center;gap:10px;padding:10px 2px;border-top:1px solid #f0f2f5}
+  .rk{width:24px;height:24px;border-radius:50%;background:#eef1f6;color:var(--ink-2);font-size:12.5px;font-weight:800;display:grid;place-items:center;flex:none}.rk.t3{background:#f97316;color:#fff}
+  .nm{flex:1;min-width:0}
+  .nm b{display:flex;align-items:center;gap:5px;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden}
+  .nm b span{overflow:hidden;text-overflow:ellipsis}
+  .nm small{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pt{font-style:normal;font-size:11px;font-weight:800;color:#d12f62;background:#fde8ee;border-radius:6px;padding:1px 6px;flex:none}
+  .v{font-size:17px;font-weight:800;color:#c2410c;flex:none}.v small{font-size:12px;color:var(--muted);margin-left:1px;font-weight:600}
+  .chg{font-size:12.5px;font-weight:800;min-width:34px;text-align:right;flex:none}.chg.up{color:var(--red)}.chg.dn{color:var(--blue)}.chg.eq{color:#b4bcc8}.chg.nw{color:#f97316}
+  .empty{text-align:center;color:var(--muted);font-size:14px;padding:34px 0;line-height:1.6;border-top:1px solid #f0f2f5}
+  .note{font-size:11.5px;color:var(--muted);text-align:right;padding:6px 0 4px}
+  .sels2{display:flex;gap:6px;margin-bottom:8px}.sels2 select{flex:1;min-width:0;font:inherit;font-size:14px;font-weight:700;height:38px;border:1px solid #d6dbe2;border-radius:10px;padding:0 8px;background:#fff;color:var(--ink)}
+  .seg{display:flex;background:#e6e9ef;border-radius:12px;padding:3px;margin-bottom:8px}
+  .seg button{flex:1;font:inherit;font-size:13.5px;font-weight:800;color:var(--ink-2);border:0;background:none;border-radius:9px;padding:7px 0;cursor:pointer}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(20,30,60,.12)}
+  .rk.t3{background:var(--red)}
+  .pr{text-align:right;flex:none}.pr b{display:block;font-size:16px;font-weight:800;color:var(--blue)}.pr.j b{color:#0f6b5c}.pr small{font-size:11.5px;color:var(--muted);font-weight:400}
+</style>
+</head>
+<body><div class="wrap">
+<div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
+<div class="head"><h1>👑 최고가</h1></div>
+<div class="sec">
+  <div class="sels2"><select id="sido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select><select id="gu" aria-label="구·군"></select><select id="dong" aria-label="동"></select></div>
+  <div class="sels2"><select id="yr" aria-label="연도"></select><select id="mo" aria-label="월"></select></div>
+  <div class="seg" id="kind"><button type="button" data-k="s" class="on">매매·분양권</button><button type="button" data-k="j">전세</button></div>
+  <div class="seg" id="ty"><button type="button" data-t="0" class="on">전체</button><button type="button" data-t="59">59</button><button type="button" data-t="74">74</button><button type="button" data-t="84">84</button></div>
+  <div id="list"></div>
+  <div class="note" id="note"></div>
+</div>
+</div>
+<script>
+const S = { s: '', g: '', d: '', y: '', m: '', k: 's', t: 0 };
+try { Object.assign(S, JSON.parse(sessionStorage.getItem('ndp_hi')) || {}); } catch (e) {}
+const idx = {}, yc = {};
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const eok = p => { const e = Math.floor(p / 1e4), r = p % 1e4; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() : '') || '0'; };
+const getj = u => fetch(u).then(r => r.json());
+const opt = (v, l, on) => `<option value="${esc(v)}"${on ? ' selected' : ''}>${esc(l)}</option>`;
+async function render() {
+  try { sessionStorage.setItem('ndp_hi', JSON.stringify(S)); } catch (e) {}
+  const ix = idx[S.s] = idx[S.s] || await getj(`hi/${S.s}.json?v={{ today }}`);
+  if (!ix.y.includes(S.y)) S.y = ix.y[ix.y.length - 1] || '';   // 기본: 올해
+  const gu = document.getElementById('gu'), dong = document.getElementById('dong');
+  gu.hidden = !ix.g.length;
+  gu.innerHTML = opt('', '전체', !S.g) + ix.g.map(g => opt(g, g, g === S.g)).join('');
+  const ds = (ix.d[S.g] || []);
+  if (!ds.includes(S.d)) S.d = '';
+  dong.hidden = !S.g;
+  dong.innerHTML = opt('', '전체', !S.d) + ds.map(d => opt(d, d, d === S.d)).join('');
+  document.getElementById('yr').innerHTML = ix.y.slice().reverse().map(y => opt(y, y + '년', y === S.y)).join('');
+  document.getElementById('mo').innerHTML = opt('', '전체 월', !S.m) + Array.from({ length: 12 }, (_, i) => opt(String(i + 1), (i + 1) + '월', String(i + 1) === S.m)).join('');
+  document.querySelectorAll('#kind button').forEach(b => b.classList.toggle('on', b.dataset.k === S.k));
+  document.querySelectorAll('#ty button').forEach(b => b.classList.toggle('on', +b.dataset.t === +S.t));
+  const list = document.getElementById('list');
+  if (!S.y) { list.innerHTML = '<div class="empty">데이터가 없어요</div>'; return; }
+  const key = S.s + S.y;
+  if (!yc[key]) list.innerHTML = '<div class="empty">불러오는 중…</div>';
+  const d = yc[key] = yc[key] || await getj(`hi/${S.s}/${S.y}.json?v={{ today }}`);
+  const best = new Map();
+  for (const r of d.t) {
+    const [mi, kind, ty, mo, p] = r;
+    if ((S.k === 'j') !== (kind === 2)) continue;
+    if (+S.t && ty !== +S.t) continue;
+    if (S.m && mo !== +S.m) continue;
+    const m = d.m[mi];
+    if (S.g && m[2] !== S.g) continue;
+    if (S.d && m[3] !== S.d) continue;
+    const k = mi + ':' + kind;
+    if (!best.has(k) || p > best.get(k)[4]) best.set(k, r);
+  }
+  const rs = [...best.values()].sort((a, b) => b[4] - a[4]).slice(0, 10);
+  list.innerHTML = rs.length ? rs.map(([mi, kind, ty, mo, p, f, dd, a], i) => {
+    const m = d.m[mi], pre = kind === 1;
+    const loc = S.d ? '' : S.g ? m[3] : m[2];
+    const sub = [loc, m[4] ? String(m[4]).slice(2) + '년' + (pre ? ' 예정' : '') : ''].filter(Boolean).join(' · ');
+    const when = `${S.y.slice(2)}.${String(mo).padStart(2, '0')}.${String(dd).padStart(2, '0')}`;
+    const inner = `<span class="rk ${i < 3 ? 't3' : ''}">${i + 1}</span><span class="nm"><b><span>${esc(m[1])}</span>${pre ? '<i class="pt">분양권</i>' : ''}</b><small>${esc(sub)}</small></span>`
+      + `<span class="pr ${kind === 2 ? 'j' : ''}"><b>${eok(p)}</b><small>${ty || Math.round(a) + '㎡'} · ${/^-?\d+$/.test(f) ? f + '층' : esc(f)} · ${when}</small></span>`;
+    return m[0].endsWith('.html') ? `<a class="r" href="${esc(m[0])}">${inner}</a>` : `<div class="r">${inner}</div>`;
+  }).join('') : '<div class="empty">이 조건에 맞는 거래가 없어요</div>';
+  document.getElementById('note').textContent = `국토부 실거래 · 계약일 기준 · 기간 중 단지별 최고 거래${S.k === 'j' ? ' (전세는 최근 1년)' : ''}`;
+}
+const sel = document.getElementById('sido');
+if (S.s && [...sel.options].some(o => o.value === S.s)) sel.value = S.s; else S.s = sel.value;
+sel.onchange = () => { S.s = sel.value; S.g = S.d = ''; render(); };
+document.getElementById('gu').onchange = e => { S.g = e.target.value; S.d = ''; render(); };
+document.getElementById('dong').onchange = e => { S.d = e.target.value; render(); };
+document.getElementById('yr').onchange = e => { S.y = e.target.value; render(); };
+document.getElementById('mo').onchange = e => { S.m = e.target.value; render(); };
+document.getElementById('kind').onclick = e => { const b = e.target.closest('button'); if (b) { S.k = b.dataset.k; render(); } };
+document.getElementById('ty').onclick = e => { const b = e.target.closest('button'); if (b) { S.t = +b.dataset.t; render(); } };
+render();
+</script>
+<script src="search.js?v={{ today }}"></script>
+</body>
+</html>

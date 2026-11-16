@@ -291,6 +291,87 @@ def same_type(area, ref):
     return D.area_type(area) == t if t != "기타" else abs(area - ref) <= 1.5
 
 
+def hi_type(a):
+    """최고가 평형: 59 · 74(전용 70~77㎡) · 84 — 단지 페이지 매매가 순위와 같은 기준, 나머지 0(기타)."""
+    ai = int(a)
+    return 59 if ai == 59 else 74 if 70 <= ai <= 77 else 84 if ai == 84 else 0
+
+
+def hi_build(sd, sdir, sdb, cinfo, l2_of, l2_name):
+    """site/hi/{시도}/{연도}.json — {"m": [[단지키, 이름, 구·군, 동, 입주년, 분양권]], "t": [[단지번호, 종류(0 매매·1 분양권·2 전세), 평형, 월, 금액, 층, 계약일, 면적]]}
+    (단지·종류·평형·월마다 최고 거래 1건). site/hi/{시도}.json = {"y": [연도...], "g": [구·군...], "d": {구·군: [동...]}}.
+    매매는 과거 수집(2006~)+최근 13개월, 분양권은 과거(2020~)+최근, 전세는 최근 13개월."""
+    l2 = lambda c, d="": l2_name.get(l2_of.get(c), (d or "").split()[-1] if d else "")
+    meta, best = {}, {}
+
+    def put(k, m, kind, t_dt, p, f, a):
+        y, mo = str(t_dt)[:4], int(str(t_dt)[4:6] or 0)
+        if not y.isdigit() or not mo or not p:
+            return
+        if k not in meta:
+            meta[k] = m
+        kk = (y, k, kind, hi_type(a), mo)
+        if kk not in best or p > best[kk][0]:
+            best[kk] = (p, str(f), int(str(t_dt)[6:8] or 0), round(a, 1))
+
+    def sale_key(t):
+        return f"{sdir}/apt/{t['s']}.html" if t.get("s") and t["s"] in D.APT_PAGES else f"{t['n']}|{l2(t.get('c'), t.get('d'))}"
+    for t in sdb["sale"]["trades"]:
+        hh, ap = cinfo(t)
+        yr = int(ap[:4]) if ap and ap[:4].isdigit() else (int(t["by"]) if str(t.get("by", "")).isdigit() else 0)
+        put(sale_key(t), [t["n"], l2(t.get("c"), t.get("d")), t.get("u", ""), yr, 0], 0, t["dt"], t["p"], t.get("f", ""), t["a"])
+    for t in sdb["rent"]["trades"]:
+        if t.get("m"):
+            continue   # 전세만 (월세 제외)
+        hh, ap = cinfo(t)
+        yr = int(ap[:4]) if ap and ap[:4].isdigit() else 0
+        put(sale_key(t), [t["n"], l2(t.get("c"), t.get("d")), t.get("u", ""), yr, 0], 2, t["dt"], t["p"], t.get("f", ""), t["a"])
+    for t in sdb["pre"]["trades"]:
+        hh, mv, extra = cinfo(dict(t, src="pre"))
+        k = f"{sdir}/{extra['h']}.html" if extra.get("h") else f"{t['n']}|{l2(t.get('c'), t.get('d'))}"
+        put(k, [t["n"], l2(t.get("c"), t.get("d")), t.get("u", ""), int(str(mv)[:4]) if mv else 0, 1], 1, t["dt"], t["p"], t.get("f", ""), t["a"])
+    # 과거 수집분 (최근 13개월 창 이전)
+    oldest = min((str(t["dt"])[:6] for t in sdb["sale"]["trades"]), default="999999")
+    for src, kind in (("", 0), ("pre_", 1)):
+        pth = os.path.join(HIST, f"{src}{sd['key']}.json.gz")
+        if not os.path.exists(pth):
+            continue
+        with gzip.open(pth, "rt", encoding="utf-8") as f:
+            apts = json.load(f).get("apts", {})
+        for ak, a in apts.items():
+            code = a.get("c", "")
+            if kind == 0:
+                k = f"{sdir}/apt/{ak}.html" if ak in D.APT_PAGES else f"{a['n']}|{l2(code)}"
+                m = [a["n"], l2(code), a.get("u", ""), int(a["by"]) if str(a.get("by", "")).isdigit() else 0, 0]
+            else:
+                k = f"{a['n']}|{l2(code)}"
+                m = [a["n"], l2(code), a.get("u", ""), 0, 1]
+            for x in a["t"]:
+                if str(x[0])[:6] < oldest:
+                    put(k, m, kind, x[0], x[1], x[2], x[4])
+    base = os.path.join(SITE, "hi", sdir)
+    os.makedirs(base, exist_ok=True)
+    years = sorted({kk[0] for kk in best})
+    for y in years:
+        keys, idx, rows = [], {}, []
+        for (yy, k, kind, ty, mo), (p, f, dd, a) in best.items():
+            if yy != y:
+                continue
+            if k not in idx:
+                idx[k] = len(keys)
+                keys.append([k] + meta[k])
+            rows.append([idx[k], kind, ty, mo, p, f, dd, a])
+        with open(os.path.join(base, f"{y}.json"), "w", encoding="utf-8") as f:
+            json.dump({"m": keys, "t": rows}, f, ensure_ascii=False, separators=(",", ":"))
+    dongs = defaultdict(set)
+    for m in meta.values():
+        if m[1] and m[2]:
+            dongs[m[1]].add(m[2])
+    with open(os.path.join(SITE, "hi", f"{sdir}.json"), "w", encoding="utf-8") as f:
+        json.dump({"y": years, "g": [l["name"] for l in sd["l2"]] if len(sd["l2"]) > 1 else [],
+                   "d": {g: sorted(v) for g, v in dongs.items()}}, f, ensure_ascii=False, separators=(",", ":"))
+
+
 def pop_periods(today):
     """인기단지 기간: (키, 이름, 시작, 끝, 기준) — 주는 월요일 시작, 기준 'seen'=공개일 · 'dt'=계약일."""
     mon = today - timedelta(days=today.weekday())
@@ -649,6 +730,8 @@ def main():
         push["regions"][f"{sdir}/index.html"] = {"n": nm, "c": sale_ctx["cnt"], "h": sale_ctx["high_cnt"], "r": rent_ctx["cnt"]}
         for c in chips:
             push["regions"][c["href"]] = {"n": f"{nm} {c['name']}", "c": c["cnt"], "h": c["high"]}
+        if key in APT_SIDOS:   # 최고가: 연도별 단지·타입·월 최고 거래 (과거 데이터 있는 해부터)
+            hi_build(sd, sdir, sdb, cinfo, l2_of, l2_name)
         if key in APT_SIDOS:   # 인기단지 '많이 산 단지': 기간·지역별 거래 많은 단지 (주 단위는 공개일, 월·연 단위는 계약일)
             pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name)
         # --- 지난 날짜 (최근 7일 중 신규 공개가 있었던 날) — /{시도}/d{날짜}/
@@ -694,6 +777,9 @@ def main():
         f.write(env.get_template("home.html").render(hc))
     with open(os.path.join(SITE, "pop.html"), "w", encoding="utf-8") as f:   # 인기단지 (많이 산 단지 · 실시간 검색)
         f.write(env.get_template("pop.html").render(today=now.strftime("%Y%m%d"),
+                sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home if h["key"] in APT_SIDOS]))
+    with open(os.path.join(SITE, "hi.html"), "w", encoding="utf-8") as f:   # 최고가 (기간·지역·평형별)
+        f.write(env.get_template("hi.html").render(today=now.strftime("%Y%m%d"),
                 sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home if h["key"] in APT_SIDOS]))
     with open(os.path.join(SITE, "push.json"), "w", encoding="utf-8") as f:
         json.dump(push, f, ensure_ascii=False, separators=(",", ":"))
