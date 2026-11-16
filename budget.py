@@ -32,12 +32,15 @@ def _ty(a):
     return 59 if ai == 59 else 74 if 70 <= ai <= 77 else 84 if ai == 84 else 0
 
 
-def build(site, sd, sdir, sale, cinfo, l2_of, l2_name, apt_pages, pcache, today):
+def build(site, sd, sdir, sale, cinfo, l2_of, l2_name, apt_pages, pcache, today, alias=None):
+    alias = alias or {}
     """최근 6개월 매매로 단지·평형별 중간값 → site/bud/{sdir}.json"""
     d6 = (today - timedelta(days=183)).strftime("%Y%m%d")
     by, meta = defaultdict(list), {}
     for t in sale:
         s = t.get("s")
+        if s in alias:   # 1·2·3단지를 합친 단지는 대표 단지로
+            s = alias[s][0]
         if not s or s not in apt_pages or str(t["dt"]) < d6:
             continue
         ty = _ty(t["a"])
@@ -49,7 +52,7 @@ def build(site, sd, sdir, sale, cinfo, l2_of, l2_name, apt_pages, pcache, today)
             yr = int(ap[:4]) if ap and str(ap)[:4].isdigit() else (int(t["by"]) if str(t.get("by", "")).isdigit() else 0)
             p = pcache.get(s) or {}
             sc = (p.get("as") or [p.get("sc")])[0]   # 배정 초등학교 우선, 없으면 가까운 초등학교
-            meta[s] = {"n": t["n"], "g": l2_name.get(l2_of.get(t.get("c")), (t.get("d") or "").split()[-1]), "d": t.get("u", ""),
+            meta[s] = {"n": alias.get(t.get("s"), (0, t["n"]))[1], "g": l2_name.get(l2_of.get(t.get("c")), (t.get("d") or "").split()[-1]), "d": t.get("u", ""),
                        "y": yr, "h": hh or 0, "sc": sc, "st": p.get("st"), "p": f"{sdir}/apt/{s}.html", "t": {},
                        "ac": p.get("ac"), "fd": p.get("fd"), "mt": p.get("mt")}
     for (s, ty), ts in by.items():

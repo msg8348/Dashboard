@@ -120,6 +120,7 @@ def collect(hist, sale, rent, oldest_ym):
 
 
 NUM = re.compile(r"(제?\d+단지|\d+차)\)?$")
+DAN = re.compile(r"\(?제?\d+단지\)?$")
 
 
 def merge_split(apts, ckey):
@@ -143,6 +144,30 @@ def merge_split(apts, ckey):
             b["r"] = sorted(b["r"] + a["r"], key=lambda x: -x[0])
             b["by"] = b["by"] or a["by"]
             alias[k] = to
+    # 'OO1단지 · OO2단지 · OO3단지'(같은 법정동·같은 이름): 단지 번호를 떼고 한 단지로 합친다 ('N차'는 별개 단지라 그대로)
+    groups = defaultdict(list)
+    for k, a in apts.items():
+        if DAN.search(a["n"].replace(" ", "")):
+            groups[(a["c"], a["u"], ckey(a["n"]))].append(k)
+    for ks in groups.values():
+        if len(ks) < 2:
+            continue
+        to = max(ks, key=lambda k: len(apts[k]["s"]) + len(apts[k]["r"]))
+        b = apts[to]
+        b["mem"] = [(apts[k]["j"], apts[k]["n"]) for k in ks]   # K-apt 세대수 합산용
+        b["n"] = DAN.sub("", b["n"]).strip() or b["n"]
+        for k in ks:
+            if k == to:
+                continue
+            a = apts.pop(k)
+            b["s"] = sorted(b["s"] + a["s"], key=lambda x: -x[0])
+            b["r"] = sorted(b["r"] + a["r"], key=lambda x: -x[0])
+            b["by"] = min(x for x in (b["by"], a["by"]) if x) if (b["by"] or a["by"]) else b["by"]
+            alias[k] = to
+    for k, to in list(alias.items()):   # 두 단계로 합쳐진 곳은 최종 대표로
+        while to in alias:
+            to = alias[to]
+        alias[k] = to
     return alias
 
 
@@ -194,7 +219,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
     """시도 하나의 단지 페이지를 만들고 (단지번호 집합, 검색 목록, 주소 목록) 반환."""
     hist = load_hist(hist_dir, sd["key"])
     if not hist:
-        return set(), [], [], {}
+        return set(), [], [], {}, {}
     apts = collect(hist, sdb["sale"]["trades"], sdb["rent"]["trades"], oldest_ym)
     alias = merge_split(apts, ckey)
     moved = {}
@@ -236,7 +261,16 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
         if not a["s"] and not a["r"]:
             continue
         gu = sd["codes"].get(a["c"], "")
-        info = info_from(find_kapt(idx, a["u"], a["j"], a["n"], ckey), sd["sido"])
+        if a.get("mem"):   # 1·2·3단지를 합친 단지: 각 단지 K-apt 행을 모아 합산
+            rows, seen = [], set()
+            for j, nm in a["mem"]:
+                for r in find_kapt(idx, a["u"], j, nm, ckey):
+                    if id(r) not in seen:
+                        seen.add(id(r))
+                        rows.append(r)
+            info = info_from(rows, sd["sido"])
+        else:
+            info = info_from(find_kapt(idx, a["u"], a["j"], a["n"], ckey), sd["sido"])
         l2k = l2_of.get(a["c"])
         crumbs = [("전국", "../../index.html"), (sd["short"], "../index.html")]
         if l2k and len(sd["l2"]) > 1:
@@ -288,4 +322,4 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
                         f'<link rel="canonical" href="{to}.html"><script>location.replace("{to}.html")</script>')
             done.add(k)
     print(f"🏢 {sd['short']}: 단지 페이지 {len(done):,}개 (K-apt 정보 연결 포함)")
-    return done, search, urls, moved
+    return done, search, urls, moved, {k: (to, apts[to]["n"]) for k, to in alias.items() if to in apts}

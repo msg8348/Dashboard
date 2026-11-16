@@ -315,17 +315,19 @@ def hi_build(sd, sdir, sdb, cinfo, l2_of, l2_name):
             best[kk] = (p, str(f), int(str(t_dt)[6:8] or 0), round(a, 1))
 
     def sale_key(t):
+        if t.get("s") in D.APT_ALIAS:
+            return f"{sdir}/apt/{D.APT_ALIAS[t['s']][0]}.html"
         return f"{sdir}/apt/{t['s']}.html" if t.get("s") and t["s"] in D.APT_PAGES else f"{t['n']}|{l2(t.get('c'), t.get('d'))}"
     for t in sdb["sale"]["trades"]:
         hh, ap = cinfo(t)
         yr = int(ap[:4]) if ap and ap[:4].isdigit() else (int(t["by"]) if str(t.get("by", "")).isdigit() else 0)
-        put(sale_key(t), [t["n"], l2(t.get("c"), t.get("d")), t.get("u", ""), yr, 0], 0, t["dt"], t["p"], t.get("f", ""), t["a"])
+        put(sale_key(t), [D.APT_ALIAS.get(t.get("s"), (0, t["n"]))[1], l2(t.get("c"), t.get("d")), t.get("u", ""), yr, 0], 0, t["dt"], t["p"], t.get("f", ""), t["a"])
     for t in sdb["rent"]["trades"]:
         if t.get("m"):
             continue   # 전세만 (월세 제외)
         hh, ap = cinfo(t)
         yr = int(ap[:4]) if ap and ap[:4].isdigit() else 0
-        put(sale_key(t), [t["n"], l2(t.get("c"), t.get("d")), t.get("u", ""), yr, 0], 2, t["dt"], t["p"], t.get("f", ""), t["a"])
+        put(sale_key(t), [D.APT_ALIAS.get(t.get("s"), (0, t["n"]))[1], l2(t.get("c"), t.get("d")), t.get("u", ""), yr, 0], 2, t["dt"], t["p"], t.get("f", ""), t["a"])
     for t in sdb["pre"]["trades"]:
         hh, mv, extra = cinfo(dict(t, src="pre"))
         k = f"{sdir}/{extra['h']}.html" if extra.get("h") else f"{t['n']}|{l2(t.get('c'), t.get('d'))}"
@@ -341,8 +343,9 @@ def hi_build(sd, sdir, sdb, cinfo, l2_of, l2_name):
         for ak, a in apts.items():
             code = a.get("c", "")
             if kind == 0:
-                k = f"{sdir}/apt/{ak}.html" if ak in D.APT_PAGES else f"{a['n']}|{l2(code)}"
-                m = [a["n"], l2(code), a.get("u", ""), int(a["by"]) if str(a.get("by", "")).isdigit() else 0, 0]
+                k = (f"{sdir}/apt/{D.APT_ALIAS[ak][0]}.html" if ak in D.APT_ALIAS else
+                     f"{sdir}/apt/{ak}.html" if ak in D.APT_PAGES else f"{a['n']}|{l2(code)}")
+                m = [D.APT_ALIAS.get(ak, (0, a["n"]))[1], l2(code), a.get("u", ""), int(a["by"]) if str(a.get("by", "")).isdigit() else 0, 0]
             else:
                 k = f"{a['n']}|{l2(code)}"
                 m = [a["n"], l2(code), a.get("u", ""), 0, 1]
@@ -394,14 +397,15 @@ def pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name):
             l2 = l2_name.get(l2_of.get(t.get("c")), (t.get("d") or "").split()[-1] if t.get("d") else "")
             if src == "sale":
                 hh, ap = cinfo(t)
-                k = f"{sdir}/apt/{t['s']}.html" if t.get("s") and t["s"] in D.APT_PAGES else f"{t['n']}|{l2}"
+                k = (f"{sdir}/apt/{D.APT_ALIAS[t['s']][0]}.html" if t.get("s") in D.APT_ALIAS else
+                     f"{sdir}/apt/{t['s']}.html" if t.get("s") and t["s"] in D.APT_PAGES else f"{t['n']}|{l2}")
                 yr = int(ap[:4]) if ap and ap[:4].isdigit() else (int(t["by"]) if str(t.get("by", "")).isdigit() else 0)
             else:
                 hh, mv, extra = cinfo(dict(t, src="pre"))
                 k = f"{sdir}/{extra['h']}.html" if extra.get("h") else f"{t['n']}|{l2}"
                 yr = int(str(mv)[:4]) if mv else 0
             if k not in meta:
-                meta[k] = [t["n"], l2, t.get("u", ""), yr, hh or 0, 1 if src == "pre" else 0]
+                meta[k] = [D.APT_ALIAS.get(t.get("s"), (0, t["n"]))[1], l2, t.get("u", ""), yr, hh or 0, 1 if src == "pre" else 0]
             rows.append((k, l2, str(t.get("dt", "")), t.get("seen") or ""))
     out = {"p": [[pk, nm, a, b] for pk, nm, a, b, _ in periods], "m": {}, "r": {}}
     for pk, nm, a, b, basis in periods:
@@ -597,9 +601,10 @@ def main():
         os.makedirs(os.path.join(SITE, sdir), exist_ok=True)
         if key in APT_SIDOS:   # 단지 페이지 (과거 실거래가 있는 시도)
             pby = PS.group(sd, sdb, HIST, months[-1], houses, match_house)
-            done, srch, aurls, moved = CX.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, ckey, SITE_URL, STORE,
+            done, srch, aurls, moved, alias = CX.build(sd, sdir, sdb, HIST, months[-1], now, env, SITE, l2slug, l2_of, ckey, SITE_URL, STORE,
                                                 pre=PS.moving(pby, houses, now), houses=houses)
             D.APT_PAGES |= done
+            D.APT_ALIAS.update(alias)
             D.PRE_MOVED.update(moved)
             search += srch
             urls += aurls
@@ -751,7 +756,7 @@ def main():
             hi_build(sd, sdir, sdb, cinfo, l2_of, l2_name)
             import budget, poi as POI   # 나의 예산: 예산 맞춤 추천용 단지 목록
             budget.build(SITE, sd, sdir, sdb["sale"]["trades"], cinfo, l2_of, l2_name, D.APT_PAGES,
-                         POI.load(os.path.join(STORE, "poi.json")), now)
+                         POI.load(os.path.join(STORE, "poi.json")), now, D.APT_ALIAS)
             bud_sidos.append(["전남광주" if sd["short"] == "광주전남" else sd["short"], sdir])
         if key in APT_SIDOS:   # 인기단지 '많이 산 단지': 기간·지역별 거래 많은 단지 (주 단위는 공개일, 월·연 단위는 계약일)
             pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name)
