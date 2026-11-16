@@ -3,6 +3,7 @@
 - 기준금리: 한국은행 기준금리 (722Y001, 일별 → 변경일만 남김)
 - 주담대 평균: 예금은행 가중평균 대출금리 · 신규취급액 · 주택담보대출 (121Y006, 월별)
 - 국고채 3년: 시장금리 (817Y002, 일별 → 주 끝 값)
+- 미국 정책금리: 주요국 중앙은행 정책금리 (902Y006, 월별 → 바뀐 달만)
 항목 코드는 통계표의 항목 목록(StatisticItemList)에서 이름으로 찾는다 (코드가 바뀌어도 이름으로 맞춤).
 ECOS_API_KEY 가 없거나 받지 못하면 예전 rate.json 그대로 둔다.
 """
@@ -18,6 +19,7 @@ SERIES = {   # 이름: (통계표, 주기, 항목 이름에 들어갈 말들, �
     "base": ("722Y001", "D", ["기준금리"], "19990501"),
     "mort": ("121Y006", "M", ["주택담보대출"], "200101"),
     "kb3": ("817Y002", "D", ["국고채", "3년"], None),
+    "us": ("902Y006", "M", ["미국"], "199901"),   # 주요국 중앙은행 정책금리 (월별)
 }
 
 
@@ -61,17 +63,31 @@ def build(store, now=None):
     if not KEY:
         print("💹 ECOS_API_KEY 없음 — 금리는 예전 값 사용")
         return old
-    if old.get("date") == today:
+    if old.get("date") == today and "us" in old:
         return old
     out = {"date": today}
     try:
         for name, (stat, cyc, words, start) in SERIES.items():
-            code = item_code(stat, words)
+            if name == "us":   # 미국은 못 받아도 나머지는 그대로
+                try:
+                    code = item_code(stat, words)
+                except Exception as e:
+                    print(f"⚠️ 미국 금리 항목 못 찾음: {e}")
+                    continue
+            else:
+                code = item_code(stat, words)
             end = today if cyc == "D" else today[:6]
             if name == "kb3":
                 start = (now - timedelta(days=365 * 6)).strftime("%Y%m%d")
             rows = series(stat, cyc, code, start, end)
-            if name == "base":   # 바뀐 날만
+            if name == "us":   # 바뀐 달만
+                ch = []
+                for d, v in rows:
+                    if not ch or ch[-1][1] != v:
+                        ch.append([d, v])
+                out["us"] = ch
+                out["us_last"] = rows[-1][0] if rows else ""
+            elif name == "base":   # 바뀐 날만
                 ch = []
                 for d, v in rows:
                     if not ch or ch[-1][1] != v:
