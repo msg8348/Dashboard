@@ -123,7 +123,7 @@ async function detail(id) {
     P.ac != null && `📚 학원 ${P.ac}곳`, P.fd != null && `🍽️ 음식점·카페 ${P.fd}곳`, P.mt && `🛒 ${esc(P.mt[0].split(' ')[0])} ${P.mt[1]}분`].filter(Boolean);
   const nearTy = ['59', '84'].filter(t => (h.near[t] || []).length);
   if (!nearTy.includes(NT)) NT = nearTy[0] || '59';
-  const nearRows = (h.near[NT] || []).map((r, i) => `<tr><td>${i + 1}. ${r[4] ? `<a href="${r[4]}">${esc(r[0])}</a>` : esc(r[0])}<br><small>${esc(r[1])}</small></td><td><b>${eok(r[2])}</b><br><small>${r[3].slice(2, 4)}.${r[3].slice(4, 6)}.${r[3].slice(6)}</small></td></tr>`).join('');
+  const nearRows = (h.near[NT] || []).map((r, i) => `<tr><td>${i + 1}. ${r[4] ? `<a href="${r[4]}">${esc(r[0])}</a>` : esc(r[0])}<br><small>${[r[1], r[5] ? r[5].toLocaleString() + '세대' : '', r[6] || ''].filter(Boolean).map(esc).join(' · ')}</small></td><td><b>${eok(r[2])}</b><br><small>${r[3].slice(2, 4)}.${r[3].slice(4, 6)}.${r[3].slice(6)}</small></td></tr>`).join('');
   $('det').innerHTML = `<button class="bk" type="button" onclick="history.back()">‹ 청약단지</button>
     <div class="hero"><h1>${esc(h.n)}</h1><div class="m">${esc(h.addr)}${h.b ? ' · ' + esc(h.b) : ''}</div>
       <div class="tags"><i class="st ${cls}" style="${cls === 'now' ? 'background:#e0472c;color:#fff' : ''}">${lb}</i>${tagsOf(h).map(x => `<i>${esc(x)}</i>`).join('')}</div></div>
