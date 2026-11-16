@@ -36,6 +36,7 @@
   .res .row{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0;border-top:1px solid rgba(255,255,255,.12)}.res .row b{font-weight:800}
   .lim{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}.lim div{background:rgba(255,255,255,.1);border-radius:10px;padding:7px 8px;font-size:11.5px;opacity:.9}.lim b{display:block;font-size:14.5px;margin-top:2px}.lim .on{background:#fff;color:var(--navy);opacity:1}
   .why{margin-top:8px;background:rgba(255,255,255,.12);border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:1.55}
+  .sels{display:flex;gap:6px}.sels select{flex:1;min-width:0;font:inherit;font-size:14.5px;font-weight:700;height:40px;border:1px solid #d6dbe2;border-radius:10px;padding:0 10px;background:#fff;color:var(--ink)}
   .chips{display:flex;gap:6px;flex-wrap:wrap}
   .chips button{font:inherit;font-size:13.5px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid #d6dbe2;background:#fff;color:var(--ink);cursor:pointer}
   .chips button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
@@ -102,24 +103,22 @@
 </div>
 
 <div class="sec"><div class="st">STEP 2 · 지역</div><div class="sh">어디를 보시나요?</div>
-  <div class="chips" id="sido">{% for s in sidos %}<button type="button" data-v="{{ s[1] }}">{{ s[0] }}</button>{% endfor %}</div>
-  <div class="gap8"></div><div class="chips" id="gus"></div>
+  <div class="sels"><select id="sido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select><select id="gus" aria-label="구·군"></select></div>
   <div class="gap8"></div><div class="chips" id="ty"><button type="button" data-v="84">84타입</button><button type="button" data-v="59">59타입</button><button type="button" data-v="74">74타입</button></div>
-  <div class="hint">구·군은 여러 곳 고를 수 있어요 (안 고르면 전체)</div>
 </div>
 
 <div class="sec"><div class="st">STEP 3 · 우선순위</div><div class="sh">중요한 순서대로 눌러 주세요</div>
-  <div class="pr" id="pri"><button type="button" data-k="price"><em></em>가격</button><button type="button" data-k="school"><em></em>초등학교</button><button type="button" data-k="subway"><em></em>지하철</button><button type="button" data-k="new"><em></em>신축</button><button type="button" data-k="brand"><em></em>1군 브랜드</button><button type="button" data-k="big"><em></em>대단지</button><button type="button" disabled><em>-</em>평지<small>준비 중</small></button></div>
-  <div class="hint">1순위 ×3 · 2순위 ×2.5 · 3순위 ×2 · 4순위 ×1.5 · 5·6순위 ×1 · 안 누른 항목은 점수에 넣지 않아요. 다시 누르면 빠져요.</div>
+  <div class="pr" id="pri"><button type="button" data-k="brand"><em></em>1군 브랜드</button><button type="button" data-k="subway"><em></em>역세권</button><button type="button" data-k="big"><em></em>대단지</button><button type="button" data-k="new"><em></em>신축</button><button type="button" disabled><em>-</em>평지<small>준비 중</small></button><button type="button" data-k="school"><em></em>초등학교</button><button type="button" data-k="acad"><em></em>학원가</button><button type="button" data-k="shop"><em></em>상권</button></div>
+  <div class="hint">1순위 ×3 · 2순위 ×2.5 · 3순위 ×2 · 4순위 ×1.5 · 그다음 ×1 · 안 누른 항목은 점수에 넣지 않아요. 다시 누르면 빠져요. 같은 점수면 예산에 가까운 단지가 위로 와요.</div>
 </div>
 <div id="out"></div>
-<div class="note">기본값 ({{ rules.asof }} 기준, 일반 무주택·은행권): DSR {{ rules.dsr }}% · {% for k, r in rules.regions.items() %}{{ r.name }} LTV {{ r.ltv }}%(생애최초 {{ r.ltv1 }}%)·스트레스 +{{ r.stress }}%p{% if not loop.last %} / {% endif %}{% endfor %} · 수도권·규제지역 주담대 상한(규제지역 15억 이하 6억·25억 이하 4억·초과 2억, 수도권 6억) · 취득세 1~3%+지방교육세(생애최초 12억 이하 {{ rules.acq_first_cut }}만원 감면) · 중개수수료 법정 상한 요율 · 추천 예상가 = 최근 6개월 실거래 중간값 · 1군 브랜드 = 시공능력평가 상위 10개사 대표 브랜드.<br>계산은 참고용이에요. 실제 대출 한도와 세금은 은행 심사, 개인 조건, 정책 변경에 따라 달라요. 입력값은 이 기기에만 저장돼요.</div>
+<div class="note">기본값 ({{ rules.asof }} 기준, 일반 무주택·은행권): DSR {{ rules.dsr }}% · {% for k, r in rules.regions.items() %}{{ r.name }} LTV {{ r.ltv }}%(생애최초 {{ r.ltv1 }}%)·스트레스 +{{ r.stress }}%p{% if not loop.last %} / {% endif %}{% endfor %} · 수도권·규제지역 주담대 상한(규제지역 15억 이하 6억·25억 이하 4억·초과 2억, 수도권 6억) · 취득세 1~3%+지방교육세(생애최초 12억 이하 {{ rules.acq_first_cut }}만원 감면) · 중개수수료 법정 상한 요율 · 추천 예상가 = 최근 6개월 실거래 중간값 · 1군 브랜드 = 시공능력평가 상위 10개사 대표 브랜드 · 학원가 = 반경 500m 학원 수, 상권 = 반경 500m 음식점·카페 수와 대형마트 거리(카카오 지도, 같은 시도 안에서 상대 비교).<br>계산은 참고용이에요. 실제 대출 한도와 세금은 은행 심사, 개인 조건, 정책 변경에 따라 달라요. 입력값은 이 기기에만 저장돼요.</div>
 </div>
 <script>
 const RU = {{ rules|tojson }};
 const KEY = 'ndp_budget';
 const V = Object.assign({ cash: 10000, stock: 0, sell: 0, debt: 0, gift: 0, marry: false, etc: 0, first: '1', region: '', income: 6000, other: 0,
-  rate: {{ mort.v }}, years: '30', method: 'eq', sido: '', gus: [], ty: '84', pri: ['price', 'school', 'subway'] }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })());
+  rate: {{ mort.v }}, years: '30', method: 'eq', sido: '', gu: '', ty: '84', pri: ['subway', 'school'] }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })());
 const $ = id => document.getElementById(id);
 const num = v => { const n = +String(v).replace(/[^\d.]/g, ''); return isFinite(n) ? n : 0; };
 const won = v => { v = Math.round(v); const neg = v < 0; v = Math.abs(v); const e = Math.floor(v / 10000), m = v % 10000; return (neg ? '−' : '') + ((e ? e + '억' : '') + (m ? (e ? ' ' : '') + m.toLocaleString() + '만' : '') || '0'); };
@@ -204,7 +203,7 @@ function calc() {
 // ── 추천
 const BUD = {};
 const isBrand = n => { const u = n.toUpperCase().replace(/\s/g, ''); return RU.brands.some(b => u.includes(b.toUpperCase())); };
-const W = [3, 2.5, 2, 1.5, 1, 1];
+const W = [3, 2.5, 2, 1.5, 1, 1, 1];
 const nowY = new Date().getFullYear();
 async function recommend() {
   const out = $('out');
@@ -214,17 +213,22 @@ async function recommend() {
   const gus = $('gus');
   if (gus.dataset.s !== V.sido) {
     gus.dataset.s = V.sido;
-    gus.innerHTML = d.g.map(g => `<button type="button" data-v="${g}">${g}</button>`).join('');
+    gus.innerHTML = `<option value="">구·군 전체</option>` + d.g.map(g => `<option>${g}</option>`).join('');
   }
-  gus.querySelectorAll('button').forEach(b => b.classList.toggle('on', V.gus.includes(b.dataset.v)));
+  gus.hidden = !d.g.length;
+  gus.value = V.gu || '';
   const maxP = RES.P;
+  const sorted = k => d.a.map(a => a[k]).filter(v => v != null).sort((x, y) => x - y);
+  const acs = d._acs = d._acs || sorted('ac'), fds = d._fds = d._fds || sorted('fd');
+  const pctl = (arr, v) => { if (!arr.length) return 0; let lo = 0, hi = arr.length; while (lo < hi) { const m = (lo + hi) >> 1; arr[m] < v ? lo = m + 1 : hi = m; } return lo / arr.length * 100; };
   const list = [];
   for (const a of d.a) {
     const t = a.t[V.ty]; if (!t) continue;
-    if (V.gus.length && !V.gus.includes(a.g)) continue;
+    if (V.gu && a.g !== V.gu) continue;
     const p = t[0]; if (p > maxP * 1.05) continue;
     const s = {
-      price: Math.max(0, 100 - Math.abs(maxP * .95 - p) / maxP * 300),
+      acad: a.ac == null ? 0 : pctl(acs, a.ac),
+      shop: a.fd == null ? 0 : pctl(fds, a.fd) * .8 + (a.mt && a.mt[1] <= 15 ? 20 : 0),
       school: a.sc ? Math.max(0, 100 - (a.sc[1] - 3) * 9) : 0,
       subway: a.st ? Math.max(0, 100 - (a.st[1] - 3) * 9) : 0,
       new: a.y ? Math.max(0, 100 - (nowY - a.y) * 4) : 0,
@@ -232,10 +236,10 @@ async function recommend() {
       big: Math.min(100, (a.h || 0) / 10),
     };
     let sum = 0, wt = 0;
-    V.pri.forEach((k, i) => { sum += s[k] * W[i]; wt += W[i]; });
-    list.push({ a, p, n: t[1], tr: t[2], score: wt ? sum / wt : 50 });
+    V.pri.filter(k => k in s).forEach((k, i) => { sum += s[k] * W[i]; wt += W[i]; });
+    list.push({ a, p, n: t[1], tr: t[2], score: wt ? sum / wt : 50, fit: Math.abs(maxP * .95 - p) });
   }
-  const ok = list.filter(x => x.p <= maxP).sort((x, y) => y.score - x.score || x.p - y.p);
+  const ok = list.filter(x => x.p <= maxP).sort((x, y) => Math.round(y.score) - Math.round(x.score) || x.fit - y.fit);
   const over = list.filter(x => x.p > maxP).sort((x, y) => y.score - x.score).slice(0, 3);
   const card = (x, i) => {
     const a = x.a, ch = [];
@@ -244,6 +248,8 @@ async function recommend() {
     if (a.y && nowY - a.y <= 10) ch.push(`✓ ${String(a.y).slice(2)}년 신축급`);
     if (a.h >= 1000) ch.push(`✓ ${a.h.toLocaleString()}세대`);
     if (isBrand(a.n)) ch.push('✓ 1군 브랜드');
+    if (a.ac != null && acs.length && pctl(acs, a.ac) >= 70) ch.push(`✓ 학원 ${a.ac}곳`);
+    if (a.mt && a.mt[1] <= 15) ch.push(`✓ ${a.mt[0].replace(/\s.*$/, '')} ${a.mt[1]}분`);
     const diff = maxP - x.p;
     const need = Math.max(0, x.p + buyCost(x.p, RES.first) - RES.eq);
     const loan = Math.min(need, x.p * RES.ltv, capFor(RES.region, x.p), RES.dl);
@@ -253,7 +259,7 @@ async function recommend() {
       <div class="ch">${ch.map(c => `<i>${c}</i>`).join('')}</div>
       <div class="ln">${need ? `대출 ${won(loan)} 필요 · 월 ${won(firstPay(loan, RES.r, RES.y, RES.m))}원` : '대출 없이 가능'} · 최근 6개월 ${x.n}건</div></a>`;
   };
-  const gl = V.gus.length ? V.gus.join('·') : (document.querySelector(`#sido [data-v="${V.sido}"]`) || {}).textContent;
+  const gl = V.gu || ($('sido').selectedOptions[0] || {}).textContent;
   out.innerHTML = `<div class="sub">${gl} · ${V.ty}타입 · ${won(maxP)} 이하 추천 ${ok.length}곳${ok.length > 10 ? ' 중 Top 10' : ''}</div>`
     + (ok.length ? ok.slice(0, 10).map((x, i) => card(x, i + 1)).join('') : '<div class="sec"><div class="empty">이 예산에 맞는 거래가 최근 6개월에 없어요<br>다른 지역·평형을 골라 보세요</div></div>')
     + (over.length ? `<div class="sub">조금만 더 보태면</div>` + over.map(x => card(x, '+')).join('') : '');
@@ -267,27 +273,23 @@ function seg(id, key) {
   el.onclick = e => { const b = e.target.closest('button'); if (!b) return; V[key] = b.dataset.v; paint(); onSeg(key); calc(); };
   paint();
 }
-function onSeg(key) {
-  if (key === 'sido') { V.gus = []; const reg = (BUD[V.sido] || {}).region; if (reg) { V.region = reg; $('region').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === reg)); } }
-}
+function onSeg(key) {}
 seg('first', 'first'); seg('region', 'region'); seg('years', 'years'); seg('method', 'method'); seg('ty', 'ty');
 const sidoEl = $('sido');
-sidoEl.onclick = async e => {
-  const b = e.target.closest('button'); if (!b) return;
-  V.sido = b.dataset.v; V.gus = [];
-  sidoEl.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+sidoEl.onchange = async () => {
+  V.sido = sidoEl.value; V.gu = '';
   const d = BUD[V.sido] = BUD[V.sido] || await fetch(`bud/${V.sido}.json?v={{ today }}`).then(r => r.json()).catch(() => null);
   if (d && d.region) { V.region = d.region; $('region').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.v === V.region)); }
   calc();
 };
-$('gus').onclick = e => { const b = e.target.closest('button'); if (!b) return; const g = b.dataset.v; V.gus = V.gus.includes(g) ? V.gus.filter(x => x !== g) : [...V.gus, g]; calc(); };
+$('gus').onchange = e => { V.gu = e.target.value; calc(); };
 const priEl = $('pri');
 function paintPri() { priEl.querySelectorAll('button[data-k]').forEach(b => { const i = V.pri.indexOf(b.dataset.k); b.classList.toggle('on', i >= 0); b.querySelector('em').textContent = i >= 0 ? i + 1 : ''; }); }
 priEl.onclick = e => { const b = e.target.closest('button[data-k]'); if (!b) return; const k = b.dataset.k; V.pri = V.pri.includes(k) ? V.pri.filter(x => x !== k) : [...V.pri, k]; paintPri(); calc(); };
 paintPri();
 $('regHint').textContent = '규제지역: 서울 전역 등 · 수도권: 경기·인천 비규제';
-if (!V.sido && sidoEl.querySelector('button')) V.sido = (sidoEl.querySelector('[data-v="busan"]') || sidoEl.querySelector('button')).dataset.v;
-sidoEl.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.v === V.sido));
+if (!V.sido || ![...sidoEl.options].some(o => o.value === V.sido)) V.sido = [...sidoEl.options].some(o => o.value === 'busan') ? 'busan' : (sidoEl.value || '');
+sidoEl.value = V.sido;
 (async () => {
   if (!V.region) {
     const d = BUD[V.sido] = await fetch(`bud/${V.sido}.json?v={{ today }}`).then(r => r.json()).catch(() => null);
