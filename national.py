@@ -799,6 +799,9 @@ def main():
     with open(os.path.join(SITE, "act.html"), "w", encoding="utf-8") as f:   # 거래활발도 (시도별 · 전국 시군구 · 지표단지 · 구군별)
         f.write(env.get_template("act.html").render(today=now.strftime("%Y%m%d"), nat=act_nat, sidos=act_sidos,
                 date_label=now.strftime("%y.%m.%d")))
+    import rate   # 금리 (한국은행 ECOS, 하루 한 번)
+    with open(os.path.join(SITE, "rate.html"), "w", encoding="utf-8") as f:
+        f.write(env.get_template("rate.html").render(today=now.strftime("%Y%m%d"), rate=rate.build(STORE)))
     with open(os.path.join(SITE, "hi.html"), "w", encoding="utf-8") as f:   # 최고가 (기간·지역·평형별)
         f.write(env.get_template("hi.html").render(today=now.strftime("%Y%m%d"),
                 sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home if h["key"] in APT_SIDOS]))
