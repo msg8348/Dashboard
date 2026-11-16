@@ -486,14 +486,14 @@
   </div>
 </div>
 {% endif %}
-</div>
-
 {% if hi %}
 <div class="report page" id="page5" hidden>
   <div class="head"><h1>{{ RG }} 최고가</h1></div>
   <div id="hiw" data-s="{{ hi.s }}" data-g="{{ hi.g }}" data-n="{{ hi.n }}"></div>
 </div>
 {% endif %}
+</div>
+
 <nav class="bnav" id="bnav">
   <span class="bpill" id="bpill"></span>
   {% for t, k, pn in PAGES %}<button class="bt {% if loop.first %}on{% endif %}" data-page="{{ pn }}" onclick="showPage({{ pn }})">{{ t }}</button>{% endfor %}
