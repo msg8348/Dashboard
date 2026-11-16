@@ -716,7 +716,7 @@ def main():
             t = ind["gu_total"]
             act_nat["s"].append({"n": nm_s, "c3": t["c3"], "c1": t["c1"], "r3": t["r3"], "r1": t["r1"], "trend": t["trend"], "change": t["change"], "h": f"{sdir}/index.html"})
             for g in ind["gus"]:
-                if (g.get("hh") or 0) >= 3000:   # 작은 시군구 제외 (아파트 3천세대 이상)
+                if (g.get("hh") or 0) >= 20000:   # 작은 시군구 제외 (아파트 2만세대 이상)
                     act_nat["g"].append({"n": f"{nm_s} {g['name']}", "c3": g["c3"], "c1": g["c1"], "r3": g["r3"], "r1": g["r1"], "trend": g["trend"], "change": g["change"]})
         # --- 레벨2
         chips = []
