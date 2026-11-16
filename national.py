@@ -389,7 +389,7 @@ def pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name):
     today = datetime.now(D.KST)
     periods = pop_periods(today)
     meta, rows = {}, []
-    for src in ("sale", "pre"):
+    for src in ("sale",):   # 많이 산 단지: 매매만 (분양권 제외)
         for t in sdb[src]["trades"]:
             l2 = l2_name.get(l2_of.get(t.get("c")), (t.get("d") or "").split()[-1] if t.get("d") else "")
             if src == "sale":
