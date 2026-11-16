@@ -52,17 +52,18 @@
   .shot{background:#fff;border:1px solid #e3e8ee;border-radius:20px;overflow:hidden;min-height:200px;display:grid;place-items:center}
   .shot img{display:block;width:100%;height:auto}
   .shot .empty{border:0}
-  .save{width:100%;height:52px;margin-top:10px;border:0;border-radius:16px;background:var(--navy);color:#fff;font:inherit;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
-  .save svg{width:20px;height:20px}.save:disabled{opacity:.5}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  .btn{background:#fff;color:#111;border:1.5px solid #cfd6de;border-radius:14px;padding:14px;font:inherit;font-size:15px;font-weight:800;cursor:pointer}
+  .btn:disabled{opacity:.5}
   .tip{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}
 </style>
 </head>
 <body><div class="wrap">
 <div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
 <div class="head"><h1>주요거래</h1></div>
-<div class="sels"><select id="sido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select><select id="gu" aria-label="구·군"></select></div>
+<div class="sels"><select id="sido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select></div>
 <div class="shot" id="shot"><div class="empty">불러오는 중…</div></div>
-<button class="save" id="save" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>이미지 저장</button>
+<div class="acts"><button class="btn" id="shareBtn" type="button" disabled>공유하기</button><button class="btn" id="saveBtn" type="button" disabled>저장하기</button></div>
 <div class="tip">국토부 실거래 · 그날 새로 공개된 매매(분양권 포함) · 타입별 금액순 15건</div>
 <div class="sheet" id="out" aria-hidden="true"></div>
 </div>
@@ -70,7 +71,7 @@
 const FV = (() => { try { return localStorage.getItem('ndp_region_fav_dir') || ''; } catch (e) { return ''; } })();   // 홈 지역 즐겨찾기 (없으면 서울)
 const S = { s: '', g: '' };
 try { Object.assign(S, JSON.parse(sessionStorage.getItem('ndp_major')) || {}); } catch (e) {}
-const sel = document.getElementById('sido'), guSel = document.getElementById('gu');
+const sel = document.getElementById('sido');
 const has = v => !!v && [...sel.options].some(o => o.value === v);
 if (S.fv !== FV) { S.fv = FV; S.s = ''; S.g = ''; }
 S.s = has(S.s) ? S.s : has(FV) ? FV : has('seoul') ? 'seoul' : sel.value;
@@ -90,16 +91,13 @@ function section(k, rows, wide) {
 }
 async function render() {
   try { sessionStorage.setItem('ndp_major', JSON.stringify(S)); } catch (e) {}
-  const out = document.getElementById('out'), shot = document.getElementById('shot'), btn = document.getElementById('save');
+  const out = document.getElementById('out'), shot = document.getElementById('shot'), btns = [document.getElementById('shareBtn'), document.getElementById('saveBtn')];
   const my = ++render.n;
-  btn.disabled = true;
+  btns.forEach(b => { b.disabled = true; });
   shot.innerHTML = '<div class="empty">이미지 만드는 중…</div>';
   let d = cache[S.s];
   if (!d) { d = cache[S.s] = await fetch(`major/${S.s}.json?v={{ today }}`).then(r => r.ok ? r.json() : { d: '', c: [] }).catch(() => ({ d: '', c: [] })); }
-  const gus = [...new Set(d.c.map(r => r[1]).filter(Boolean))].sort();
-  if (S.g && !gus.includes(S.g)) S.g = '';
-  guSel.hidden = gus.length < 2;
-  guSel.innerHTML = '<option value="">구·군 전체</option>' + gus.map(g => `<option${g === S.g ? ' selected' : ''}>${esc(g)}</option>`).join('');
+  S.g = '';
   const rows = d.c.filter(r => !S.g || r[1] === S.g).sort((a, b) => b[5] - a[5]);
   const by = k => rows.filter(r => r[2] === k);
   const cnt = k => by(k).length, pre = rows.filter(r => r[6]).length, hi = rows.filter(r => r[7]).length;
@@ -118,7 +116,7 @@ async function render() {
     FILE = new File([blob], `${name.replace(/\s+/g, '_')}_주요거래_${(d.d || '').replace(/\./g, '')}.png`, { type: 'image/png' });
     const img = new Image(); img.alt = `${name} 아파트 매매 ${d.d} 신규 실거래`; img.src = URL.createObjectURL(blob);
     shot.innerHTML = ''; shot.appendChild(img);
-    btn.disabled = false;
+    btns.forEach(b => { b.disabled = false; });
   } catch (e) { shot.innerHTML = '<div class="empty">이미지를 만들지 못했어요</div>'; }
 }
 render.n = 0;
@@ -126,15 +124,17 @@ let FILE = null;
 const loadH2C = () => window.html2canvas ? Promise.resolve() : new Promise((ok, no) => {
   const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
 });
-document.getElementById('save').onclick = async () => {   // 휴대폰: 공유 창에서 '이미지 저장' / PC: 바로 내려받기
+const download = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(FILE); a.download = FILE.name; document.body.appendChild(a); a.click(); a.remove(); };
+document.getElementById('shareBtn').onclick = async () => {   // 공유하기: 이미지 파일로 공유 (카카오톡 등) — 안 되는 브라우저는 페이지 주소 공유
   if (!FILE) return;
-  if (navigator.canShare && navigator.canShare({ files: [FILE] }) && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    try { await navigator.share({ files: [FILE] }); return; } catch (e) { if (e.name === 'AbortError') return; }
-  }
-  const a = document.createElement('a'); a.href = URL.createObjectURL(FILE); a.download = FILE.name; document.body.appendChild(a); a.click(); a.remove();
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [FILE] })) await navigator.share({ files: [FILE] });
+    else if (navigator.share) await navigator.share({ title: document.title, url: location.href });
+    else download();
+  } catch (e) {}
 };
+document.getElementById('saveBtn').onclick = () => { if (FILE) download(); };   // 저장하기: 이미지 파일로 내려받기
 sel.onchange = () => { S.s = sel.value; S.g = ''; render(); };
-guSel.onchange = () => { S.g = guSel.value; render(); };
 render();
 </script>
 <script src="search.js?v={{ today }}"></script>
