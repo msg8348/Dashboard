@@ -381,8 +381,7 @@
 <option value="{{ 'index.html' if level == 2 else '' }}"{% if level == 1 %} selected{% endif %}>{{ L2W }} 전체</option>
 {% for n, h in l2opts %}<option value="{{ h }}"{% if level == 2 and n == region %} selected{% endif %}>{{ n }}</option>{% endfor %}
 </select></label>{% endif %}</nav>{% endif %}
-{% set PAGES = [('요약','sum',1),('실거래','sale',2),('거래활발도','ind',4)] if has_ind else [('요약','sum',1),('실거래','sale',2)] %}
-{% if hi %}{% set PAGES = PAGES + [('최고가','hi',5)] %}{% endif %}
+{% set PAGES = [('요약','sum',1),('실거래','sale',2)] + ([('최고가','hi',5)] if hi else []) + ([('거래활발도','ind',4)] if has_ind else []) %}
 
 <!-- ============ 1. 요약 ============ -->
 <div class="report page" id="page1">
