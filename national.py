@@ -803,7 +803,14 @@ def main():
                      "avg84": avg84(sdb["sale"]["trades"], now), "l2_word": l2_word, "chips": chips})
         print(f"🧾 {sd['short']}: 신규 매매 {sale_ctx['cnt']} · 신고가 {sale_ctx['high_cnt']} · 페이지 {1 + len(chips)}개")
 
-    hc = {"date_label": now.strftime("%y.%m.%d"), "sidos": home, "site_url": SITE_URL,
+    # 홈 막대그래프: 전국 최근 60일 계약일별 매매 건수 (최근 2주는 아직 신고 중이라 연하게)
+    from collections import Counter
+    dcnt = Counter(str(t.get("dt", "")) for sd in sidos for t in dbs["sale"][sd["key"]]["trades"])
+    last = max((d for d in dcnt if d <= now.strftime("%Y%m%d")), default=now.strftime("%Y%m%d"))
+    lday = datetime.strptime(last, "%Y%m%d")
+    daily = [[(lday - timedelta(days=i)).strftime("%Y%m%d"), dcnt.get((lday - timedelta(days=i)).strftime("%Y%m%d"), 0)]
+             for i in range(59, -1, -1)]
+    hc = {"date_label": now.strftime("%y.%m.%d"), "sidos": home, "site_url": SITE_URL, "daily": daily,
           "tot": {k: sum(h[k] for h in home) for k in ("cnt", "high", "rent")},
           "max_cnt": max([h["cnt"] for h in home] + [1])}
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
