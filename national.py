@@ -555,7 +555,8 @@ def main():
                 legacy = json.load(f).get("highs3")
             if legacy:
                 db.setdefault("highs3_by", {})["20261113"] = legacy
-    houses = applyhome.load(os.path.join(STORE, "applyhome.json"), D.MOLIT_API_KEY, now)
+    # 청약홈 갱신 주기는 실제 오늘 기준 (신규 공개가 없는 날 표시 기준일(now)로 하면 주말·월요일엔 갱신이 멈춤)
+    houses = applyhome.load(os.path.join(STORE, "applyhome.json"), D.MOLIT_API_KEY, datetime.now(D.KST))
     today_s = now.strftime("%Y%m%d")
     d7 = (now - timedelta(days=6)).strftime("%Y%m%d")
     seen_days = {t.get("seen") for src in ("sale", "rent") for db in dbs[src].values() for t in db["trades"]}
