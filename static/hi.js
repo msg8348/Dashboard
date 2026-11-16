@@ -75,7 +75,7 @@
         const k = mi + ':' + kind;
         if (!best.has(k) || p > best.get(k)[4]) best.set(k, r);
       }
-      const rs = [...best.values()].sort((a, b) => b[4] - a[4]).slice(0, 10);
+      const rs = [...best.values()].sort((a, b) => b[4] - a[4]).slice(0, 20);
       list.innerHTML = rs.length ? rs.map(([mi, kind, ty, mo, p, f, dd, a], i) => {
         const m = d.m[mi], pre = kind === 1;
         const loc = S.d ? '' : S.g ? m[3] : m[2];   // 전체: 구·군 / 구·군 선택: 동 / 동 선택: 생략
