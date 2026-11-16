@@ -130,13 +130,13 @@
 <body>
 <div class="wrap">
   <div class="top">{{ brand("index.html") }}<span class="tr"><span class="dt">{{ date_label }} 신규 공개</span><a class="menu-btn" href="fav.html" aria-label="관심단지"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></a><button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button class="menu-btn" type="button" aria-label="메뉴" onclick="openMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></span></div>
-  {%- set n = daily|length %}{% set mx = (daily|map(attribute=1)|max or 1) * 1.05 %}{% set full = daily[:-14] %}{% set avg = (full|map(attribute=1)|sum) / (full|length or 1) %}
-  <div class="hero"><div class="t"><h1>전국 아파트 실거래</h1><small>최근 60일 계약일별 매매</small></div>
+  {%- set n = daily|length %}{% set known = daily|selectattr(1)|map(attribute=1)|list %}{% set mx = (known|max if known else 1) * 1.05 %}{% set avg = (known|sum) / (known|length or 1) %}
+  <div class="hero"><div class="t"><h1>전국 아파트 실거래</h1><small>최근 30일 신규 공개 매매</small></div>
     <div class="bd"><div class="l"><div class="k">신규 매매 · {{ date_label[3:] }}</div><div class="v">{{ "{:,}".format(tot.cnt) }}<span>건</span></div>
       <div class="s">신고가 <b class="r">{{ "{:,}".format(tot.high) }}</b> · 전월세 <b>{{ "{:,}".format(tot.rent) }}</b></div></div>
-    <div class="c" title="계약 후 30일 안에 신고돼 최근 2주는 아직 집계 중"><svg class="ch" viewBox="0 0 {{ n * 10 }} 62" preserveAspectRatio="none" aria-label="최근 60일 계약일별 매매 건수">
-      <line x1="0" x2="{{ n * 10 }}" y1="{{ '%.1f'|format(62 - avg / mx * 58) }}" y2="{{ '%.1f'|format(62 - avg / mx * 58) }}" stroke="#fff" stroke-opacity=".35" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>
-      {%- for d, v in daily %}<rect x="{{ loop.index0 * 10 + 2 }}" y="{{ '%.1f'|format(62 - v / mx * 58) }}" width="6" height="{{ '%.1f'|format(v / mx * 58) }}" fill="#8fa2ff" fill-opacity="{{ '.3' if loop.index0 >= n - 14 else '.75' }}"><title>{{ d[4:6]|int }}.{{ d[6:]|int }} {{ "{:,}".format(v) }}건</title></rect>{% endfor %}</svg>
+    <div class="c"><svg class="ch" viewBox="0 0 {{ n * 10 }} 62" preserveAspectRatio="none" aria-label="최근 30일 날짜별 신규 공개 매매 건수">
+      {%- if known|length > 1 %}<line x1="0" x2="{{ n * 10 }}" y1="{{ '%.1f'|format(62 - avg / mx * 58) }}" y2="{{ '%.1f'|format(62 - avg / mx * 58) }}" stroke="#fff" stroke-opacity=".35" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>{% endif %}
+      {%- for d, v in daily %}<rect x="{{ loop.index0 * 10 + 1.5 }}" y="{{ '%.1f'|format(62 - (v or 0) / mx * 58) if v else 59 }}" width="7" height="{{ '%.1f'|format(v / mx * 58) if v else 3 }}" rx="1" fill="{{ '#fff' if loop.last and v else '#8fa2ff' }}" fill-opacity="{{ '1' if loop.last and v else ('.75' if v else '.15') }}"><title>{{ d[4:6]|int }}.{{ d[6:]|int }} {{ "{:,}".format(v) ~ '건' if v else '공개 없음' }}</title></rect>{% endfor %}</svg>
       <div class="ax"><span>{{ daily[0][0][4:6]|int }}.{{ daily[0][0][6:]|int }}</span><span>{{ daily[-1][0][4:6]|int }}.{{ daily[-1][0][6:]|int }}</span></div></div></div></div>
   <div class="menu">   <!-- 메뉴 8개 (4개씩 2줄) — 아직 만들지 않은 메뉴는 준비 중 안내 -->
     <a class="it" href="fav.html"><span class="ib"><svg viewBox="0 0 32 32"><path d="M16 4.5l3.5 7.2 7.9 1.1-5.7 5.5 1.4 7.8L16 22.4l-7.1 3.7 1.4-7.8-5.7-5.5 7.9-1.1z" fill="#f5b301"/></svg></span><span class="lb">즐겨찾기</span></a>

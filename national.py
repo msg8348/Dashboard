@@ -803,13 +803,31 @@ def main():
                      "avg84": avg84(sdb["sale"]["trades"], now), "l2_word": l2_word, "chips": chips})
         print(f"🧾 {sd['short']}: 신규 매매 {sale_ctx['cnt']} · 신고가 {sale_ctx['high_cnt']} · 페이지 {1 + len(chips)}개")
 
-    # 홈 막대그래프: 전국 최근 60일 계약일별 매매 건수 (최근 2주는 아직 신고 중이라 연하게)
-    from collections import Counter
-    dcnt = Counter(str(t.get("dt", "")) for sd in sidos for t in dbs["sale"][sd["key"]]["trades"])
-    last = max((d for d in dcnt if d <= now.strftime("%Y%m%d")), default=now.strftime("%Y%m%d"))
-    lday = datetime.strptime(last, "%Y%m%d")
-    daily = [[(lday - timedelta(days=i)).strftime("%Y%m%d"), dcnt.get((lday - timedelta(days=i)).strftime("%Y%m%d"), 0)]
-             for i in range(59, -1, -1)]
+    # 홈 막대그래프: 최근 30일 날짜별 '신규 공개 매매' 건수 (홈 숫자와 같은 기준 = 그날 새로 공개된 매매+분양권)
+    # 날마다 store/home_daily.json 에 쌓는다. 처음 한 번은 거래의 공개일(seen)로 아는 날을 채운다 (전국 수집 시작 11.14 부터).
+    dpath = os.path.join(STORE, "home_daily.json")
+    try:
+        with open(dpath, encoding="utf-8") as f:
+            hist_d = json.load(f)
+    except (OSError, ValueError):
+        hist_d = {}
+    tot_cnt = sum(h["cnt"] for h in home)
+    if not args.only:   # 일부 시도만 만든 시험 빌드는 기록하지 않음
+        from collections import Counter
+        seen_c = Counter(t.get("seen") for src in ("sale", "pre") for sd in sidos for t in dbs[src][sd["key"]]["trades"])
+        for d, c in seen_c.items():
+            if d and d >= "20261114" and d not in hist_d:
+                hist_d[d] = c
+        hist_d[now.strftime("%Y%m%d")] = tot_cnt
+        hist_d = dict(sorted(hist_d.items())[-120:])
+        with open(dpath, "w", encoding="utf-8") as f:
+            json.dump(hist_d, f, separators=(",", ":"))
+    daily = []
+    for i in range(29, -1, -1):
+        d = (now - timedelta(days=i)).strftime("%Y%m%d")
+        daily.append([d, hist_d.get(d)])
+    if args.only and daily[-1][1] is None:
+        daily[-1][1] = tot_cnt
     hc = {"date_label": now.strftime("%y.%m.%d"), "sidos": home, "site_url": SITE_URL, "daily": daily,
           "tot": {k: sum(h[k] for h in home) for k in ("cnt", "high", "rent")},
           "max_cnt": max([h["cnt"] for h in home] + [1])}
