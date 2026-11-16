@@ -3,7 +3,11 @@
 (function () {
   const css = `
 .hiw .sels2{display:flex;gap:6px;margin-bottom:8px}
-.hiw .sels2 select{flex:1;min-width:0;font:inherit;font-size:14px;font-weight:700;height:38px;border:1px solid #d6dbe2;border-radius:10px;padding:0 8px;background:#fff;color:#17202c}
+.hiw .sels2{gap:4px}
+.hiw .sels2 select{flex:1 1 0;min-width:0;font:inherit;font-size:13px;font-weight:700;height:36px;border:1px solid #d6dbe2;border-radius:9px;padding:0 13px 0 6px;color:#17202c;text-overflow:ellipsis;white-space:nowrap;
+  -webkit-appearance:none;appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238a94a3' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 5px center/8px 5px}
+.hiw .sels2 .h-gu,.hiw .sels2 .h-dong{flex-grow:1.3}.hiw .sels2 .h-sido,.hiw .sels2 .h-yr{flex-grow:.8}
+.hiw .sels2.five select{font-size:12.5px;padding:0 12px 0 5px;background-position:right 4px center}
 .hiw .sels2 select[hidden]{display:none}
 .hiw .seg{display:flex;background:#e6e9ef;border-radius:12px;padding:3px;margin-bottom:8px}
 .hiw .seg button{flex:1;font:inherit;font-size:13.5px;font-weight:800;color:#4a5566;border:0;background:none;border-radius:9px;padding:7px 0;cursor:pointer}
@@ -38,8 +42,7 @@
     if (o.s) S.s = o.s;
     if (o.g) S.g = o.g;
     el.classList.add('hiw');
-    el.innerHTML = `<div class="sels2"><select class="h-sido" aria-label="시도"${o.s ? ' hidden' : ''}>${(o.sidos || []).map(x => opt(x[1], x[0])).join('')}</select><select class="h-gu" aria-label="구·군"></select><select class="h-dong" aria-label="동"></select></div>
-      <div class="sels2"><select class="h-yr" aria-label="연도"></select><select class="h-mo" aria-label="월"></select></div>
+    el.innerHTML = `<div class="sels2"><select class="h-sido" aria-label="시도"${o.s ? ' hidden' : ''}>${(o.sidos || []).map(x => opt(x[1], x[0])).join('')}</select><select class="h-gu" aria-label="구·군"></select><select class="h-dong" aria-label="동"></select><select class="h-yr" aria-label="연도"></select><select class="h-mo" aria-label="월"></select></div>
       <div class="seg h-kind"><button type="button" data-k="s">매매·분양권</button><button type="button" data-k="j">전세</button></div>
       <div class="seg h-ty"><button type="button" data-t="84">84</button><button type="button" data-t="59">59</button><button type="button" data-t="74">74</button><button type="button" data-t="0">전체</button></div>
       <div class="h-cap"></div><div class="h-list"></div><div class="note h-note"></div><div class="h-sh"><button type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>공유</button></div>`;
@@ -53,13 +56,14 @@
       if (!ix.y.includes(S.y)) S.y = ix.y[ix.y.length - 1] || '';   // 기본: 올해
       const gu = $('.h-gu'), dong = $('.h-dong');
       gu.hidden = !ix.g.length || !!o.g;
-      gu.innerHTML = opt('', '전체', !S.g) + ix.g.map(g => opt(g, g, g === S.g)).join('');
+      gu.innerHTML = opt('', '구전체', !S.g) + ix.g.map(g => opt(g, g, g === S.g)).join('');
       const ds = ix.d[S.g] || [];
       if (!ds.includes(S.d)) S.d = '';
       dong.hidden = !S.g;
-      dong.innerHTML = opt('', o.g ? '동 전체' : '전체', !S.d) + ds.map(d => opt(d, d, d === S.d)).join('');
-      $('.h-yr').innerHTML = ix.y.slice().reverse().map(y => opt(y, y + '년', y === S.y)).join('');
-      $('.h-mo').innerHTML = opt('', '전체 월', !S.m) + Array.from({ length: 12 }, (_, i) => opt(String(i + 1), (i + 1) + '월', String(i + 1) === S.m)).join('');
+      el.querySelector('.sels2').classList.toggle('five', !S.g ? false : !o.g && !o.s);
+      dong.innerHTML = opt('', '동전체', !S.d) + ds.map(d => opt(d, d, d === S.d)).join('');
+      $('.h-yr').innerHTML = ix.y.slice().reverse().map(y => opt(y, y.slice(2) + '년', y === S.y)).join('');
+      $('.h-mo').innerHTML = opt('', '월전체', !S.m) + Array.from({ length: 12 }, (_, i) => opt(String(i + 1), (i + 1) + '월', String(i + 1) === S.m)).join('');
       el.querySelectorAll('.h-kind button').forEach(b => b.classList.toggle('on', b.dataset.k === S.k));
       el.querySelectorAll('.h-ty button').forEach(b => b.classList.toggle('on', +b.dataset.t === +S.t));
       const list = $('.h-list');
