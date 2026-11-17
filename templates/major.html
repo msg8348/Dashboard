@@ -21,7 +21,7 @@
   .sels select{font:inherit;font-size:14px;font-weight:700;height:38px;border:1px solid #d6dbe2;border-radius:10px;padding:0 8px;background:#fff;color:var(--ink)}
   .sheet{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:16px}
   .ttl{display:flex;align-items:baseline;gap:8px;padding-bottom:10px;border-bottom:1px solid #e9edf2;margin-bottom:10px}
-  .ttl{align-items:center}.ttl b{font-size:24px;font-weight:900;letter-spacing:-.3px}.ttl>small{font-size:14px;color:var(--ink-2);font-weight:700}
+  .ttl{align-items:center}.ttl{gap:12px}.ttl>b{font-size:44px;font-weight:900;letter-spacing:-1px;line-height:1}.ttl>small{font-size:20px;color:var(--ink-2);font-weight:800;align-self:flex-end;margin-bottom:4px}
   .ttl .lg{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:17px;font-weight:900;color:#2b3a67}
   .cards{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px}
   .cd{border-radius:14px;padding:10px 12px}.cd.b{background:#eaf0fb}.cd.r{background:#fdeee9}
@@ -119,11 +119,11 @@ async function render() {
   const guHtml = `<div class="gl" style="grid-template-rows:repeat(${Math.max(1, half)},auto)">` + gl.map(([g, [c, h]]) => `<div class="gr"><b>${esc(g)}</b><span class="gb"><i style="width:${Math.max(4, c / gmx * 100).toFixed(0)}%"></i></span><span class="gc">${c}건</span><span class="gh">${h ? '▲' + h : ''}</span></div>`).join('') + '</div>';
   // 최근 60일 신규 매매 추이 (공개일만)
   const ts = d.t || [], tv = ts.map(x => x[1]), tmx = (Math.max(1, ...tv)) * 1.08, tavg = tv.length ? tv.reduce((a, b) => a + b, 0) / tv.length : 0;
-  const N = Math.max(ts.length, 1), W = N * 10, yy = v => (150 - v / tmx * 145).toFixed(1);
+  const N = Math.max(ts.length, 1), SL = Math.max(N, 43), OFF = SL - N, W = SL * 10, yy = v => (150 - v / tmx * 145).toFixed(1);
   const chart = ts.length ? `<svg class="ch" viewBox="0 0 ${W} 150" preserveAspectRatio="none">${ts.length > 1 ? `<line x1="0" x2="${W}" y1="${yy(tavg)}" y2="${yy(tavg)}" stroke="#2b3a67" stroke-opacity=".35" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>` : ''}`
-    + ts.map(([dd, v], i) => `<rect x="${i * 10 + 2}" y="${yy(v)}" width="6" height="${(v / tmx * 145).toFixed(1)}" rx="1" fill="${i === N - 1 ? '#2b3a67' : '#8fa2ff'}" fill-opacity="${i === N - 1 ? 1 : .75}"/>`).join('') + '</svg>'
-    + `<div class="ax"><span>${+ts[0][0].slice(4, 6)}.${+ts[0][0].slice(6)}</span>${ts.length > 1 ? '<span>- - 평균</span>' : ''}<span>${+ts[N - 1][0].slice(4, 6)}.${+ts[N - 1][0].slice(6)}</span></div>` : '<div class="empty">기록이 쌓이는 중이에요</div>';
-  out.innerHTML = `<div class="ttl"><b>${esc(name)}</b><small>${esc(d.d)} 신규 실거래</small><span class="lg"></span></div>`
+    + ts.map(([dd, v], i) => `<rect x="${(OFF + i) * 10 + 2}" y="${yy(v)}" width="6" height="${(v / tmx * 145).toFixed(1)}" rx="1" fill="${i === N - 1 ? '#2b3a67' : '#8fa2ff'}" fill-opacity="${i === N - 1 ? 1 : .75}"/>`).join('') + '</svg>'
+    + `<div class="ax"><span>${OFF ? '60일 전' : `${+ts[0][0].slice(4, 6)}.${+ts[0][0].slice(6)}`}</span>${ts.length > 1 ? '<span>- - 평균</span>' : ''}<span>${+ts[N - 1][0].slice(4, 6)}.${+ts[N - 1][0].slice(6)}</span></div>` : '<div class="empty">기록이 쌓이는 중이에요</div>';
+  out.innerHTML = `<div class="ttl"><b>${esc(name)}</b><small>${esc(d.d)}</small><span class="lg"></span></div>`
     + `<div class="cards"><div class="cd b"><div class="l">신규 실거래</div><div class="v">${rows.length.toLocaleString()}<span>건</span></div><div class="h">84타입 ${cnt('84타입')} · 59타입 ${cnt('59타입')} · 기타 ${cnt('기타')}${pre ? ` · 분양권 ${pre} 포함` : ''}</div></div>`
     + `<div class="cd r"><div class="l">신고가</div><div class="v">${hi}<span>건</span></div><div class="h">동일 단지·타입 최고가 경신</div></div></div>`
     + `<div class="two">${section('84타입', by('84타입').slice(0, 15))}${section('59타입', by('59타입').slice(0, 15))}</div>${section('기타', by('기타').slice(0, 15), true)}`
