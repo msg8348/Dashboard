@@ -54,7 +54,6 @@
 <option value="{{ 'index.html' if level == 2 else '' }}"{% if level == 1 %} selected{% endif %}>{{ L2W }} 전체</option>
 {% for n, h in l2opts %}<option value="{{ h }}"{% if level == 2 and n == region %} selected{% endif %}>{{ n }}</option>{% endfor %}
 </select></label>{% endif %}<span class="cdate">{{ dsel() }}</span></nav>{% endif %}
-<div class="vtabs" id="vtabs"><button type="button" data-v="list" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>리스트형</button><button type="button" data-v="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="4.5" width="14" height="6" rx="1.6"/><rect x="5" y="13.5" width="14" height="6" rx="1.6"/></svg>카드형</button></div>
 {% set PAGES = [('요약','sum',1),('실거래','sale',2)] %}   {#- 최고가·거래활발도는 홈 메뉴로 옮김 #}
 
 <!-- ============ 1. 요약 ============ -->
@@ -63,6 +62,7 @@
 <!-- ============ 2. 실거래 (매매·분양권·전월세 통합) ============ -->
 <div class="report page trd" id="page2">
   <div class="head"><h1>{{ RG }} 아파트 실거래</h1></div>
+  <div class="vtabs" id="vtabs"><button type="button" data-v="list" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>리스트형</button><button type="button" data-v="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="4.5" width="14" height="6" rx="1.6"/><rect x="5" y="13.5" width="14" height="6" rx="1.6"/></svg>카드형</button></div>
   {{ notices_box() }}
   <div class="cards c2 lsum" id="lsum">
     <div class="cd b go" role="button" onclick="goTrade('sale')"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
