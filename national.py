@@ -396,7 +396,7 @@ def pop_live_periods(today):
             ["tm", "이번달", f(m1), f(today)], ["lm", "지난달", f(pm_end.replace(day=1)), f(pm_end)]]
 
 
-def pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name):
+def pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name, houses=()):
     """site/pop/{시도}.json — {"p": 많이 산 단지 기간 [[키, 이름, 시작, 끝]], "y": [선택 연도...], "pl": 실시간 검색 기간,
     "m": {단지키: [이름, 구·군, 동, 입주년, 세대수, 분양권]}, "r": {기간키: {"": [[단지키, 건수]...], 구·군: [...]}} (상위 10)}.
     단지키 = 페이지 주소(시도/apt/…) 또는 '이름|구·군'. 매매만, 계약일 기준 (최근 13개월 + 과거 수집분)."""
@@ -404,7 +404,7 @@ def pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name):
     periods = pop_periods(today)
     meta, rows = {}, []
     l2n = lambda c, d="": l2_name.get(l2_of.get(c), (d or "").split()[-1] if d else "")
-    for t in sdb["sale"]["trades"]:   # 많이 산 단지: 매매만 (분양권 제외)
+    for t in sdb["sale"]["trades"]:   # 많이 산 단지: 매매 + 분양권 (아래)
         l2 = l2n(t.get("c"), t.get("d"))
         hh, ap = cinfo(t)
         k = (f"{sdir}/apt/{D.APT_ALIAS[t['s']][0]}.html" if t.get("s") in D.APT_ALIAS else
@@ -429,6 +429,34 @@ def pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name):
                 if k not in meta:
                     meta[k] = [D.APT_ALIAS.get(ak, (0, a["n"]))[1], l2, a.get("u", ""), int(a["by"]) if str(a.get("by", "")).isdigit() else 0, 0, 0]
                 rows.append((k, l2, dt))
+    # 분양권 (최근 13개월 + 과거 수집분): 분양권 페이지(또는 입주 후 옮겨 간 매매 단지)로 묶음, 모집공고일 이전 거래는 옛 단지라 뺌
+    hcache = {}
+
+    def pre_row(t):
+        hk = (t.get("c"), t["n"])
+        if hk not in hcache:
+            h = match_house(houses, sd, t)
+            hcache[hk] = int(re.sub(r"\D", "", (h or {}).get("pbl") or "")[:8] or 0)
+        if int(str(t["dt"])[:8] or 0) < hcache[hk]:
+            return
+        l2 = l2n(t.get("c"), t.get("d"))
+        hh, mv, extra = cinfo(dict(t, src="pre"))
+        k = f"{sdir}/{extra['h']}.html" if extra.get("h") else f"{t['n']}|{l2}"
+        if k not in meta:
+            meta[k] = [t["n"], l2, t.get("u", ""), int(str(mv)[:4]) if mv else 0, hh or 0, 0 if k.startswith(f"{sdir}/apt/") else 1]
+        rows.append((k, l2, str(t["dt"])))
+    for t in sdb["pre"]["trades"]:
+        pre_row(t)
+    oldest_p = min((str(t["dt"])[:6] for t in sdb["pre"]["trades"]), default="999999")
+    pth = os.path.join(HIST, f"pre_{sd['key']}.json.gz")
+    if os.path.exists(pth):
+        with gzip.open(pth, "rt", encoding="utf-8") as f:
+            papts = json.load(f).get("apts", {})
+        for a in papts.values():
+            c = a.get("c", "")
+            for x in a.get("t", []):
+                if str(x[0])[:6] < oldest_p:
+                    pre_row({"n": a["n"], "c": c, "d": sd["codes"].get(c, ""), "u": a.get("u", ""), "a": x[4], "dt": x[0]})
     years = sorted({r[2][:4] for r in rows if r[2][:4].isdigit()}, reverse=True)
     ys = [y for y in years if int(y) < today.year - 1]   # 작년은 버튼이 따로 있음
     allp = [(pk, nm, a, b) for pk, nm, a, b in periods] + [(f"y{y}", f"{y[2:]}년", f"{y}0101", f"{y}1231") for y in ys]
@@ -804,7 +832,7 @@ def main():
                          POI.load(os.path.join(STORE, "poi.json")), now, D.APT_ALIAS)
             bud_sidos.append(["전남광주" if sd["short"] == "광주전남" else sd["short"], sdir])
         if key in APT_SIDOS:   # 인기단지 '많이 산 단지': 기간·지역별 거래 많은 단지 (주 단위는 공개일, 월·연 단위는 계약일)
-            pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name)
+            pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name, houses)
         # --- 지난 날짜 (최근 7일 중 신규 공개가 있었던 날) — /{시도}/d{날짜}/
         for dd in days[1:]:
             day = now.replace(year=int(dd[:4]), month=int(dd[4:6]), day=int(dd[6:]))
