@@ -24,6 +24,8 @@
   .per{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}.per::-webkit-scrollbar{display:none}
   .per button{flex:none;font:inherit;font-size:13px;font-weight:800;padding:7px 12px;border-radius:999px;background:#f2f4f7;color:var(--ink-2);border:0;cursor:pointer}
   .per button.on{background:var(--navy);color:#fff}
+  .per select{flex:none;font:inherit;font-size:13px;font-weight:800;height:31px;padding:0 26px 0 12px;border-radius:999px;border:0;background:#f2f4f7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%234a5566' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center/9px 6px;color:var(--ink-2);-webkit-appearance:none;appearance:none;cursor:pointer}
+  .per select.on{background-color:var(--navy);color:#fff;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E")}
   .f{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
   .f .sels{display:flex;gap:6px}
   .f select{font:inherit;font-size:14px;font-weight:700;height:36px;border:1px solid #d6dbe2;border-radius:10px;padding:0 8px;background:#fff;color:var(--ink)}
@@ -55,7 +57,7 @@
 <script>
 const PUSH_API = 'https://nextdoorprice-push.newreds22.workers.dev';
 const SIDO_NAME = {{ sidos|tojson }};
-const S = { t: 'buy', p: 'lm', s: '', g: '' };   // 기본: 지난달 (이번달은 신고 기간 30일이라 아직 집계 중)
+const S = { t: 'buy', pb: 'lm', pl: 'yd', s: '', g: '' };   // 많이 산 단지 기본: 지난달 · 실시간 검색 기본: 어제
 try { Object.assign(S, JSON.parse(sessionStorage.getItem('ndp_pop')) || {}); } catch (e) {}
 const cache = {};
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -76,20 +78,29 @@ async function render() {
   try { sessionStorage.setItem('ndp_pop', JSON.stringify(S)); } catch (e) {}
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === S.t));
   const d = await data(S.s);
-  const per = d.p.find(x => x[0] === S.p) || d.p[2];
-  document.getElementById('per').innerHTML = d.p.map(x => `<button type="button" data-p="${x[0]}" class="${x[0] === per[0] ? 'on' : ''}">${x[1]}</button>`).join('');
+  // 많이 산 단지: 지난달 · 올해 · 작년 · 연도 선택 / 실시간 검색: 어제 · 지난주 · 이번달 · 지난달
+  const buy = S.t === 'buy', ys = d.y || [];
+  const plist = buy ? d.p.concat(ys.map(y => [`y${y}`, `${y.slice(2)}년`, `${y}0101`, `${y}1231`])) : (d.pl || []);
+  const cur = buy ? S.pb : S.pl;
+  const per = plist.find(x => x[0] === cur) || plist[0];
+  if (buy) S.pb = per[0]; else S.pl = per[0];
+  const isY = buy && per[0][0] === 'y';
+  document.getElementById('per').innerHTML = (buy ? d.p : plist).map(x => `<button type="button" data-p="${x[0]}" class="${x[0] === per[0] ? 'on' : ''}">${x[1]}</button>`).join('')
+    + (buy && ys.length ? `<select id="yr" aria-label="연도 선택" class="${isY ? 'on' : ''}"><option value="">연도 선택</option>${ys.map(y => `<option value="y${y}"${'y' + y === per[0] ? ' selected' : ''}>${y}년</option>`).join('')}</select>` : '');
+  const yr = document.getElementById('yr');
+  if (yr) yr.onchange = () => { if (yr.value) { S.pb = yr.value; render(); } };
   const gu = document.getElementById('gu');
   gu.hidden = !d.g.length;
   gu.innerHTML = `<option value="">전체</option>` + d.g.map(g => `<option ${g === S.g ? 'selected' : ''}>${esc(g)}</option>`).join('');
   const list = document.getElementById('list'), note = document.getElementById('note');
-  const range = per[2] === per[3] ? dlab(per[2]) : `${dlab(per[2])}~${dlab(per[3])}`;
+  const range = isY ? `${per[2].slice(0, 4)}년` : per[2] === per[3] ? dlab(per[2]) : `${dlab(per[2])}~${dlab(per[3])}`;
   if (S.t === 'buy') {
     document.getElementById('sub').textContent = '매매 · 거래 건수 순';
     const rs = (d.r[per[0]] || {})[S.g] || [];
     list.innerHTML = rs.length ? rs.map(([k, n], i) => { const m = d.m[k] || [k, '', '', 0, 0, 0];
       return row(i, k.endsWith('.html') ? k : '', m[0], sub(m[0], m[1], m[2], m[3], m[4], m[5]), m[5], `<span class="v">${n}<small>건</small></span>`); }).join('')
       : '<div class="empty">이 기간에 거래가 없어요</div>';
-    note.textContent = `국토부 실거래 · ${['tw', 'lw'].includes(per[0]) ? '공개일' : '계약일'} 기준 (${range})${['tm', 'ty', 'tw'].includes(per[0]) ? ' · 계약 후 30일 안에 신고돼 최근 거래는 아직 집계 중' : ''}`;
+    note.textContent = `국토부 실거래 · 계약일 기준 (${range})${per[0] === 'ty' ? ' · 계약 후 30일 안에 신고돼 최근 거래는 아직 집계 중' : ''}`;
   } else {
     document.getElementById('sub').textContent = '옆집얼마 단지 조회 순';
     list.innerHTML = '<div class="empty">불러오는 중…</div>';
@@ -107,7 +118,7 @@ async function render() {
   }
 }
 document.getElementById('tabs').onclick = e => { const b = e.target.closest('button'); if (b) { S.t = b.dataset.t; render(); } };
-document.getElementById('per').onclick = e => { const b = e.target.closest('button'); if (b) { S.p = b.dataset.p; render(); } };
+document.getElementById('per').onclick = e => { const b = e.target.closest('button'); if (b) { if (S.t === 'buy') S.pb = b.dataset.p; else S.pl = b.dataset.p; render(); } };
 const sel = document.getElementById('sido');
 const FV = (() => { try { return localStorage.getItem('ndp_region_fav_dir') || ''; } catch (e) { return ''; } })();   // 홈 지역 즐겨찾기 (없으면 서울)
 const pickSido = (has, cur, st) => { if (st.fv !== FV) { st.fv = FV; cur = ''; } return has(cur) ? cur : has(FV) ? FV : has('seoul') ? 'seoul' : ''; };

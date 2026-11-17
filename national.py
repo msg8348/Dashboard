@@ -376,43 +376,67 @@ def hi_build(sd, sdir, sdb, cinfo, l2_of, l2_name):
 
 
 def pop_periods(today):
-    """인기단지 기간: (키, 이름, 시작, 끝, 기준) — 주는 월요일 시작, 기준 'seen'=공개일 · 'dt'=계약일."""
-    mon = today - timedelta(days=today.weekday())
+    """인기단지 '많이 산 단지' 기간: (키, 이름, 시작, 끝) — 계약일 기준. 지난달 · 올해 · 작년 (연도 선택은 'y연도')."""
     f = lambda d: d.strftime("%Y%m%d")
     m1 = today.replace(day=1)
     pm_end = m1 - timedelta(days=1)
-    return [("tw", "이번주", f(mon), f(today), "seen"), ("lw", "지난주", f(mon - timedelta(days=7)), f(mon - timedelta(days=1)), "seen"),
-            ("tm", "이번달", f(m1), f(today), "dt"), ("lm", "지난달", f(pm_end.replace(day=1)), f(pm_end), "dt"),
-            ("ty", "올해", f(today.replace(month=1, day=1)), f(today), "dt")]
+    y = today.year
+    return [("lm", "지난달", f(pm_end.replace(day=1)), f(pm_end)), ("ty", "올해", f"{y}0101", f(today)),
+            ("py", "작년", f"{y - 1}0101", f"{y - 1}1231")]
+
+
+def pop_live_periods(today):
+    """인기단지 '실시간 검색' 기간: 어제 · 지난주(월~일) · 이번달 · 지난달 — 화면에서 /rank 로 조회."""
+    f = lambda d: d.strftime("%Y%m%d")
+    yd = today - timedelta(days=1)
+    mon = today - timedelta(days=today.weekday())
+    m1 = today.replace(day=1)
+    pm_end = m1 - timedelta(days=1)
+    return [["yd", "어제", f(yd), f(yd)], ["lw", "지난주", f(mon - timedelta(days=7)), f(mon - timedelta(days=1))],
+            ["tm", "이번달", f(m1), f(today)], ["lm", "지난달", f(pm_end.replace(day=1)), f(pm_end)]]
 
 
 def pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name):
-    """site/pop/{시도}.json — {"p": 기간 [[키, 이름, 시작, 끝]], "m": {단지키: [이름, 구·군, 동, 입주년, 세대수, 분양권]},
-    "r": {기간키: {"": [[단지키, 건수]...], 구·군: [...]}} (상위 10)}. 단지키 = 페이지 주소(시도/apt/…) 또는 '이름|구·군'."""
+    """site/pop/{시도}.json — {"p": 많이 산 단지 기간 [[키, 이름, 시작, 끝]], "y": [선택 연도...], "pl": 실시간 검색 기간,
+    "m": {단지키: [이름, 구·군, 동, 입주년, 세대수, 분양권]}, "r": {기간키: {"": [[단지키, 건수]...], 구·군: [...]}} (상위 10)}.
+    단지키 = 페이지 주소(시도/apt/…) 또는 '이름|구·군'. 매매만, 계약일 기준 (최근 13개월 + 과거 수집분)."""
     today = datetime.now(D.KST)
     periods = pop_periods(today)
     meta, rows = {}, []
-    for src in ("sale",):   # 많이 산 단지: 매매만 (분양권 제외)
-        for t in sdb[src]["trades"]:
-            l2 = l2_name.get(l2_of.get(t.get("c")), (t.get("d") or "").split()[-1] if t.get("d") else "")
-            if src == "sale":
-                hh, ap = cinfo(t)
-                k = (f"{sdir}/apt/{D.APT_ALIAS[t['s']][0]}.html" if t.get("s") in D.APT_ALIAS else
-                     f"{sdir}/apt/{t['s']}.html" if t.get("s") and t["s"] in D.APT_PAGES else f"{t['n']}|{l2}")
-                yr = int(ap[:4]) if ap and ap[:4].isdigit() else (int(t["by"]) if str(t.get("by", "")).isdigit() else 0)
-            else:
-                hh, mv, extra = cinfo(dict(t, src="pre"))
-                k = f"{sdir}/{extra['h']}.html" if extra.get("h") else f"{t['n']}|{l2}"
-                yr = int(str(mv)[:4]) if mv else 0
-            if k not in meta:
-                meta[k] = [D.APT_ALIAS.get(t.get("s"), (0, t["n"]))[1], l2, t.get("u", ""), yr, hh or 0, 1 if src == "pre" else 0]
-            rows.append((k, l2, str(t.get("dt", "")), t.get("seen") or ""))
-    out = {"p": [[pk, nm, a, b] for pk, nm, a, b, _ in periods], "m": {}, "r": {}}
-    for pk, nm, a, b, basis in periods:
+    l2n = lambda c, d="": l2_name.get(l2_of.get(c), (d or "").split()[-1] if d else "")
+    for t in sdb["sale"]["trades"]:   # 많이 산 단지: 매매만 (분양권 제외)
+        l2 = l2n(t.get("c"), t.get("d"))
+        hh, ap = cinfo(t)
+        k = (f"{sdir}/apt/{D.APT_ALIAS[t['s']][0]}.html" if t.get("s") in D.APT_ALIAS else
+             f"{sdir}/apt/{t['s']}.html" if t.get("s") and t["s"] in D.APT_PAGES else f"{t['n']}|{l2}")
+        yr = int(ap[:4]) if ap and ap[:4].isdigit() else (int(t["by"]) if str(t.get("by", "")).isdigit() else 0)
+        if k not in meta:
+            meta[k] = [D.APT_ALIAS.get(t.get("s"), (0, t["n"]))[1], l2, t.get("u", ""), yr, hh or 0, 0]
+        rows.append((k, l2, str(t.get("dt", ""))))
+    oldest = min((r[2][:6] for r in rows), default="999999")
+    pth = os.path.join(HIST, f"{sd['key']}.json.gz")   # 과거 매매 (최근 13개월 창 이전) — 작년·연도 선택용
+    if os.path.exists(pth):
+        with gzip.open(pth, "rt", encoding="utf-8") as f:
+            apts = json.load(f).get("apts", {})
+        for ak, a in apts.items():
+            l2 = l2n(a.get("c", ""))
+            k = (f"{sdir}/apt/{D.APT_ALIAS[ak][0]}.html" if ak in D.APT_ALIAS else
+                 f"{sdir}/apt/{ak}.html" if ak in D.APT_PAGES else f"{a['n']}|{l2}")
+            for x in a.get("t", []):
+                dt = str(x[0])
+                if dt[:6] >= oldest:
+                    continue
+                if k not in meta:
+                    meta[k] = [D.APT_ALIAS.get(ak, (0, a["n"]))[1], l2, a.get("u", ""), int(a["by"]) if str(a.get("by", "")).isdigit() else 0, 0, 0]
+                rows.append((k, l2, dt))
+    years = sorted({r[2][:4] for r in rows if r[2][:4].isdigit()}, reverse=True)
+    ys = [y for y in years if int(y) < today.year - 1]   # 작년은 버튼이 따로 있음
+    allp = [(pk, nm, a, b) for pk, nm, a, b in periods] + [(f"y{y}", f"{y[2:]}년", f"{y}0101", f"{y}1231") for y in ys]
+    out = {"p": [list(x) for x in periods], "y": ys, "pl": pop_live_periods(today), "m": {}, "r": {}}
+    for pk, nm, a, b in allp:
         by = defaultdict(lambda: defaultdict(int))
-        for k, l2, dt, seen in rows:
-            d = seen if basis == "seen" else dt
-            if a <= d <= b:
+        for k, l2, dt in rows:
+            if a <= dt <= b:
                 by[""][k] += 1
                 by[l2][k] += 1
         out["r"][pk] = {g: sorted(c.items(), key=lambda kv: (-kv[1], kv[0]))[:10] for g, c in by.items()}
