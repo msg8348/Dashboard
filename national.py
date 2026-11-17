@@ -957,7 +957,9 @@ def main():
     today_iso = now.strftime("%Y-%m-%d")
     with open(os.path.join(SITE, "sitemap.xml"), "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
-        for u in [f"{SITE_URL}/"] + urls:
+        menus = [f"{SITE_URL}/{m}.html" for m in ("major", "hi", "act", "pop", "sub", "rate", "budget")   # 홈 메뉴 페이지
+                 if os.path.exists(os.path.join(SITE, f"{m}.html"))]
+        for u in [f"{SITE_URL}/"] + menus + urls:
             f.write(f"<url><loc>{u}</loc><lastmod>{today_iso}</lastmod><changefreq>daily</changefreq></url>\n")
         f.write("</urlset>\n")
     with open(os.path.join(SITE, "robots.txt"), "w", encoding="utf-8") as f:
