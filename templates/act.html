@@ -23,11 +23,11 @@
   .alg{display:flex;gap:10px;font-size:12px;font-weight:700;color:var(--ink-2);white-space:nowrap}.alg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
   .alg button{font:inherit;font-size:12px;font-weight:700;color:var(--ink-2);background:#f2f4f7;border:0;border-radius:999px;padding:5px 9px;cursor:pointer;display:inline-flex;align-items:center}
   .alg button.on{background:var(--navy);color:#fff}.alg button em{font-style:normal;font-size:10px;margin-left:3px}
-  .ar{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid #f0f2f5;color:inherit;text-decoration:none}
+  .ar{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #f0f2f5;color:inherit;text-decoration:none}
   .ark{width:24px;height:24px;border-radius:50%;background:#eef1f6;color:var(--ink-2);font-size:12.5px;font-weight:800;display:grid;place-items:center;flex:none}.ark.t3{background:var(--navy);color:#fff}
-  .anm{flex:1;min-width:0}.anm b{display:block;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .anm .trend{display:inline-block;margin-top:3px}
-  .av{width:68px;text-align:right;font-size:15px;font-weight:800;flex:none}.av small{display:block;font-size:11px;color:var(--muted);font-weight:600}.av.m{color:var(--amber)}.av.y{color:var(--teal)}
+  .anm{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px}.anm b{min-width:0;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .anm .trend{flex:none;margin:0;font-size:10.5px;padding:2px 5px;white-space:nowrap;letter-spacing:-.3px}   /* 강세·약세 스티커: 지역명 오른쪽 */
+  .av{width:62px;text-align:right;font-size:15px;font-weight:800;flex:none}.av small{display:block;font-size:11px;color:var(--muted);font-weight:600}.av.m{color:var(--amber)}.av.y{color:var(--teal)}
   .anote.crit{font-size:10.5px;padding-top:0}
   .anote{font-size:11.5px;color:var(--muted);text-align:right;padding:6px 0 4px}
   .actl{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
@@ -43,7 +43,7 @@
 <div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
 <div class="ahead"><h1>거래활발도</h1></div>
 <div class="atabs" id="atabs"><button type="button" data-t="1" class="on">시도별</button><button type="button" data-t="2">전국 시군구</button><button type="button" data-t="3">지표단지</button><button type="button" data-t="4">구·군별</button></div>
-{% macro trendb(a) %}{% if a.trend == 'strong' %}<span class="trend strong">▲ 강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">▲ 증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">▼ 약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">▼ 감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}{% endmacro %}
+{% macro trendb(a) %}{% if a.trend == 'strong' %}<span class="trend strong">강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}{% endmacro %}
 {% macro rows(list) %}{% for r in list %}{% if r.h %}<a class="ar" href="{{ r.h }}" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% else %}<div class="ar" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% endif %}<span class="ark {% if loop.index0 < 3 %}t3{% endif %}">{{ loop.index }}</span><span class="anm"><b>{{ r.n }}</b>{{ trendb(r) }}</span><span class="av m">{{ "%.2f"|format(r.r3) }}%<small>{{ "{:,}".format(r.c3) }}건</small></span><span class="av y">{{ "%.2f"|format(r.r1) }}%<small>{{ "{:,}".format(r.c1) }}건</small></span>{% if r.h %}</a>{% else %}</div>{% endif %}{% endfor %}{% endmacro %}
 <div class="apanel" id="p1"><div class="asec"><div class="ahd"><b>시도별</b><span class="alg"><button type="button" data-k="r3" class="on"><i style="background:#f0a35e"></i>3개월<em>▼</em></button><button type="button" data-k="r1"><i style="background:#1f9b85"></i>1년<em></em></button></span></div>
   {{ rows(nat.s) }}<div class="anote">아파트 매매 · 회전율 = 거래 건수 ÷ 세대수 · <span class="sortlbl">최근 3개월 높은 순</span> ({{ date_label }} 기준)</div></div></div>
