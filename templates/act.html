@@ -37,6 +37,9 @@
   #frag[data-v="apt-det"] .v-apt-det,#frag[data-v="gu-det"] .v-gu-det{display:block}
   #frag .ind-two{grid-template-columns:1fr}
   .aempty{text-align:center;color:var(--muted);font-size:14px;padding:34px 0}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  .acts .btn{background:#fff;color:#111;border:1.5px solid #cfd6de;border-radius:14px;padding:14px;font:inherit;font-size:15px;font-weight:800;cursor:pointer}
+  .acts .btn:disabled{opacity:.5}
 </style>
 </head>
 <body><div class="wrap">
@@ -54,6 +57,7 @@
     <div class="tfv" id="avw"><button type="button" data-w="sum" class="on">요약</button><button type="button" data-w="det">상세</button></div></div>
   <div id="frag"><div class="aempty">불러오는 중…</div></div>
 </div>
+<div class="acts"><button class="btn" id="shareBtn" type="button">공유하기</button><button class="btn" id="saveBtn" type="button">저장하기</button></div>
 </div>
 <script>
 const A = { t: '1', s: '', w: 'sum' };
@@ -97,6 +101,58 @@ document.getElementById('atabs').onclick = e => { const b = e.target.closest('bu
 document.getElementById('avw').onclick = e => { const b = e.target.closest('button'); if (b) { A.w = b.dataset.w; render(); } };
 sel.onchange = () => { A.s = sel.value; render(); };
 render();
+// ── 이미지 공유·저장: 지금 보고 있는 탭 내용을 한 장으로 (맨 위 로고·제목, 맨 아래 사이트 주소) ──
+const loadH2C = () => window.html2canvas ? Promise.resolve() : new Promise((ok, no) => {
+  const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
+});
+function capInfo() {
+  const tab = (document.querySelector('#atabs button.on') || {}).textContent || '';
+  const date = '{{ date_label }}';
+  if (A.t === '1') return { el: document.querySelector('#p1 .asec'), title: '시도별', date };
+  if (A.t === '2') return { el: document.querySelector('#p2 .asec'), title: '전국 시군구 Top 20', date };
+  const sn = (sel.selectedOptions[0] || {}).textContent || '';
+  return { el: document.getElementById('frag'), title: `${sn} ${A.t === '3' ? '지표단지' : '구·군별'} ${A.w === 'sum' ? '요약' : '상세'}`, date };
+}
+async function makeImage() {
+  await loadH2C();
+  if (document.fonts && document.fonts.ready) await document.fonts.ready;
+  const { el, title, date } = capInfo();
+  el.dataset.cap = '1';
+  try {
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, windowWidth: 520, scrollX: 0, scrollY: -window.scrollY,
+      onclone: doc => {
+        const c = doc.querySelector('[data-cap="1"]');
+        Object.assign(c.style, { width: '500px', padding: '16px 18px 10px', background: '#fff', border: '0', borderRadius: '0', boxShadow: 'none' });
+        c.querySelectorAll('.alg, .ahd > b').forEach(x => { x.style.display = 'none'; });
+        const hd = doc.createElement('div');
+        hd.style.cssText = 'display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid #e9edf2';
+        hd.innerHTML = `<div><div style="font-size:21px;font-weight:900;color:#17202c;letter-spacing:-.4px;line-height:1.2">${title}</div><div style="font-size:13px;font-weight:700;color:#4a5566;margin-top:3px">거래활발도 · ${date} 기준</div></div>`;
+        const br = doc.querySelector('.topbar .brand');
+        if (br) { const lg = br.cloneNode(true); lg.style.transform = 'scale(.72)'; lg.style.transformOrigin = 'right bottom'; lg.style.flex = 'none'; hd.appendChild(lg); }
+        c.prepend(hd);
+        const mk = doc.createElement('div'); mk.textContent = 'nextdoorprice.com';
+        mk.style.cssText = 'text-align:center;font-size:11px;color:#a3abb7;letter-spacing:.6px;padding:8px 0 2px';
+        c.appendChild(mk);
+      } });
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    return new File([blob], `거래활발도_${title.replace(/\s+/g, '_')}_${date.replace(/\./g, '')}.png`, { type: 'image/png' });
+  } finally { delete el.dataset.cap; }
+}
+async function act(kind) {
+  const btns = [document.getElementById('shareBtn'), document.getElementById('saveBtn')];
+  btns.forEach(b => { b.disabled = true; }); const lb = btns.map(b => b.textContent);
+  (kind === 'share' ? btns[0] : btns[1]).textContent = '준비 중…';
+  try {
+    const f = await makeImage();
+    const dl = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); };
+    if (kind === 'share' && navigator.canShare && navigator.canShare({ files: [f] })) await navigator.share({ files: [f] }).catch(() => {});
+    else if (kind === 'share' && navigator.share) await navigator.share({ title: document.title, url: location.href }).catch(() => {});
+    else dl();
+  } catch (e) { alert('이미지를 만들지 못했어요'); }
+  btns.forEach((b, i) => { b.disabled = false; b.textContent = lb[i]; });
+}
+document.getElementById('shareBtn').onclick = () => act('share');
+document.getElementById('saveBtn').onclick = () => act('save');
 </script>
 <script src="search.js?v={{ today }}"></script>
 </body>
