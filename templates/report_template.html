@@ -519,6 +519,7 @@ try {   // 뒤로가기·새로고침이면 보던 형태 그대로, 새로 들�
   const nav = (performance.getEntriesByType('navigation')[0] || {}).type;
   const sv = sessionStorage.getItem('view:' + location.pathname);
   if ((nav === 'back_forward' || nav === 'reload') && sv === 'card') TR.v = 'card';
+  if (/[?&]v=card\b/.test(location.search)) TR.v = 'card';   // 홈 상단 박스에서 들어올 때: 카드형으로
 } catch (e) {}
 setView(TR.v);
 </script>
