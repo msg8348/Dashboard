@@ -146,14 +146,14 @@
       res.innerHTML = r.length
         ? '<div class="sh">최근 검색<button type="button" data-clear>전체 삭제</button></div>' +
           r.map((a, i) => `<div class="si" data-r="${i}"><span class="ic">${CLOCK}</span><span class="t"><b>${esc(a[0])}</b><small>${esc(a[1])}</small></span><button class="del" type="button" data-del="${i}" aria-label="삭제">×</button></div>`).join('')
-        : '<div class="empty2">단지명을 입력하세요<br><small>현재 서울·부산 단지를 제공합니다</small></div>';
+        : '<div class="empty2">단지명을 입력하세요<br><small>현재 서울·경기·인천·부산·대구 단지를 제공합니다</small></div>';
       return;
     }
     if (!LIST) { res.innerHTML = '<div class="empty2">불러오는 중…</div>'; load().then(render); return; }
     hits = LIST.filter(a => a[4].includes(q)).sort((a, b) => (b[4].startsWith(q) - a[4].startsWith(q)) || b[3] - a[3]).slice(0, 60);
     res.innerHTML = hits.length
       ? hits.map((a, i) => `<div class="si" data-h="${i}"><span class="ic">${HOME}</span><span class="t"><b>${hl(a[0], raw)}</b><small>${esc(a[1])}</small></span></div>`).join('')
-      : `<div class="empty2">'${esc(raw)}' 검색 결과가 없습니다<br><small>현재 서울·부산 단지를 제공합니다</small></div>`;
+      : `<div class="empty2">'${esc(raw)}' 검색 결과가 없습니다<br><small>현재 서울·경기·인천·부산·대구 단지를 제공합니다</small></div>`;
   }
   let pickFn = null;                       // 관심단지 추가 모드: 결과를 누르면 이동 대신 추가
   function go(a) {

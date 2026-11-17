@@ -39,7 +39,7 @@ IND_PATH = os.path.join(STORE, "indicators.json")
 HIST = os.environ.get("HIST_DIR", "hist")
 BUSAN = "26"
 WORKERS = int(os.environ.get("FETCH_WORKERS", "8"))   # 동시 요청 수
-APT_SIDOS = {"26", "11"}   # 단지 페이지를 연 시도 (부산 · 서울) — 과거 수집이 끝난 시도부터
+APT_SIDOS = {"26", "11", "41", "28", "27"}   # 단지 페이지를 연 시도 (부산 · 서울 · 경기 · 인천 · 대구) — 과거 수집이 끝난 시도부터
 
 
 # ---------------------------------------------------------------- 저장소
