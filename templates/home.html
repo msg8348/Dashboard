@@ -68,6 +68,10 @@
   .card .sub b{color:var(--ink);white-space:nowrap}.card .sub .d30{color:var(--muted);font-size:11px}
   .bar{height:5px;background:#eef1f6;border-radius:3px;margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--blue);border-radius:3px}
   /* 메뉴: 연회색 둥근 네모 아이콘 + 이름, 흰 카드 안에 4개씩 2줄 (PC 8개 한 줄) */
+  .srow{display:grid;grid-template-columns:7fr 3fr;gap:8px;margin-bottom:10px}   /* 단지 검색 7 : 즐겨찾기 3 */
+  .srow .sbar{margin-bottom:0;min-width:0}
+  .fbtn{display:flex;align-items:center;justify-content:center;gap:5px;height:50px;background:#fff;border:1.5px solid #d6dbe2;border-radius:16px;font-size:15px;font-weight:800;color:var(--ink);white-space:nowrap;text-decoration:none}
+  .fbtn svg{width:20px;height:20px;flex:none}.fbtn:hover{border-color:var(--navy)}
   .sbar{width:100%;display:flex;align-items:center;gap:10px;height:50px;padding:0 16px;margin-bottom:10px;background:#fff;border:1.5px solid #d6dbe2;border-radius:16px;font:inherit;font-size:15.5px;font-weight:600;color:var(--muted);cursor:pointer;text-align:left}
   .sbar svg{width:20px;height:20px;color:var(--ink)}.sbar:hover{border-color:var(--navy)}
   .menu{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:10px 10px 8px;display:grid;grid-template-columns:repeat(8,1fr);row-gap:12px;margin-bottom:8px}
@@ -149,7 +153,7 @@
       {%- if known|length > 1 %}<line x1="0" x2="{{ n * 10 }}" y1="{{ '%.1f'|format(62 - avg / mx * 58) }}" y2="{{ '%.1f'|format(62 - avg / mx * 58) }}" stroke="#fff" stroke-opacity=".35" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>{% endif %}
       {%- for d, v in daily %}<rect x="{{ loop.index0 * 10 + 1.5 }}" y="{{ '%.1f'|format(62 - (v or 0) / mx * 58) if v else 59 }}" width="7" height="{{ '%.1f'|format(v / mx * 58) if v else 3 }}" rx="1" fill="{{ '#fff' if loop.last and v else '#8fa2ff' }}" fill-opacity="{{ '1' if loop.last and v else ('.75' if v else '.15') }}"><title>{{ d[4:6]|int }}.{{ d[6:]|int }} {{ "{:,}".format(v) ~ '건' if v else '공개 없음' }}</title></rect>{% endfor %}</svg>
       <div class="ax"><span>{{ daily[0][0][4:6]|int }}.{{ daily[0][0][6:]|int }}</span><span>{{ daily[-1][0][4:6]|int }}.{{ daily[-1][0][6:]|int }}</span></div></div></div></div>
-  <button class="sbar" type="button" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>단지명으로 검색</button>
+  <div class="srow"><button class="sbar" type="button" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>단지명으로 검색</button><a class="fbtn" href="fav.html" aria-label="즐겨찾기"><svg viewBox="0 0 24 24"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" fill="#f5b301" stroke="#e0a400" stroke-width="1.2" stroke-linejoin="round"/></svg>즐겨찾기</a></div>
   <div class="menu">   <!-- 메뉴 8개 (4개씩 2줄) — 아직 만들지 않은 메뉴는 준비 중 안내 -->
     <a class="it" href="major.html"><span class="ib"><svg viewBox="0 0 32 32"><rect x="6" y="4.5" width="20" height="23" rx="3.5" fill="#dbe5ff"/><rect x="6" y="4.5" width="20" height="23" rx="3.5" fill="none" stroke="#2754d6" stroke-width="2.4"/><path d="M11 11.5h10M11 16h10M11 20.5h6" stroke="#2754d6" stroke-width="2.4" stroke-linecap="round"/></svg></span><span class="lb">주요거래</span></a>
     <a class="it" href="hi.html"><span class="ib"><svg viewBox="0 0 32 32"><rect x="5" y="19" width="5" height="8" rx="1.5" fill="#f6c7bc"/><rect x="13.5" y="14" width="5" height="13" rx="1.5" fill="#f6c7bc"/><rect x="22" y="8" width="5" height="19" rx="1.5" fill="#e0472c"/><path d="M5 14l7-6 5 3 7-7" fill="none" stroke="#e0472c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lb">최고가</span></a>
