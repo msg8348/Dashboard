@@ -99,6 +99,45 @@
     navigator.sendBeacon(PUSH_API + '/hit', new Blob([JSON.stringify(m)], { type: 'text/plain' }));
   })();
   window.NDPRoot = ROOT;
+  // ---- 오른쪽 위 ☰ 메뉴: 모든 페이지 같은 구성 (홈화면 + 홈 메뉴 8개)
+  (() => {
+    const ITEMS = [["index.html", "<svg viewBox=\"0 0 32 32\"><path d=\"M5 15 L16 6 L27 15 V26 H5 Z\" fill=\"#dbe5ff\" stroke=\"#2b3a67\" stroke-width=\"2.4\" stroke-linejoin=\"round\"/><rect x=\"13\" y=\"18\" width=\"6\" height=\"8\" rx=\"1\" fill=\"#2b3a67\"/></svg>", "홈화면"], ["major.html", "<svg viewBox=\"0 0 32 32\"><rect x=\"6\" y=\"4.5\" width=\"20\" height=\"23\" rx=\"3.5\" fill=\"#dbe5ff\"/><rect x=\"6\" y=\"4.5\" width=\"20\" height=\"23\" rx=\"3.5\" fill=\"none\" stroke=\"#2754d6\" stroke-width=\"2.4\"/><path d=\"M11 11.5h10M11 16h10M11 20.5h6\" stroke=\"#2754d6\" stroke-width=\"2.4\" stroke-linecap=\"round\"/></svg>", "주요거래"], ["hi.html", "<svg viewBox=\"0 0 32 32\"><rect x=\"5\" y=\"19\" width=\"5\" height=\"8\" rx=\"1.5\" fill=\"#f6c7bc\"/><rect x=\"13.5\" y=\"14\" width=\"5\" height=\"13\" rx=\"1.5\" fill=\"#f6c7bc\"/><rect x=\"22\" y=\"8\" width=\"5\" height=\"19\" rx=\"1.5\" fill=\"#e0472c\"/><path d=\"M5 14l7-6 5 3 7-7\" fill=\"none\" stroke=\"#e0472c\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>", "최고가"], ["weekly.html", "<svg viewBox=\"0 0 32 32\"><rect x=\"4\" y=\"5\" width=\"11\" height=\"10\" rx=\"2.5\" fill=\"#f6c7bc\"/><rect x=\"17\" y=\"5\" width=\"11\" height=\"10\" rx=\"2.5\" fill=\"#e0472c\"/><rect x=\"4\" y=\"17\" width=\"11\" height=\"10\" rx=\"2.5\" fill=\"#2754d6\"/><rect x=\"17\" y=\"17\" width=\"11\" height=\"10\" rx=\"2.5\" fill=\"#c9d6f7\"/></svg>", "주간변동률"], ["act.html", "<svg viewBox=\"0 0 32 32\"><path d=\"M3 17h6l3-8 5 15 4-11 2 4h6\" fill=\"none\" stroke=\"#12806b\" stroke-width=\"2.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>", "거래활발도"], ["pop.html", "<svg viewBox=\"5 2 22 24\"><path d=\"M16 3.5c1 4.5 6.5 7 6.5 13.5a6.5 6.5 0 0 1-13 0c0-3 1.5-5 3-6.5.3 2 1.3 3.2 2.6 3.7C14 10.5 15 7 16 3.5z\" fill=\"#f97316\"/><path d=\"M16 15c.6 2 3 3 3 5.6a3 3 0 0 1-6 0c0-1.6 1-2.6 1.8-3.3.2.9.6 1.4 1.2 1.6-.3-1.4-.4-2.6 0-3.9z\" fill=\"#fed7aa\"/></svg>", "인기단지"], ["sub.html", "<svg viewBox=\"0 0 32 32\"><rect x=\"7\" y=\"9\" width=\"12\" height=\"18\" rx=\"1.5\" fill=\"#d9cffb\"/><rect x=\"17\" y=\"14\" width=\"9\" height=\"13\" rx=\"1.5\" fill=\"#7048e8\"/><path d=\"M10 13h2M14 13h2M10 17h2M14 17h2M10 21h2M14 21h2\" stroke=\"#7048e8\" stroke-width=\"1.8\" stroke-linecap=\"round\"/><path d=\"M13 9V3.5l6 2-6 2\" fill=\"#7048e8\" stroke=\"#7048e8\" stroke-width=\"1.4\" stroke-linejoin=\"round\"/></svg>", "청약단지"], ["rate.html", "<svg viewBox=\"0 0 32 32\"><circle cx=\"16\" cy=\"16\" r=\"11\" fill=\"#cdeef5\"/><path d=\"M21.5 10.5l-11 11\" stroke=\"#0e7490\" stroke-width=\"2.8\" stroke-linecap=\"round\"/><circle cx=\"11.5\" cy=\"11.5\" r=\"2.6\" fill=\"#0e7490\"/><circle cx=\"20.5\" cy=\"20.5\" r=\"2.6\" fill=\"#0e7490\"/></svg>", "금리"], ["budget.html", "<svg viewBox=\"0 0 32 32\"><rect x=\"4\" y=\"9\" width=\"24\" height=\"17\" rx=\"3.5\" fill=\"#f6dfb9\"/><path d=\"M7 9l13-4 2 4\" fill=\"none\" stroke=\"#c27512\" stroke-width=\"2\" stroke-linejoin=\"round\"/><rect x=\"18\" y=\"14\" width=\"10\" height=\"7\" rx=\"2.5\" fill=\"#c27512\"/><circle cx=\"22\" cy=\"17.5\" r=\"1.5\" fill=\"#fff\"/></svg>", "나의 예산"]];
+    const mcss = `.ndm-dim{position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:60}.ndm-dim[hidden]{display:none}
+.ndm{position:fixed;top:0;right:0;height:100%;width:min(320px,82vw);background:#fff;z-index:61;transform:translateX(100%);transition:transform .25s ease;box-shadow:-8px 0 30px rgba(20,30,60,.18);overflow:auto;font-family:Pretendard,'Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+.ndm.open{transform:none}
+.ndm-top{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px 24px;font-size:18px;color:#17202c}
+.ndm-x{width:40px;height:40px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;color:#17202c}.ndm-x svg{width:24px;height:24px}
+.ndm-list{border-top:1px solid #e6eaf0;padding:4px 0 24px}
+.ndm-it{display:flex;align-items:center;gap:12px;padding:10px 24px;font-size:16px;font-weight:700;color:#17202c;text-decoration:none}.ndm-it:hover{background:#f4f6fa}
+.ndm-it .l{flex:1}.ndm-it em{font-style:normal;font-size:13px;color:#8a94a3}
+.ndm-ic{width:38px;height:38px;border-radius:12px;background:#f2f4f7;display:grid;place-items:center;flex:none}.ndm-ic svg{width:22px;height:22px}
+.ndm-btns{display:inline-flex;align-items:center;gap:8px}`;
+    const st = document.createElement('style'); st.textContent = mcss; document.head.appendChild(st);
+    const box = document.createElement('div');
+    box.innerHTML = `<div class="ndm-dim" hidden></div><aside class="ndm" aria-hidden="true" aria-label="메뉴"><div class="ndm-top"><b>메뉴</b><button class="ndm-x" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`
+      + `<div class="ndm-list">${ITEMS.map(([h, ic, l]) => `<a class="ndm-it" href="${ROOT}${h}"><span class="ndm-ic">${ic}</span><span class="l">${l}</span><em>›</em></a>`).join('')}</div></aside>`;
+    document.body.appendChild(box);
+    const dim = box.querySelector('.ndm-dim'), dr = box.querySelector('.ndm');
+    window.openMenu = () => { dim.hidden = false; dr.classList.add('open'); dr.setAttribute('aria-hidden', 'false'); };
+    window.closeMenu = () => { dim.hidden = true; dr.classList.remove('open'); dr.setAttribute('aria-hidden', 'true'); };
+    dim.onclick = window.closeMenu; box.querySelector('.ndm-x').onclick = window.closeMenu;
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeMenu(); });
+    // ☰ 버튼이 없는 페이지는 오른쪽 위 버튼 줄 끝에 추가 (옆 버튼 모양 그대로)
+    if (!document.querySelector('[aria-label="메뉴"][onclick], button[data-ndm]')) {
+      const bar = document.querySelector('.topbar, .top');
+      const btns = bar && [...bar.querySelectorAll('button, a')].filter(x => !x.closest('.brand') && x.offsetParent !== null);
+      const ref = btns && btns[btns.length - 1];
+      if (ref) {
+        const b = ref.cloneNode(false);
+        const nb = document.createElement('button');
+        nb.className = b.className; nb.type = 'button'; nb.dataset.ndm = '1'; nb.setAttribute('aria-label', '메뉴');
+        nb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
+        nb.onclick = () => window.openMenu();
+        if (ref.parentElement === bar) { const w = document.createElement('span'); w.className = 'ndm-btns'; ref.before(w); w.append(ref, nb); }
+        else ref.after(nb);
+      }
+    }
+  })();
   // 단지·분양권 페이지의 별 버튼 (data-fav='[이름, 위치, 주소]')
   document.querySelectorAll('[data-fav]').forEach(b => {
     const it = JSON.parse(b.dataset.fav);

@@ -83,19 +83,7 @@
   <span class="bpill" id="bpill"></span>
   {% for t, k, pn in PAGES %}<button class="bt {% if loop.first %}on{% endif %}" data-page="{{ pn }}" onclick="showPage({{ pn }})">{{ t }}</button>{% endfor %}
 </nav>
-<div class="mdim" id="mdim" hidden onclick="closeMenu()"></div>
-<aside class="drawer" id="drawer" aria-hidden="true">
-  <div class="dr-top"><button class="dr-x" type="button" aria-label="닫기" onclick="closeMenu()">{{ ic('x') }}</button></div>
-  {% if crumbs %}<div class="dr-crumb">{% for c in crumbs %}{% if c[1] %}<a href="{{ c[1] }}">{{ c[0] }}</a><span>›</span>{% else %}<b>{{ c[0] }}</b>{% endif %}{% endfor %}</div>{% endif %}
-  <div class="dr-list">
-    <button class="dr-it" type="button" onclick="setView('list'); closeMenu(); window.scrollTo(0, 0)">{{ ic('sale') }}<span>리스트형</span></button><button class="dr-it" type="button" onclick="setView('card'); closeMenu(); window.scrollTo(0, 0)">{{ ic('sum') }}<span>카드형</span></button>
-  </div>
-  <div class="dr-list sub">
-    <a class="dr-it" href="{{ root|default('') }}fav.html">{{ ic('star') }}<span>관심단지</span></a>
-    <a class="dr-it" href="{{ home_href|default('./') }}">{{ ic('map') }}<span>지역 선택</span></a>
-    {% if crumbs and crumbs|length > 2 %}<a class="dr-it" href="{{ crumbs[1][1] }}">{{ ic('up') }}<span>{{ crumbs[1][0] }} 전체 보기</span></a>{% endif %}
-  </div>
-</aside>
+
 <div class="actions">
   <button class="btn" id="share-btn" onclick="shareReport()">공유하기</button>
   <button class="btn" id="save-btn" onclick="saveReport()">저장하기</button>
@@ -189,15 +177,7 @@ function fitFoot() {
 }
 window.addEventListener('load', fitFoot);
 window.addEventListener('resize', fitFoot);
-function openMenu() {
-  document.getElementById('mdim').hidden = false;
-  const d = document.getElementById('drawer'); d.classList.add('open'); d.setAttribute('aria-hidden', 'false');
-}
-function closeMenu() {
-  document.getElementById('mdim').hidden = true;
-  const d = document.getElementById('drawer'); d.classList.remove('open'); d.setAttribute('aria-hidden', 'true');
-}
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+
 // 하단 탭: 아래로 스크롤하면 숨기고, 위로 올리면 다시 보임
 (() => {
   const nav = document.getElementById('bnav');
