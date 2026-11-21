@@ -62,8 +62,8 @@
     if (T.length) {
       const last = T[0], max = T.reduce((a, b) => b[1] > a[1] ? b : a), y1 = T.filter(t => t[0] >= d365).length;
       const first = T[T.length - 1][0];
-      $('stats').innerHTML = `<div><small>최근 거래</small><b>${won(last[1])}</b><em>${dL(last[0])} · ${last[2]}층</em></div>` +
-        `<div><small>최고가</small><b class="r">${won(max[1])}</b><em>${dL(max[0])} · ${max[2]}층</em></div>` +
+      $('stats').innerHTML = `<div class="rt"><small>최근 거래</small><b>${won(last[1])}</b><em>${dL(last[0])} · ${last[2]}층</em></div>` +
+        `<div class="rt"><small>최고가</small><b class="r">${won(max[1])}</b><em>${dL(max[0])} · ${max[2]}층</em></div>` +
         `<div><small>1년 거래</small><b class="k">${y1}건</b><em>최근 12개월</em></div>` +
         `<div><small>전체 거래</small><b class="k">${T.length.toLocaleString()}건</b><em>${String(first).slice(0, 4)}년 이후</em></div>`;
       $('srange').textContent = `${String(first).slice(0, 4)}.${String(first).slice(4, 6)} ~ ${String(last[0]).slice(0, 4)}.${String(last[0]).slice(4, 6)}`;
@@ -84,8 +84,8 @@
     const y1 = RT.filter(t => t[0] >= d365);
     $('srange').textContent = '전월세 최근 13개월';
     $('stats').innerHTML = RT.length ? (
-      `<div><small>최근 전세</small><b class="t">${J.length ? won(J[0][1]) : '-'}</b>${J.length ? `<em>${dL(J[0][0])} · ${J[0][3]}층</em>` : ''}</div>` +
-      `<div><small>전세 최고</small><b class="t">${jmax ? won(jmax[1]) : '-'}</b>${jmax ? `<em>${dL(jmax[0])}</em>` : ''}</div>` +
+      `<div class="rt"><small>최근 전세</small><b class="t">${J.length ? won(J[0][1]) : '-'}</b>${J.length ? `<em>${dL(J[0][0])} · ${J[0][3]}층</em>` : ''}</div>` +
+      `<div class="rt"><small>전세 최고</small><b class="t">${jmax ? won(jmax[1]) : '-'}</b>${jmax ? `<em>${dL(jmax[0])}</em>` : ''}</div>` +
       `<div><small>전세가율</small><b class="k">${ja && sa ? Math.round(ja / sa * 100) + '%' : '-'}</b><em>전세÷매매</em></div>` +
       `<div><small>1년 거래</small><b class="k">${y1.length}건</b><em>전세 ${y1.filter(t => !t[2]).length} · 월세 ${y1.filter(t => t[2]).length}</em></div>`) : '';
     $('rrows').innerHTML = RT.length ? RT.slice(0, rshown).map(t => `<tr><td>${dL(t[0])}</td><td>${t[3]}층</td>` +
