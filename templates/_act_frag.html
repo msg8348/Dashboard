@@ -61,5 +61,5 @@
       <div class="who"><b>{% if a.h %}<a href="{{ a.h }}">{{ a.name }}</a>{% else %}{{ a.name }}{% endif %}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span>{{ trendb(a) }}</div>
       <div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>
       <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}</div>
-    <div class="foot2 cxnote">조건: 500세대 이상 아파트 · 매매만 (분양권 제외) · 회전율 = 거래 건수 ÷ 세대수(K-apt)<br>추세 = 최근 3개월 거래×4 와 1년 거래 비교 · 여러 단지로 나뉜 곳은 세대수 합산</div>
+    <div class="foot2 cxnote">조건: 500세대 이상 · 입주(사용승인)한 아파트 매매만 (입주 전 분양권 제외) · 회전율 = 거래 건수 ÷ 세대수(K-apt)<br>추세 = 최근 3개월 거래×4 와 1년 거래 비교 · 여러 단지로 나뉜 곳은 세대수 합산</div>
   </div>{% endif %}

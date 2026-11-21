@@ -397,7 +397,7 @@ def pop_live_periods(today):
 
 
 def act_cx(sdir, sdb, cinfo, l2_of, l2_name, now, top=15, min_hh=500):
-    """거래활발도 '단지별': 시도 안 모든 아파트(500세대 이상, 분양권 제외) 회전율 Top 15 — 최근 3개월 순, 1년 함께, 강세·약세."""
+    """거래활발도 '단지별': 시도 안 모든 아파트(500세대 이상, 입주 전 분양권 단계 제외) 회전율 Top 15 — 최근 3개월 순, 1년 함께, 강세·약세."""
     today_s = now.strftime("%Y%m%d")
     d1 = (now - timedelta(days=365)).strftime("%Y%m%d")
     d3 = D.months_ago(now, 3).strftime("%Y%m%d")
@@ -414,13 +414,15 @@ def act_cx(sdir, sdb, cinfo, l2_of, l2_name, now, top=15, min_hh=500):
                                 "h": f"{sdir}/apt/{k}.html" if k else ""})
         it["c1"] += 1
         it["c3"] += dt > d3
-        hh, _ = cinfo(t)
+        hh, ap = cinfo(t)
         if hh:
             it["hhs"][t["n"]] = hh   # 통합 단지(예: 1·2·3단지)는 이름별 세대수 합
+        if ap and str(ap)[:6] > today_s[:6]:
+            it["pre"] = True   # 입주(사용승인) 전 = 분양권 단계라 뺌
     out = []
     for it in g.values():
         hh = sum(it.pop("hhs").values())
-        if hh < min_hh:
+        if hh < min_hh or it.pop("pre", False):
             continue
         it.update(households=hh, r1=it["c1"] / hh * 100, r3=it["c3"] / hh * 100)
         out.append(D.add_trend(it))
