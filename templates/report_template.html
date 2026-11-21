@@ -228,7 +228,7 @@ function renderOne(n, shot) {
             const items = [...box.children].filter(e => e.classList.contains('tcard') || e.classList.contains('r'));
             if (items.length > shot.trim) {
               items.slice(shot.trim).forEach(e => e.remove());
-              const more = doc.createElement('div'); more.className = 'tmore'; more.textContent = `외 ${(items.length - shot.trim).toLocaleString()}건`;
+              const more = doc.createElement('div'); more.className = 'tmore'; more.textContent = `그 외 ${(items.length - shot.trim).toLocaleString()}건`;
               box.appendChild(more);
             }
           });
@@ -347,11 +347,19 @@ async function partFile(el, limit) {   // 영역 하나를 이미지 파일로 (
           head.className = 'cap-head';
           const br = doc.querySelector('.topbar .brand');
           head.innerHTML = `<span>${CAPRG} · ${DATE.slice(2,4)}.${DATE.slice(4,6)}.${DATE.slice(6)}</span>`;
-          if (br) { const lg = br.cloneNode(true); lg.classList.add('cap-mini'); head.insertBefore(lg, head.firstChild); }
+          if (c.classList.contains('tq')) {   // 실거래 리스트형: 주요거래와 같은 타이틀 — 큰 지역명 · 날짜 · 맨 오른쪽 로고
+            head.className = 'cap-ttl';
+            head.innerHTML = `<b>${CAPRG}</b><small>${DATE.slice(2,4)}.${DATE.slice(4,6)}.${DATE.slice(6)}</small><span class="lg"></span>`;
+            Object.assign(head.style, { display: 'flex', alignItems: 'center', gap: '10px', padding: '2px 2px 14px', borderBottom: '1px solid #e9edf2', marginBottom: '16px' });
+            Object.assign(head.children[0].style, { fontSize: CAPRG.length > 3 ? '34px' : '40px', fontWeight: '900', letterSpacing: '-1px', lineHeight: '1', color: '#111827', whiteSpace: 'nowrap' });
+            Object.assign(head.children[1].style, { fontSize: '19px', fontWeight: '800', color: '#4a5566', alignSelf: 'flex-end', marginBottom: '2px' });
+            Object.assign(head.children[2].style, { marginLeft: 'auto', display: 'flex' });
+            if (br) { const lg = br.cloneNode(true); lg.classList.add('cap-mini'); head.children[2].appendChild(lg); }
+          } else if (br) { const lg = br.cloneNode(true); lg.classList.add('cap-mini'); head.insertBefore(lg, head.firstChild); }
           c.insertBefore(head, c.firstChild);
           // 오른쪽 위 '지역 · 날짜'는 목록의 금액 글자와 같은 크기 (색은 그대로)
           const pr = c.querySelector('.pr, .val, .row b, .mr b');
-          if (pr) head.lastElementChild.style.fontSize = doc.defaultView.getComputedStyle(pr).fontSize;
+          if (pr && head.className === 'cap-head') head.lastElementChild.style.fontSize = doc.defaultView.getComputedStyle(pr).fontSize;
           if (c.classList.contains('qx')) head.style.padding = '12px 18px 26px';
           if (c.classList.contains('hl')) c.style.width = '520px';
           if (c.classList.contains('tq')) c.style.width = '500px';   // 실거래 리스트형: 휴대폰 폭 (예전 표와 같은 크기)
@@ -360,7 +368,7 @@ async function partFile(el, limit) {   // 영역 하나를 이미지 파일로 (
             const rs = [...c.querySelectorAll(':scope > .r')];
             if (rs.length > limit) {
               rs.slice(limit).forEach(r => r.remove());
-              const more = doc.createElement('div'); more.className = 'more-n'; more.textContent = `외 ${(rs.length - limit).toLocaleString()}건`;
+              const more = doc.createElement('div'); more.className = 'more-n'; more.textContent = `그 외 ${(rs.length - limit).toLocaleString()}건`;
               Object.assign(more.style, { textAlign: 'center', fontSize: '14px', fontWeight: '800', color: '#4a5566', padding: '12px 0 12px', borderTop: '1px solid #edf1f3' });
               rs[limit - 1].after(more);
             }
@@ -413,7 +421,7 @@ async function saveReport() {
 async function listFiles() {
   const parts = [...document.querySelectorAll('#tout .tq')].filter(q => q.querySelector('.r'));
   const out = [];
-  for (const q of parts) out.push(await partFile(q, 20));
+  for (const q of parts) out.push(await partFile(q, 15));
   return out;
 }
 function download(blob, name) {
