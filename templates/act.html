@@ -133,7 +133,7 @@ async function makeImage() {
         Object.assign(c.style, { width: '500px', padding: '16px 18px 10px', background: '#fff', border: '0', borderRadius: '0', boxShadow: 'none' });
         c.querySelectorAll('.alg, .ahd > b').forEach(x => { x.style.display = 'none'; });
         c.querySelectorAll('.anote').forEach(x => { x.style.fontSize = '10px'; x.style.lineHeight = '1.5'; });   // 이미지 아래 설명은 항상 작게
-        { const f = c.querySelector('.ar'); if (f) f.style.borderTop = '0'; }   // 제목 밑줄과 겹치는 1위 윗줄은 빼기
+        { const f = c.querySelector('.ar'); if (f) { f.style.borderTop = '0'; f.style.paddingTop = '2px'; } }   // 제목 밑줄과 겹치는 1위 윗줄은 빼기
         c.querySelectorAll('.v-cx').forEach(x => { Object.assign(x.style, { border: '0', padding: '0', borderRadius: '0' }); });   // 단지별: 안쪽 테두리 없이 시도별과 같은 모양
         const hd = doc.createElement('div');
         hd.style.cssText = 'display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid #e9edf2';
@@ -142,7 +142,7 @@ async function makeImage() {
           c.querySelectorAll('.anote').forEach(x => { if (x.querySelector('.sortlbl')) { if (A.t === '1') x.textContent = '아파트 매매 · 회전율 = 거래 건수 ÷ 세대수'; else x.remove(); } });
           c.querySelectorAll('.anote').forEach(x => { x.style.textAlign = 'left'; });
           const lgd = doc.createElement('div'); const av = c.querySelector('.ar .av'); const w = av ? doc.defaultView.getComputedStyle(av).width : '56px';
-          lgd.style.cssText = 'display:flex;justify-content:flex-end;gap:6px;font-size:11.5px;font-weight:700;color:#4a5566;padding:2px 0 4px';
+          lgd.style.cssText = 'display:flex;justify-content:flex-end;gap:6px;font-size:11.5px;font-weight:700;color:#4a5566;padding:0;margin-bottom:-2px';
           lgd.innerHTML = [['#f0a35e', '3개월'], ['#1f9b85', '1년']].map(([cl, t]) => `<span style="width:${w};text-align:right;white-space:nowrap"><i style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${cl};margin-right:4px;vertical-align:0"></i>${t}</span>`).join('');
           c.prepend(lgd);
         }
