@@ -87,13 +87,14 @@ async function render() {
   fr.dataset.v = A.t === '5' ? 'cx' : (A.t === '3' ? 'apt-' : 'gu-') + A.w;
   if (fr.dataset.s !== A.s) {
     fr.innerHTML = '<div class="aempty">불러오는 중…</div>';
-    try { fc[A.s] = fc[A.s] || await fetch(`act/${A.s}.html?v={{ today }}`).then(r => r.text()); fr.innerHTML = fc[A.s]; fr.dataset.s = A.s; }
+    try { fc[A.s] = fc[A.s] || await fetch(`act/${A.s}.html?v={{ today }}`).then(r => r.text()); fr.innerHTML = fc[A.s]; fr.dataset.s = A.s; fr.querySelectorAll('.asec').forEach(bindSort); }
     catch (e) { fr.innerHTML = '<div class="aempty">불러오지 못했어요</div>'; }
   }
 }
 // 3개월·1년 버튼: 누르면 그 기준으로 정렬, 한 번 더 누르면 오름차순/내림차순 전환
-document.querySelectorAll('.asec').forEach(sec => {
+function bindSort(sec) {
   let key = 'r3', desc = true;
+  if (!sec.querySelector('.alg button')) return;
   sec.querySelector('.alg').onclick = e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.k === key) desc = !desc; else { key = b.dataset.k; desc = true; }
@@ -103,7 +104,8 @@ document.querySelectorAll('.asec').forEach(sec => {
     rows.forEach((r, i) => { const k = r.querySelector('.ark'); k.textContent = i + 1; k.classList.toggle('t3', i < 3); note.before(r); });
     const sl = sec.querySelector('.sortlbl'); if (sl) sl.textContent = `최근 ${key === 'r3' ? '3개월' : '1년'} ${desc ? '높은' : '낮은'} 순`;
   };
-});
+}
+document.querySelectorAll('.asec').forEach(bindSort);
 document.getElementById('atabs').onclick = e => { const b = e.target.closest('button'); if (b) { A.t = b.dataset.t; render(); } };
 document.getElementById('avw').onclick = e => { const b = e.target.closest('button'); if (b) { A.w = b.dataset.w; render(); } };
 sel.onchange = () => { A.s = sel.value; render(); };
@@ -133,7 +135,7 @@ async function makeImage() {
         Object.assign(c.style, { width: '500px', padding: '16px 18px 10px', background: '#fff', border: '0', borderRadius: '0', boxShadow: 'none' });
         c.querySelectorAll('.alg, .ahd > b').forEach(x => { x.style.display = 'none'; });
         c.querySelectorAll('.anote').forEach(x => { x.style.fontSize = '10px'; x.style.lineHeight = '1.5'; });   // 이미지 아래 설명은 항상 작게
-        { const f = c.querySelector('.ar'); if (f) { f.style.borderTop = '0'; f.style.paddingTop = '2px'; } }   // 제목 밑줄과 겹치는 1위 윗줄은 빼기
+        { const f = c.querySelector('.ar'); if (f) { f.style.borderTop = '0'; f.style.paddingTop = '4px'; } }   // 제목 밑줄과 겹치는 1위 윗줄은 빼기
         c.querySelectorAll('.v-cx').forEach(x => { Object.assign(x.style, { border: '0', padding: '0', borderRadius: '0' }); });   // 단지별: 안쪽 테두리 없이 시도별과 같은 모양
         const hd = doc.createElement('div');
         hd.style.cssText = 'display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid #e9edf2';
@@ -142,7 +144,7 @@ async function makeImage() {
           c.querySelectorAll('.anote').forEach(x => { if (x.querySelector('.sortlbl')) { if (A.t === '1') x.textContent = '아파트 매매 · 회전율 = 거래 건수 ÷ 세대수'; else x.remove(); } });
           c.querySelectorAll('.anote').forEach(x => { x.style.textAlign = 'left'; });
           const lgd = doc.createElement('div'); const av = c.querySelector('.ar .av'); const w = av ? doc.defaultView.getComputedStyle(av).width : '56px';
-          lgd.style.cssText = 'display:flex;justify-content:flex-end;gap:6px;font-size:11.5px;font-weight:700;color:#4a5566;padding:0;margin-bottom:-2px';
+          lgd.style.cssText = 'display:flex;justify-content:flex-end;gap:6px;font-size:11.5px;font-weight:700;color:#4a5566;line-height:1.4;padding:0 0 2px';
           lgd.innerHTML = [['#f0a35e', '3개월'], ['#1f9b85', '1년']].map(([cl, t]) => `<span style="width:${w};text-align:right;white-space:nowrap"><i style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${cl};margin-right:4px;vertical-align:0"></i>${t}</span>`).join('');
           c.prepend(lgd);
         }
