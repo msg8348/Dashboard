@@ -923,6 +923,10 @@ def main():
           "max_cnt": max([h["cnt"] for h in home] + [1])}
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
         f.write(env.get_template("home.html").render(hc))
+    import weekly   # 주간변동률 (한국부동산원 주간 아파트 매매·전세가격지수)
+    weekly.build(SITE, STORE, datetime.now(D.KST))
+    with open(os.path.join(SITE, "weekly.html"), "w", encoding="utf-8") as f:
+        f.write(env.get_template("weekly.html").render(today=now.strftime("%Y%m%d")))
     with open(os.path.join(SITE, "major.html"), "w", encoding="utf-8") as f:   # 주요거래 (시도·구군별 오늘 신규 매매 타입별 Top 15)
         f.write(env.get_template("major.html").render(today=now.strftime("%Y%m%d"),
                 sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home]))
@@ -957,7 +961,7 @@ def main():
     today_iso = now.strftime("%Y-%m-%d")
     with open(os.path.join(SITE, "sitemap.xml"), "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
-        menus = [f"{SITE_URL}/{m}.html" for m in ("major", "hi", "act", "pop", "sub", "rate", "budget")   # 홈 메뉴 페이지
+        menus = [f"{SITE_URL}/{m}.html" for m in ("major", "hi", "weekly", "act", "pop", "sub", "rate", "budget")   # 홈 메뉴 페이지
                  if os.path.exists(os.path.join(SITE, f"{m}.html"))]
         for u in [f"{SITE_URL}/"] + menus + urls:
             f.write(f"<url><loc>{u}</loc><lastmod>{today_iso}</lastmod><changefreq>daily</changefreq></url>\n")
