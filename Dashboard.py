@@ -416,9 +416,8 @@ def trade_card(t, cnt3, jeon1, cinfo, sale1=None):
         tl = TYPE_LABEL(t)
         if tl:
             r["tl"] = tl
-    if t.get("s") and t["s"] in APT_ALIAS:   # 합친 단지: 대표 페이지 · 합친 이름
+    if t.get("s") and t["s"] in APT_ALIAS:   # 합친 단지: 링크는 대표 페이지, 이름은 실거래 원래 단지명 그대로 (예: 레이카운티(2단지))
         r["h"] = f"apt/{APT_ALIAS[t['s']][0]}"
-        r["n"] = APT_ALIAS[t["s"]][1]
     elif t.get("s") and t["s"] in APT_PAGES:
         r["h"] = f"apt/{t['s']}"   # 단지 페이지 있음
     if t.get("up"):
