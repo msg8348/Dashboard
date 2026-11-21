@@ -124,8 +124,12 @@ def _summarize(series, year):
     parents = {p for parts, _, _ in rows for p in parts[:-1]}   # 다른 지역의 상위(예: 수원시)면 잎이 아님
     for parts, w, y in rows:
         name = parts[-1]
+        if len(parts) == 1 and name == "지방권":
+            name = "지방"
         if name in NAT and len(parts) == 1:
             nat[name] = w
+            continue
+        if len(parts) == 1 and re.search(r"(대광역시|개도|권)$", name):   # 5대광역시 · 8개도 같은 묶음은 뺌
             continue
         rest = [x for x in parts if x not in NAT]
         if not rest:
@@ -141,6 +145,8 @@ def _summarize(series, year):
             lab = name
         elif par.endswith("시") and par != sd and name.endswith("구"):
             lab = f"{par[:-1]} {name}"            # 수원 영통구
+        elif sd == "전남광주" and name.endswith("구"):
+            lab = f"광주 {name}"                   # 광주 북구 (전남광주 통합특별시의 옛 광주 구)
         elif sd in ("부산", "대구", "인천", "광주", "대전", "울산"):
             lab = f"{sd} {name}"                   # 부산 강서구
         else:
@@ -160,13 +166,13 @@ def build(site, store, now=None):
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             st = json.load(f)
-    fresh = st and st.get("fetched") == now.strftime("%Y%m%d")
+    fresh = st and st.get("fetched") == now.strftime("%Y%m%d") and st.get("v") == 2
     if KEY and not fresh:
         try:
             tabs = _find_tables()
             data = {k: _summarize(_series(tid, now.year), now.year) for k, tid in tabs.items()}
             if any(v.get("sido") for v in data.values()):
-                st = {"fetched": now.strftime("%Y%m%d"), "data": data, "diag": DIAG}
+                st = {"v": 2, "fetched": now.strftime("%Y%m%d"), "data": data, "diag": DIAG}
                 print("📈 주간변동률: " + ", ".join(f"{k} {v.get('t')}" for k, v in data.items()))
             else:
                 st = dict(st or {}, diag=DIAG)
