@@ -55,11 +55,7 @@
     </div>
     {% endfor %}
   </div>
-  {% if ind.cx %}<div class="tbl qx v-cx"><div class="hd"><div><b>단지별 거래활발도 Top {{ ind.cx|length }}</b><small>{{ RG }} 아파트 매매 · 최근 3개월 순</small></div>
-    <div class="lg"><span><i class="i-m"></i>최근 3개월</span><span><i class="i-g"></i>최근 1년</span></div></div>
-    <div class="bfgrid" style="--rows:{{ ((ind.cx|length) / 2)|round(0, 'ceil')|int }}">{% for a in ind.cx %}<div class="bf">{{ rk(loop.index0, 'cn') }}
-      <div class="who"><b>{% if a.h %}<a href="{{ a.h }}">{{ a.name }}</a>{% else %}{{ a.name }}{% endif %}</b><span>{{ a.district }} · {{ "{:,}".format(a.households) }}세대</span>{{ trendb(a) }}</div>
-      <div class="side l"><span class="val c-m">{{ "%.2f"|format(a.r3) }}%<em>{{ a.c3 }}건</em></span><span class="bw"><i class="i-m" style="width:{{ a.w3 }}%"></i></span></div><div class="axis"></div>
-      <div class="side r"><span class="bw"><i class="i-g" style="width:{{ a.w1 }}%"></i></span><span class="val c-g">{{ "%.2f"|format(a.r1) }}%<em>{{ a.c1 }}건</em></span></div></div>{% endfor %}</div>
-    <div class="foot2 cxnote">조건 : 500세대 이상 · 분양권 제외 · 회전율 = 거래 건수 ÷ 세대수</div>
+  {% if ind.cx %}<div class="asec v-cx"><div class="ahd"><b>단지별 Top {{ ind.cx|length }}</b><span class="alg"><span><i style="background:#f0a35e"></i>3개월</span><span><i style="background:#1f9b85"></i>1년</span></span></div>
+    {% for r in ind.cx %}{% if r.h %}<a class="ar" href="{{ r.h }}">{% else %}<div class="ar">{% endif %}<span class="ark {% if loop.index0 < 3 %}t3{% endif %}">{{ loop.index }}</span><span class="anm"><span class="cxn"><b>{{ r.name }}</b><small>{{ r.district }} · {{ "{:,}".format(r.households) }}세대</small></span>{{ trendb(r) }}</span><span class="av m">{{ "%.2f"|format(r.r3) }}%<small>{{ "{:,}".format(r.c3) }}건</small></span><span class="av y">{{ "%.2f"|format(r.r1) }}%<small>{{ "{:,}".format(r.c1) }}건</small></span>{% if r.h %}</a>{% else %}</div>{% endif %}{% endfor %}
+    <div class="anote cxnote">조건 : 500세대 이상 · 분양권 제외 · 회전율 = 거래 건수 ÷ 세대수 · 최근 3개월 높은 순</div>
   </div>{% endif %}
