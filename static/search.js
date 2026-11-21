@@ -122,20 +122,29 @@
     window.closeMenu = () => { dim.hidden = true; dr.classList.remove('open'); dr.setAttribute('aria-hidden', 'true'); };
     dim.onclick = window.closeMenu; box.querySelector('.ndm-x').onclick = window.closeMenu;
     document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeMenu(); });
-    // ☰ 버튼이 없는 페이지는 오른쪽 위 버튼 줄 끝에 추가 (옆 버튼 모양 그대로)
-    if (!document.querySelector('[aria-label="메뉴"][onclick], button[data-ndm]')) {
-      const bar = document.querySelector('.topbar, .top');
-      const btns = bar && [...bar.querySelectorAll('button, a')].filter(x => !x.closest('.brand') && x.offsetParent !== null);
-      const ref = btns && btns[btns.length - 1];
-      if (ref) {
-        const b = ref.cloneNode(false);
-        const nb = document.createElement('button');
-        nb.className = b.className; nb.type = 'button'; nb.dataset.ndm = '1'; nb.setAttribute('aria-label', '메뉴');
-        nb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
-        nb.onclick = () => window.openMenu();
-        if (ref.parentElement === bar) { const w = document.createElement('span'); w.className = 'ndm-btns'; ref.before(w); w.append(ref, nb); }
-        else ref.after(nb);
-      }
+    // 오른쪽 위 버튼 줄: 하위 페이지는 모두 ★ 관심단지 · 🔍 단지 검색 · ☰ 메뉴 (홈은 ☰ 만 — 검색·즐겨찾기는 본문에 있음)
+    const bar = document.querySelector('.topbar, .top');
+    if (bar) {
+      const isHome = !!document.querySelector('.srow');
+      const ICON = {
+        fav: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>',
+        search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
+        menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>' };
+      const old = [...bar.querySelectorAll('a, button')].filter(x => !x.closest('.brand'));
+      const cls = ((old[0] && old[0].className) || 'menu-btn').replace(/\bon\b/, '').trim();
+      const holder = (old[0] && old[0].parentElement !== bar) ? old[0].parentElement : null;
+      old.forEach(x => x.remove());
+      const mk = (k) => {
+        const e = document.createElement(k === 'fav' ? 'a' : 'button');
+        e.className = cls; e.innerHTML = ICON[k];
+        e.querySelector('svg').classList.add('ic');
+        if (k === 'fav') { e.href = ROOT + 'fav.html'; e.setAttribute('aria-label', '관심단지'); if (/\/fav\.html/.test(location.pathname)) e.classList.add('on'); }
+        else { e.type = 'button'; e.setAttribute('aria-label', k === 'menu' ? '메뉴' : '단지 검색'); e.onclick = () => (k === 'menu' ? window.openMenu() : window.openSearch && window.openSearch()); }
+        return e;
+      };
+      const box = holder || (() => { const w = document.createElement('span'); w.className = 'ndm-btns'; bar.appendChild(w); return w; })();
+      (isHome ? ['menu'] : ['fav', 'search', 'menu']).forEach(k => box.appendChild(mk(k)));
+      if (!holder) box.style.display = 'inline-flex';
     }
   })();
   // 단지·분양권 페이지의 별 버튼 (data-fav='[이름, 위치, 주소]')
