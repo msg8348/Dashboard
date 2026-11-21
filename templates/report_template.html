@@ -196,6 +196,7 @@ window.addEventListener('resize', fitFoot);
 const DATE = '{{ date_full }}';
 const APTB = '{{ apt_base|default('') }}';
 const REGION = '{{ RG }}', MAXPAGE = 2;
+const CAPRG = '{{ ((crumbs[1][0] ~ " " ~ RG) if level == 2 and crumbs and crumbs|length > 2 else RG)|replace("광주전남", "전남광주") }}';   // 저장 이미지 지역 이름: '부산 남구' · 시도 전체는 '부산'
 // 페이지별 저장 이미지 (지표단지는 2장: 1년·3개월 / 상세)
 const SHOTS = {
   1: [{ ko: '1_요약', en: '1_summary' }],
@@ -301,6 +302,12 @@ async function shareFiles(files, fromSheet) {
 }
 
 async function shareReport(fromSheet) {
+  if (currentPage === 2 && TR.v === 'list') {   // 리스트형: 매매·전월세 각각 한 장씩 (상위 20건 · 외 N건)
+    busy('share-btn', true, '이미지 준비 중…');
+    let files;
+    try { files = await listFiles(); } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); return; } finally { busy('share-btn', false); }
+    return shareFiles(files, fromSheet);
+  }
   busy('share-btn', true, '이미지 준비 중…');
   let shots;
   try { shots = await render(currentPage); }
@@ -327,14 +334,8 @@ function partTitle(el) {
   return (h ? (h.childNodes[0].textContent || h.textContent) : '영역').trim().replace(/[\\/:*?"<>|\s]+/g, '');
 }
 const partCache = new Map();
-async function sharePart(el, btn) {
-  // 지표단지 최근 3개월·1년 카드는 두 카드를 세로로 묶어 한 장으로
-  const pair = el.classList.contains('icard') && el.closest('.ind-two');
-  if (pair) { if (!pair.dataset.part) pair.dataset.part = 'ind2'; el = pair; }
-  const label = btn.innerHTML;
-  btn.disabled = true; btn.textContent = '준비 중…';
-  try {
-    if (!partCache.has(el)) {
+async function partFile(el, limit) {   // 영역 하나를 이미지 파일로 (limit: 실거래 리스트 상위 몇 건까지)
+  const pair = el.classList.contains('ind-two');
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
       const canvas = await html2canvas(el, {
         scale: 2, backgroundColor: '#ffffff', useCORS: true,
@@ -345,7 +346,7 @@ async function sharePart(el, btn) {
           const head = doc.createElement('div');
           head.className = 'cap-head';
           const br = doc.querySelector('.topbar .brand');
-          head.innerHTML = `<span>${REGION} · ${DATE.slice(2,4)}.${DATE.slice(4,6)}.${DATE.slice(6)}</span>`;
+          head.innerHTML = `<span>${CAPRG} · ${DATE.slice(2,4)}.${DATE.slice(4,6)}.${DATE.slice(6)}</span>`;
           if (br) { const lg = br.cloneNode(true); lg.classList.add('cap-mini'); head.insertBefore(lg, head.firstChild); }
           c.insertBefore(head, c.firstChild);
           // 오른쪽 위 '지역 · 날짜'는 목록의 금액 글자와 같은 크기 (색은 그대로)
@@ -354,7 +355,16 @@ async function sharePart(el, btn) {
           if (c.classList.contains('qx')) head.style.padding = '12px 18px 26px';
           if (c.classList.contains('hl')) c.style.width = '520px';
           if (c.classList.contains('tq')) c.style.width = '500px';   // 실거래 리스트형: 휴대폰 폭 (예전 표와 같은 크기)
-          c.querySelectorAll('.pshare').forEach(x => x.remove());   // 공유 버튼('준비 중…')은 이미지에서 빼기
+          c.querySelectorAll('.pshare').forEach(x => x.remove());
+          if (limit && c.classList.contains('tq')) {   // 실거래 리스트: 상위 limit 건만, 나머지는 '외 N건'
+            const rs = [...c.querySelectorAll(':scope > .r')];
+            if (rs.length > limit) {
+              rs.slice(limit).forEach(r => r.remove());
+              const more = doc.createElement('div'); more.className = 'more-n'; more.textContent = `외 ${(rs.length - limit).toLocaleString()}건`;
+              Object.assign(more.style, { textAlign: 'center', fontSize: '14px', fontWeight: '800', color: '#4a5566', padding: '12px 0 12px', borderTop: '1px solid #edf1f3' });
+              rs[limit - 1].after(more);
+            }
+          }   // 공유 버튼('준비 중…')은 이미지에서 빼기
           if (c.classList.contains('sumind') || c.classList.contains('tbl')) {   // 지표단지·구별 표 단독 저장: 세로 1열 (휴대폰 폭)
             c.style.width = '600px';
             c.querySelectorAll('.bfgrid').forEach(g => { g.style.gridTemplateColumns = '1fr'; g.style.gridTemplateRows = 'none'; g.style.gridAutoFlow = 'row'; });
@@ -369,9 +379,16 @@ async function sharePart(el, btn) {
         }
       });
       const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-      partCache.set(el, Object.assign(new File([blob], `${REGION}_${DATE}_${pair ? '지표단지_3개월1년' : partTitle(el)}.png`, { type: 'image/png' }), { en: pair ? `apt_${DATE}_indicator_3m1y.png` : `apt_${DATE}_part${+el.dataset.part + 1}.png` }));
-    }
-  } catch (e) { alert('이미지를 만들지 못했습니다: ' + e); return; }
+      return Object.assign(new File([blob], `${CAPRG.replace(/\s+/g, '_')}_${DATE}_${pair ? '지표단지_3개월1년' : partTitle(el)}.png`, { type: 'image/png' }), { en: pair ? `apt_${DATE}_indicator_3m1y.png` : `apt_${DATE}_part${+el.dataset.part + 1}.png` });
+}
+async function sharePart(el, btn) {
+  // 지표단지 최근 3개월·1년 카드는 두 카드를 세로로 묶어 한 장으로
+  const pair = el.classList.contains('icard') && el.closest('.ind-two');
+  if (pair) { if (!pair.dataset.part) pair.dataset.part = 'ind2'; el = pair; }
+  const label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = '준비 중…';
+  try { if (!partCache.has(el)) partCache.set(el, await partFile(el)); }
+  catch (e) { alert('이미지를 만들지 못했습니다: ' + e); return; }
   finally { btn.disabled = false; btn.innerHTML = label; }
   shareFiles([partCache.get(el)]);
 }
@@ -379,6 +396,12 @@ async function sharePart(el, btn) {
 async function saveReport() {
   const n = currentPage;
   busy('save-btn', true, '이미지 준비 중…');
+  if (n === 2 && TR.v === 'list') {
+    try { for (const f of await listFiles()) { download(f, f.name); await new Promise(r => setTimeout(r, 400)); } }
+    catch (e) { alert('이미지 저장에 실패했습니다: ' + e); }
+    finally { busy('save-btn', false); }
+    return;
+  }
   try {
     const shots = await render(n);
     for (const s of shots) { download(s.blob, s.en); await new Promise(r => setTimeout(r, 400)); }
@@ -387,6 +410,12 @@ async function saveReport() {
   finally { busy('save-btn', false); }
 }
 
+async function listFiles() {
+  const parts = [...document.querySelectorAll('#tout .tq')].filter(q => q.querySelector('.r'));
+  const out = [];
+  for (const q of parts) out.push(await partFile(q, 20));
+  return out;
+}
 function download(blob, name) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
