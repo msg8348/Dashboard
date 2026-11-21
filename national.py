@@ -397,8 +397,8 @@ def pop_live_periods(today):
 
 
 def act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses=(), top=15, min_hh=500):
-    """거래활발도 '단지별': 시도 안 500세대 이상 아파트(매매 + 분양권) 회전율 Top 15 — 최근 3개월 순, 1년 함께, 강세·약세.
-    세대수: 매매는 K-apt (통합 단지는 이름별 합), 매매 세대수를 모르는 분양권 단지는 청약홈 공급세대수."""
+    """거래활발도 '단지별': 시도 안 500세대 이상 아파트 매매(분양권 제외) 회전율 Top 15 — 최근 3개월 순, 1년 함께, 강세·약세.
+    세대수: K-apt (통합 단지는 이름별 합)."""
     today_s = now.strftime("%Y%m%d")
     d1 = (now - timedelta(days=365)).strftime("%Y%m%d")
     d3 = D.months_ago(now, 3).strftime("%Y%m%d")
@@ -420,22 +420,6 @@ def act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses=(), top=15, min_hh=
         hh, _ = cinfo(t)
         if hh:
             it["hhs"][t["n"]] = hh   # 통합 단지(예: 1·2·3단지)는 이름별 세대수 합
-    pbl = {}
-    for t in sdb["pre"]["trades"]:   # 분양권: 분양권 페이지(또는 입주 후 옮겨 간 매매 단지)로 묶음
-        dt = str(t.get("dt", ""))
-        if not (d1 < dt <= today_s):
-            continue
-        hk = (t.get("c"), t["n"])
-        if hk not in pbl:
-            h = match_house(houses, sd, t)
-            pbl[hk] = re.sub(r"\D", "", (h or {}).get("pbl") or "")[:8]
-        if dt < pbl[hk]:   # 모집공고 이전 거래는 같은 이름의 옛 단지
-            continue
-        l2 = l2_name.get(l2_of.get(t.get("c")), "")
-        hh, _, extra = cinfo(dict(t, src="pre"))
-        h = f"{sdir}/{extra['h']}.html" if extra.get("h") else ""
-        it = add(h or f"{t['n']}|{l2}", t["n"], l2, h, dt)
-        it["hp"] = max(it["hp"], hh or 0)
     out = []
     for it in g.values():
         hh = sum(it.pop("hhs").values()) or it["hp"]
