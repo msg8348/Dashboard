@@ -354,7 +354,13 @@ async function partFile(el, limit) {   // 영역 하나를 이미지 파일로 (
             Object.assign(head.children[0].style, { fontSize: CAPRG.length > 3 ? '34px' : '40px', fontWeight: '900', letterSpacing: '-1px', lineHeight: '1', color: '#111827', whiteSpace: 'nowrap' });
             Object.assign(head.children[1].style, { fontSize: '19px', fontWeight: '800', color: '#4a5566', alignSelf: 'flex-end', marginBottom: '2px' });
             Object.assign(head.children[2].style, { marginLeft: 'auto', display: 'flex' });
-            if (br) { const lg = br.cloneNode(true); lg.classList.add('cap-mini'); head.children[2].appendChild(lg); }
+            if (br) {   // 로고는 조금 작게
+              const lg = br.cloneNode(true); lg.classList.add('cap-mini'); head.children[2].appendChild(lg);
+              const ic = lg.querySelector('.brand-ic'), tb = lg.querySelector('.brand-tx b'), ts = lg.querySelector('.brand-tx small');
+              if (ic) Object.assign(ic.style, { width: '31px', height: '23px' });
+              if (tb) tb.style.fontSize = '15.5px';
+              if (ts) Object.assign(ts.style, { fontSize: '8px', marginTop: '2px' });
+            }
           } else if (br) { const lg = br.cloneNode(true); lg.classList.add('cap-mini'); head.insertBefore(lg, head.firstChild); }
           c.insertBefore(head, c.firstChild);
           // 오른쪽 위 '지역 · 날짜'는 목록의 금액 글자와 같은 크기 (색은 그대로)
@@ -395,7 +401,7 @@ async function sharePart(el, btn) {
   if (pair) { if (!pair.dataset.part) pair.dataset.part = 'ind2'; el = pair; }
   const label = btn.innerHTML;
   btn.disabled = true; btn.textContent = '준비 중…';
-  try { if (!partCache.has(el)) partCache.set(el, await partFile(el)); }
+  try { if (!partCache.has(el)) partCache.set(el, await partFile(el, el.classList.contains('tq') ? 15 : 0)); }
   catch (e) { alert('이미지를 만들지 못했습니다: ' + e); return; }
   finally { btn.disabled = false; btn.innerHTML = label; }
   shareFiles([partCache.get(el)]);
@@ -442,7 +448,7 @@ function tRows() {
     && r.p >= TR.lo * 1e4 && (TR.up >= 30 || r.p <= TR.up * 1e4));   // 매매가 · 전월세는 보증금
 }
 function tList(title, cls, rs, sub, rc) {
-  return `<div class="q ${cls} tq" data-part="tl-${cls}"><h3>${title} ${rs.length.toLocaleString()}건 <small>${sub}</small></h3>` + (rs.length ? rs.map((r, i) => {
+  return `<div class="q ${cls} tq" data-part="tl-${cls}"><h3><span>${title} ${rs.length.toLocaleString()}건${TR.lo || TR.up < 30 ? ` <span class="pfl">${pLab()}</span>` : ''}</span> <small>${sub}</small></h3>` + (rs.length ? rs.map((r, i) => {
     const [tc, tl] = tTy(r.ty);
     const pr = r.m ? `<span class="pr w${r.up ? ' hi' : ''}"><span class="wtag">월</span>${r.p ? tShort(r.p) : '0'}/${r.m.toLocaleString()}</span>` : `<span class="pr${r.k === 'rent' ? ' j' : ''}${r.up ? ' hi' : ''}">${tShort(r.p)}</span>`;
     return `<div class="r"${r.h && APTB ? ` data-h="${r.h}"` : ''}><span class="rkc ${rc} ${i >= 3 ? 'lt' : ''}">${i + 1}</span><span class="nm"><span class="ty ${tc}">${tl}</span><span class="nt">${r.n}</span>${r.ty === '기타' && r.py ? `<span class="pyg">${r.py}평</span>` : ''}${r.k === 'pre' ? '<span class="ptag">분양권</span>' : ''}${r.up ? '<span class="stk">신고가</span>' : ''}</span><span class="sub">${tFl(r.f)}</span>${pr}</div>`;
