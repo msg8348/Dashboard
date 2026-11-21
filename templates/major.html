@@ -43,12 +43,7 @@
   .nm{flex:1;min-width:0;display:flex;align-items:center;gap:4px;font-weight:700;white-space:nowrap;overflow:hidden}
   .nm .nt{overflow:hidden;text-overflow:ellipsis;font-size:16.5px}
   .row.up .pr{color:var(--red)}   /* 신고가 금액: 빨강 */
-  /* 신고가 줄: 붉은 테두리 — 연속된 신고가 줄은 한 상자로 묶음 (ut 위쪽 시작 · ub 아래쪽 끝) */
-  .row.up{border:0 solid var(--red);border-left-width:1.5px;border-right-width:1.5px;border-top:1px solid #f6d3cb;margin:0 -6px;padding-left:6px;padding-right:6px}
-  .row.up.ut{border-top:1.5px solid var(--red);border-radius:9px 9px 0 0;margin-top:2px}
-  .row.up.ub{border-bottom:1.5px solid var(--red);border-radius:0 0 9px 9px;margin-bottom:2px}
-  .row.up.ut.ub{border-radius:9px}
-  .row.up.ub + .row{border-top-color:transparent}
+  .row.up{background:#fdeeea;margin:0 -6px;padding-left:6px;padding-right:6px;border-radius:6px}   /* 신고가 줄: 연한 빨강 배경 */
   .pyg{font-size:12px;color:var(--ink-2);font-weight:700;flex:none}
   .ptag{font-size:11px;font-weight:800;color:#d12f62;background:#fde8ee;border-radius:5px;padding:1px 5px;flex:none}
   .stk{font-size:11px;font-weight:800;color:#fff;background:var(--red);border-radius:5px;padding:1px 5px;flex:none}
