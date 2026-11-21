@@ -73,8 +73,7 @@
     <div class="tfv" id="tfv"><button class="on" data-v="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="4.5" width="14" height="6" rx="1.6"/><rect x="5" y="13.5" width="14" height="6" rx="1.6"/></svg>카드형</button><button data-v="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>리스트형</button></div></div>
   <div class="pbox" id="pbox" hidden><div class="lab"><span>매매가 · 전월세 보증금</span><b id="plab">전체</b></div>
     <div class="rng"><i class="bar"></i><i class="sel" id="psel"></i><input type="range" id="plo" min="0" max="30" step="1" value="0" aria-label="최소 금액(억)"><input type="range" id="phi" min="0" max="30" step="1" value="30" aria-label="최대 금액(억)"></div>
-    <div class="ticks"><span>0</span><span>5억</span><span>10억</span><span>15억</span><span>20억</span><span>25억</span><span>30억+</span></div>
-    <div class="pre" id="ppre"><button type="button" data-r="0,30">전체</button><button type="button" data-r="0,3">~3억</button><button type="button" data-r="3,6">3~6억</button><button type="button" data-r="6,9">6~9억</button><button type="button" data-r="9,15">9~15억</button><button type="button" data-r="15,30">15억~</button></div></div>
+    <div class="ticks"><span>0</span><span>5억</span><span>10억</span><span>15억</span><span>20억</span><span>25억</span><span>30억+</span></div></div>
   <div class="tcnt" id="tcnt"></div>
   <div id="tout"></div>
 </div>
@@ -495,7 +494,6 @@ function pPaint() {
   document.getElementById('plab').textContent = pLab();
   const on = TR.lo > 0 || TR.up < 30, b = document.getElementById('pbtn');
   b.textContent = (on ? pLab() : '금액 전체') + ' ▾'; b.classList.toggle('on', on);
-  document.querySelectorAll('#ppre button').forEach(x => x.classList.toggle('on', x.dataset.r === `${TR.lo},${TR.up}`));
 }
 function pToggle() { const bx = document.getElementById('pbox'); bx.hidden = !bx.hidden; }
 ['plo', 'phi'].forEach(id => document.getElementById(id).addEventListener('input', e => {
@@ -503,7 +501,6 @@ function pToggle() { const bx = document.getElementById('pbox'); bx.hidden = !bx
   if (lo > hi) { if (id === 'plo') lo = hi; else hi = lo; }
   TR.lo = lo; TR.up = hi; pPaint(); tRender();
 }));
-document.getElementById('ppre').onclick = e => { const b = e.target.closest('button'); if (!b) return; [TR.lo, TR.up] = b.dataset.r.split(',').map(Number); pPaint(); tRender(); };
 pPaint();
 document.getElementById('tfhi').onclick = e => { TR.hi = !TR.hi; e.currentTarget.classList.toggle('on', TR.hi); tRender(); };
 function goTrade(k) {   // 건수 상자(매매/전월세) → 카드형으로, 그 종류만
