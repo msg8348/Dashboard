@@ -4,7 +4,7 @@
   const TY = D.ty, T = D.t, SCAN = new Set(D.scan || []);                 // TY: [약식표기, 세대수, 최고분양가]  T: [계약일, 금액, 층, 약식표기, 분양가, 상세여부]
   const $ = id => document.getElementById(id);
   const won = v => { const e = Math.floor(v / 10000), r = v % 10000; return (e ? e + '억' : '') + (r ? (e ? ' ' : '') + r.toLocaleString() : '') || '0'; };
-  const pm = v => (v >= 0 ? '+' : '-') + (Math.abs(v) >= 10000 ? (Math.abs(v) / 10000).toFixed(2) + '억' : Math.abs(v).toLocaleString() + '만');
+  const pm = v => (v >= 0 ? '+' : '-') + (Math.abs(v) >= 10000 ? parseFloat((Math.abs(v) / 10000).toFixed(2)) + '억' : Math.abs(v).toLocaleString() + '만');
   const eok = v => (Math.round(v / 1000) / 10).toFixed(1) + '억';
   const eok2 = v => (v / 10000).toFixed(2).replace(/0$/, '') + '억';
   const dL = d => { const s = String(d); return `${s.slice(2, 4)}.${s.slice(4, 6)}.${s.slice(6, 8)}`; };
