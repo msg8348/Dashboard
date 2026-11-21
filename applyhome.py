@@ -164,6 +164,8 @@ def load(path, key, today=None):
         with open(path, encoding="utf-8") as f:
             st = json.load(f)
     fresh = st and st.get("v") == 4 and (today.date() - datetime.strptime(st["date"], "%Y%m%d").date()).days < REFRESH_DAYS
+    if fresh and not any((h.get("cmp") or {}).get("c") for h in st.get("houses", [])):
+        fresh = False   # 경쟁률이 하나도 없으면(인증 실패 등) 하루 안 기다리고 다시 받기
     if key and not fresh:
         try:
             rows = fetch(key)
