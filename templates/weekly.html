@@ -29,7 +29,7 @@
   .card{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:18px 18px 12px}
   .ch{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid #e9edf2;margin-bottom:12px}
   .ch .tt{font-size:22px;font-weight:900;letter-spacing:-.4px;line-height:1.25}.ch .st{font-size:13px;font-weight:700;color:var(--ink-2);margin-top:2px}
-  .ch .brand{flex:none}.ch .brand-ic{width:40px;height:30px}.ch .brand-tx b{font-size:19px}.ch .brand-tx small{font-size:9.5px}
+  .ch .brand{flex:none;display:none}   /* 로고는 저장 이미지에만 */.ch .brand-ic{width:40px;height:30px}.ch .brand-tx b{font-size:19px}.ch .brand-tx small{font-size:9.5px}
   .sum{display:flex;gap:8px;margin-bottom:14px}.sum div{flex:1;border-radius:12px;padding:9px 0;text-align:center}.sum small{display:block;font-size:12.5px;font-weight:800}.sum b{font-size:21px;font-weight:900}
   .maps{display:grid;grid-template-columns:1fr 1.25fr;gap:14px}
   .lbl{font-size:13px;font-weight:800;color:var(--ink-2);margin-bottom:6px}
@@ -130,7 +130,7 @@ async function makeImage() {
   await loadH2C();
   if (document.fonts && document.fonts.ready) await document.fonts.ready;
   const canvas = await html2canvas(document.getElementById('card'), { scale: 2, backgroundColor: '#ffffff', useCORS: true, windowWidth: 600, scrollX: 0, scrollY: -window.scrollY,
-    onclone: doc => { const c = doc.getElementById('card'); Object.assign(c.style, { width: '540px', border: '0', borderRadius: '0' });
+    onclone: doc => { const c = doc.getElementById('card'); c.querySelectorAll('.ch .brand').forEach(x => { x.style.display = 'inline-flex'; }); Object.assign(c.style, { width: '540px', border: '0', borderRadius: '0' });
       c.querySelectorAll('.maps').forEach(x => { x.style.gridTemplateColumns = '1fr 1.25fr'; }); c.querySelectorAll('.two').forEach(x => { x.style.gridTemplateColumns = 'minmax(0,1fr) minmax(0,1fr)'; }); } });
   const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
   return new File([blob], `주간변동률_${KN[W.k]}_${W.t === 'map' ? W.s : '순위'}.png`, { type: 'image/png' });
