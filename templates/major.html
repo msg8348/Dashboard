@@ -57,7 +57,6 @@
   .gc{text-align:right;font-weight:800}.gh{color:var(--red);font-size:12px;font-weight:800}
   .cap{font-size:12.5px;color:var(--ink-2);font-weight:700;margin:4px 0 8px}.cap b{color:#2b3a67}
   .ch{display:block;width:100%;height:230px}.ax{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px}
-  .gur{margin-top:10px}.gur:empty{display:none}
   .url{text-align:center;font-size:12px;color:#a3abb7;letter-spacing:.6px;padding:8px 0 2px}
   .note{font-size:11.5px;color:var(--muted);text-align:right;padding:8px 2px 0}
   /* 화면에는 이미지 한 장만: 표는 화면 밖(가로 900px PC 배치)에서 그려 이미지로 만듦 */
@@ -123,8 +122,8 @@ async function render() {
   const gm = {};
   rows.forEach(r => { const g = gm[r[1] || '기타'] = gm[r[1] || '기타'] || [0, 0]; g[0]++; if (r[7]) g[1]++; });
   const gl = Object.entries(gm).sort((a, b) => b[1][0] - a[1][0]), gmx = gl.length ? gl[0][1][0] : 1;
-  const glHtml = list => list.length ? `<div class="gl" style="grid-template-rows:repeat(${Math.max(1, Math.ceil(list.length / 2))},auto)">` + list.map(([g, [c, h]]) => `<div class="gr"><b>${esc(g)}</b><span class="gb"><i style="width:${Math.max(4, c / gmx * 100).toFixed(0)}%"></i></span><span class="gc">${c}건</span><span class="gh">${h ? '▲' + h : ''}</span></div>`).join('') + '</div>' : '';
-  const guHtml = `<div id="guL">${glHtml(gl)}</div>`;
+  const half = Math.ceil(gl.length / 2);
+  const guHtml = `<div class="gl" style="grid-template-rows:repeat(${Math.max(1, half)},auto)">` + gl.map(([g, [c, h]]) => `<div class="gr"><b>${esc(g)}</b><span class="gb"><i style="width:${Math.max(4, c / gmx * 100).toFixed(0)}%"></i></span><span class="gc">${c}건</span><span class="gh">${h ? '▲' + h : ''}</span></div>`).join('') + '</div>';
   // 최근 60일 신규 매매 추이 (공개일만)
   const ts = d.t || [], tv = ts.map(x => x[1]), tmx = (Math.max(1, ...tv)) * 1.08, tavg = tv.length ? tv.reduce((a, b) => a + b, 0) / tv.length : 0;
   const N = Math.max(ts.length, 1), SL = Math.max(N, 43), OFF = SL - N, W = SL * 10, yy = v => (150 - v / tmx * 145).toFixed(1);
@@ -137,23 +136,9 @@ async function render() {
     + `<div class="two">${section('84타입', by('84타입').slice(0, 15))}${section('59타입', by('59타입').slice(0, 15))}</div>${section('기타', by('기타').slice(0, 15), true)}`
     + `<div class="two"><div class="sec"><h2><span class="chip" style="background:var(--navy)">구·군별 거래량</span><span class="n">오늘 신규 · ▲신고가</span></h2>${guHtml}</div>`
     + `<div class="sec"><h2><span class="chip" style="background:var(--navy)">${esc(name)} 거래량 추이</span><span class="n">최근 60일 · 공개일별 신규 매매</span></h2>`
-    + `<div class="cap">${ts.length > 1 ? `평균 <b>${Math.round(tavg).toLocaleString()}건</b> · ` : ''}오늘 <b>${rows.length.toLocaleString()}건</b></div>${chart}<div id="guR" class="gur"></div></div></div>`
+    + `<div class="cap">${ts.length > 1 ? `평균 <b>${Math.round(tavg).toLocaleString()}건</b> · ` : ''}오늘 <b>${rows.length.toLocaleString()}건</b></div>${chart}</div></div>`
     + `<div class="url">nextdoorprice.com</div>`;
-  { const br = document.querySelector('.topbar .brand'); if (br) out.querySelector('.lg').appendChild(br.cloneNode(true)); }
-  { // 구·군이 많으면(경기 등) 일부를 오른쪽 추이 그래프 아래로 옮겨 양쪽 높이를 맞춤
-    const L = out.querySelector('#guL'), R = out.querySelector('#guR'), lsec = L.closest('.sec'), rsec = R.closest('.sec');
-    const T = Math.ceil(gl.length / 2);
-    lsec.style.alignSelf = rsec.style.alignSelf = 'start';   // 내용 높이로 재기
-    let best = [T, Infinity];
-    for (let k = T; k >= Math.ceil(T / 2); k--) {   // 왼쪽 줄 수 k
-      L.innerHTML = glHtml(gl.slice(0, 2 * k)); R.innerHTML = glHtml(gl.slice(2 * k));
-      const diff = Math.abs(lsec.offsetHeight - rsec.offsetHeight);
-      if (diff < best[1]) best = [k, diff];
-      if (rsec.offsetHeight > lsec.offsetHeight) break;
-    }
-    L.innerHTML = glHtml(gl.slice(0, 2 * best[0])); R.innerHTML = glHtml(gl.slice(2 * best[0]));
-    lsec.style.alignSelf = rsec.style.alignSelf = '';
-  }   // 화면 맨 위와 같은 옆집얼마 로고(아이콘·이름·문구) 그대로
+  { const br = document.querySelector('.topbar .brand'); if (br) out.querySelector('.lg').appendChild(br.cloneNode(true)); }   // 화면 맨 위와 같은 옆집얼마 로고(아이콘·이름·문구) 그대로
   try {
     await loadH2C();
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
