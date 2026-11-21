@@ -10,6 +10,7 @@ R-ONE 부동산통계정보시스템 Open API (인증키: 환경변수 REB_API_K
 import json
 import os
 import re
+import time
 from collections import defaultdict
 from datetime import datetime
 
@@ -22,7 +23,15 @@ NAT = ("전국", "수도권", "지방")
 
 
 def _get(op, **params):
-    r = requests.get(f"{BASE}/{op}", params=dict({"KEY": KEY, "Type": "json"}, **params), timeout=(10, 60))
+    r = None
+    for i in range(4):   # 한국부동산원 서버가 가끔 느려서 다시 시도
+        try:
+            r = requests.get(f"{BASE}/{op}", params=dict({"KEY": KEY, "Type": "json"}, **params), timeout=(15, 120))
+            break
+        except requests.RequestException:
+            if i == 3:
+                raise
+            time.sleep(5 * (i + 1))
     j = r.json()
     body = j.get(op.replace(".do", "")) or []
     head = next((b["head"] for b in body if "head" in b), [])
