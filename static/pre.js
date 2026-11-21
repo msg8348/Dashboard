@@ -37,8 +37,8 @@
     const R = T.filter(t => grp(t[3]) === cur), sup = TY.filter(t => grp(t[0]) === cur).reduce((s, t) => s + t[1], 0);
     if (!R.length) return;
     const last = R[0], max = R.reduce((a, b) => b[1] > a[1] ? b : a), rec = R.filter(t => t[0] >= d92), ap = avg(rec.map(t => t[1] - t[4]));
-    $('stats').innerHTML = `<div><small>최근 거래</small><b>${won(last[1])}</b><em>${dL(last[0])} · ${last[2]}층 · ${last[3]}</em></div>` +
-      `<div><small>최고가</small><b class="r">${won(max[1])}</b><em>${dL(max[0])} · ${max[2]}층 · ${max[3]}</em></div>` +
+    $('stats').innerHTML = `<div class="rt"><small>최근 거래</small><b>${won(last[1])}</b><em>${dL(last[0])} · ${last[2]}층 · ${last[3]}</em></div>` +
+      `<div class="rt"><small>최고가</small><b class="r">${won(max[1])}</b><em>${dL(max[0])} · ${max[2]}층 · ${max[3]}</em></div>` +
       `<div><small>분양 이후 거래</small><b class="k">${R.length.toLocaleString()}건</b><em>${cur}타입 분양 ${sup.toLocaleString()}세대 중 <b class="pct">${sup ? Math.round(R.length / sup * 100) : 0}%</b></em></div>` +
       `<div><small>평균 프리미엄</small><b class="p ${ap < 0 ? 'n' : ''}">${rec.length ? pm(r100(ap)) : '-'}</b><em>최근 3개월 · ${R.every(t => t[5]) ? '층별 분양가 대비' : '평균 분양가(추정) 대비 포함'}</em></div>`;
     $('miss').hidden = TY.filter(t => grp(t[0]) === cur).every(t => SCAN.has(t[0]));

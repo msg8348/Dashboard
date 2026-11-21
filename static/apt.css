@@ -23,7 +23,7 @@ h1{font-size:26px;font-weight:900;letter-spacing:-.5px;line-height:1.25}
 .types button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .stats div{background:#f6f8fa;border-radius:12px;padding:9px 12px;min-width:0;display:grid;grid-template-columns:auto 1fr;column-gap:6px;align-items:baseline}   /* 두 줄: 제목·값(오른쪽) / 설명 */
-.stats div>small{grid-column:1;white-space:nowrap}.stats div>b{grid-column:2;justify-self:end;text-align:right;white-space:nowrap}.stats div>em{grid-column:1/-1;margin-top:2px}
+.stats div>small{grid-column:1;white-space:nowrap}.stats div>b{grid-column:2;justify-self:end;text-align:right;white-space:nowrap}.stats div>em{grid-column:1/-1;margin-top:2px}.stats div.rt>em{text-align:right}   /* 가격 박스: 날짜·층은 오른쪽 */
 .stats small{display:block;font-size:11.5px;color:var(--muted);font-weight:700}
 .stats b{font-size:16px;font-weight:900;color:var(--blue)}.stats b.r{color:var(--red)}.stats b.k{color:var(--ink)}.stats b.t{color:var(--teal)}
 .stats em{display:block;font-style:normal;font-size:11px;color:var(--muted);margin-top:1px}
