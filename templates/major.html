@@ -39,7 +39,8 @@
   .rkc.cs{background:var(--blue)}.rkc.cj{background:var(--teal)}.rkc.cx{background:#6b7686}
   .rkc.lt.cs{background:#e3eafb;color:var(--blue)}.rkc.lt.cj{background:#dcefe9;color:var(--teal)}.rkc.lt.cx{background:#e8ebef;color:#6b7686}
   .nm{flex:1;min-width:0;display:flex;align-items:center;gap:4px;font-weight:700;white-space:nowrap;overflow:hidden}
-  .nm .nt{overflow:hidden;text-overflow:ellipsis}
+  .nm .nt{overflow:hidden;text-overflow:ellipsis;font-size:15.5px}
+  .row.up{background:#fdeeea;margin:0 -6px;padding-left:6px;padding-right:6px;border-radius:6px}   /* 신고가 줄: 연한 빨강 */
   .pyg{font-size:12px;color:var(--ink-2);font-weight:700;flex:none}
   .ptag{font-size:11px;font-weight:800;color:#d12f62;background:#fde8ee;border-radius:5px;padding:1px 5px;flex:none}
   .stk{font-size:11px;font-weight:800;color:#fff;background:var(--red);border-radius:5px;padding:1px 5px;flex:none}
@@ -94,7 +95,8 @@ function section(k, rows, wide) {
     + (rows.length ? rows.map((r, i) => {
       const [n, gu, ty, py, f, p, pre, up, h] = r;
       const inner = `<span class="rkc ${cc}${i >= 3 ? ' lt' : ''}">${i + 1}</span><span class="nm"><span class="nt">${esc(n)}</span>${ty === '기타' && py ? `<span class="pyg">${py}평</span>` : ''}${pre ? '<span class="ptag">분양권</span>' : ''}${up ? '<span class="stk">신고가</span>' : ''}</span><span class="fl">${/^-?\d+$/.test(f) ? f + '층' : esc(f || '-')}</span><span class="pr">${eok(p)}</span>`;
-      return h ? `<a class="row" href="${esc(S.s + '/' + h + '.html')}">${inner}</a>` : `<div class="row">${inner}</div>`;
+      const rc = up ? 'row up' : 'row';
+      return h ? `<a class="${rc}" href="${esc(S.s + '/' + h + '.html')}">${inner}</a>` : `<div class="${rc}">${inner}</div>`;
     }).join('') : '<div class="empty">해당 거래가 없어요</div>') + '</div></div>';
 }
 async function render() {
