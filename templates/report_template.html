@@ -68,9 +68,13 @@
     <div class="cd b go" role="button" onclick="goTrade('sale')"><div class="l">매매 <span>분양권 포함</span></div><div><div class="v">{{ "{:,}".format(sale.cnt) }}<span>건</span></div><div class="h">신고가 {{ sale.high_cnt }}건</div></div></div>
     <div class="cd t go" role="button" onclick="goTrade('rent')"><div class="l">전월세 <span>전세 {{ rent.jeonse }} · 월세 {{ rent.wolse }}</span></div><div><div class="v">{{ "{:,}".format(rent.cnt) }}<span>건</span></div><div class="h">신고가 {{ rent.high_cnt }}건</div></div></div>
   </div>
-  <div class="tf1" id="tf1"><button class="all on" data-k="all">전체</button><button class="sale" data-k="sale">매매</button><button class="rent" data-k="rent">전월세</button><button class="hi" id="tfhi">신고가만</button></div>
-  <div class="tf2"><div class="tft" id="tft"><button class="on" data-t="all">전체</button><button data-t="84타입">84</button><button data-t="59타입">59</button><button data-t="기타">기타</button></div>
+  <div class="tf1" id="tf1"><button class="all on" data-k="all">전체</button><button class="sale" data-k="sale">매매</button><button class="rent" data-k="rent">전월세</button><button class="hi" id="tfhi">신고가</button></div>
+  <div class="tf2"><div class="tft" id="tft"><button class="on" data-t="all">전체</button><button data-t="84타입">84</button><button data-t="59타입">59</button><button data-t="기타">기타</button></div><button class="pbtn" id="pbtn" type="button" onclick="pToggle()">금액 전체 ▾</button>
     <div class="tfv" id="tfv"><button class="on" data-v="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="4.5" width="14" height="6" rx="1.6"/><rect x="5" y="13.5" width="14" height="6" rx="1.6"/></svg>카드형</button><button data-v="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>리스트형</button></div></div>
+  <div class="pbox" id="pbox" hidden><div class="lab"><span>매매가 · 전월세 보증금</span><b id="plab">전체</b></div>
+    <div class="rng"><i class="bar"></i><i class="sel" id="psel"></i><input type="range" id="plo" min="0" max="30" step="1" value="0" aria-label="최소 금액(억)"><input type="range" id="phi" min="0" max="30" step="1" value="30" aria-label="최대 금액(억)"></div>
+    <div class="ticks"><span>0</span><span>5억</span><span>10억</span><span>15억</span><span>20억</span><span>25억</span><span>30억+</span></div>
+    <div class="pre" id="ppre"><button type="button" data-r="0,30">전체</button><button type="button" data-r="0,3">~3억</button><button type="button" data-r="3,6">3~6억</button><button type="button" data-r="6,9">6~9억</button><button type="button" data-r="9,15">9~15억</button><button type="button" data-r="15,30">15억~</button></div></div>
   <div class="tcnt" id="tcnt"></div>
   <div id="tout"></div>
 </div>
@@ -235,7 +239,7 @@ function renderOne(n, shot) {
           Object.assign(t.style, { display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: '12px', alignItems: 'start' });
           page.querySelectorAll('.tf1, .tf2').forEach(e => { e.style.display = 'none'; });   // 필터 버튼 대신 적용한 필터를 글로 표시
           const tc = page.querySelector('#tcnt');
-          if (tc) tc.textContent = [{ sale: '매매', rent: '전월세' }[TR.k], TR.hi ? '신고가만' : '', TR.t !== 'all' ? TR.t : '', tc.textContent].filter(Boolean).join(' · ');
+          if (tc) tc.textContent = [{ sale: '매매', rent: '전월세' }[TR.k], TR.hi ? '신고가' : '', TR.lo || TR.up < 30 ? pLab() : '', TR.t !== 'all' ? TR.t : '', tc.textContent].filter(Boolean).join(' · ');
           t.querySelectorAll('.tcard').forEach(c => { c.style.margin = '0'; });
           t.querySelectorAll('.tmore').forEach(m => { m.style.gridColumn = '1 / -1'; });
         }
@@ -395,10 +399,11 @@ function closeSheet() { document.getElementById('save-sheet').hidden = true; }
 
 // ---------------- 실거래 (카드형·리스트형) ----------------
 const TDATA = JSON.parse(document.getElementById('tdata').textContent || '[]');
-const TR = { k: 'all', hi: false, t: 'all', v: 'list' };   // 처음엔 리스트형
+const TR = { k: 'all', hi: false, t: 'all', v: 'list', lo: 0, up: 30 };   // lo·up: 금액 범위(억, up 30 = 30억 이상)   // 처음엔 리스트형
 {% include "_tcard_js.html" %}
 function tRows() {
-  return TDATA.filter(r => (TR.k === 'all' || (TR.k === 'sale' ? r.k !== 'rent' : r.k === 'rent')) && (!TR.hi || r.up) && (TR.t === 'all' || r.ty === TR.t));
+  return TDATA.filter(r => (TR.k === 'all' || (TR.k === 'sale' ? r.k !== 'rent' : r.k === 'rent')) && (!TR.hi || r.up) && (TR.t === 'all' || r.ty === TR.t)
+    && r.p >= TR.lo * 1e4 && (TR.up >= 30 || r.p <= TR.up * 1e4));   // 매매가 · 전월세는 보증금
 }
 function tList(title, cls, rs, sub, rc) {
   return `<div class="q ${cls} tq" data-part="tl-${cls}"><h3>${title} ${rs.length.toLocaleString()}건 <small>${sub}</small></h3>` + (rs.length ? rs.map((r, i) => {
@@ -410,7 +415,7 @@ function tList(title, cls, rs, sub, rc) {
 }
 function tRender() {
   const rs = tRows(), out = document.getElementById('tout');
-  document.getElementById('tcnt').textContent = `${rs.length.toLocaleString()}건 · ${TR.k === 'rent' ? '보증금순' : '금액순'}`;
+  document.getElementById('tcnt').textContent = `${rs.length.toLocaleString()}건 · ${TR.k === 'rent' ? '보증금순' : '금액순'}${TR.lo || TR.up < 30 ? ' · ' + pLab() : ''}`;
   if (TR.v === 'card') out.innerHTML = rs.length ? rs.map(r => tCard(r, TDATA.indexOf(r))).join('') : '<div class="empty">해당 거래가 없습니다</div>';
   else {
     const s = rs.filter(r => r.k !== 'rent'), t = rs.filter(r => r.k === 'rent').sort((a, b) => tConv(b) - tConv(a));
@@ -481,6 +486,25 @@ function setView(v) {   // 위쪽 [리스트형 | 카드형] 탭
 }
 document.getElementById('vtabs').onclick = e => { const b = e.target.closest('button'); if (b && b.dataset.v !== TR.v) setView(b.dataset.v); };
 tSet('#tf1 [data-k]', 'k', 'k'); tSet('#tft [data-t]', 't', 't'); tSet('#tfv [data-v]', 'v', 'v');
+// ── 금액 범위 (억 단위 슬라이드 · 0 ~ 30억 이상) ──
+const pLab = () => (TR.lo === 0 && TR.up >= 30) ? '전체' : TR.up >= 30 ? `${TR.lo}억 이상` : TR.lo === 0 ? `${TR.up}억 이하` : `${TR.lo}억~${TR.up}억`;
+function pPaint() {
+  const lo = document.getElementById('plo'), hi = document.getElementById('phi');
+  lo.value = TR.lo; hi.value = TR.up;
+  const sel = document.getElementById('psel'); sel.style.left = (TR.lo / 30 * 100) + '%'; sel.style.width = ((TR.up - TR.lo) / 30 * 100) + '%';
+  document.getElementById('plab').textContent = pLab();
+  const on = TR.lo > 0 || TR.up < 30, b = document.getElementById('pbtn');
+  b.textContent = (on ? pLab() : '금액 전체') + ' ▾'; b.classList.toggle('on', on);
+  document.querySelectorAll('#ppre button').forEach(x => x.classList.toggle('on', x.dataset.r === `${TR.lo},${TR.up}`));
+}
+function pToggle() { const bx = document.getElementById('pbox'); bx.hidden = !bx.hidden; }
+['plo', 'phi'].forEach(id => document.getElementById(id).addEventListener('input', e => {
+  let lo = +document.getElementById('plo').value, hi = +document.getElementById('phi').value;
+  if (lo > hi) { if (id === 'plo') lo = hi; else hi = lo; }
+  TR.lo = lo; TR.up = hi; pPaint(); tRender();
+}));
+document.getElementById('ppre').onclick = e => { const b = e.target.closest('button'); if (!b) return; [TR.lo, TR.up] = b.dataset.r.split(',').map(Number); pPaint(); tRender(); };
+pPaint();
 document.getElementById('tfhi').onclick = e => { TR.hi = !TR.hi; e.currentTarget.classList.toggle('on', TR.hi); tRender(); };
 function goTrade(k) {   // 건수 상자(매매/전월세) → 카드형으로, 그 종류만
   TR.k = k; TR.hi = false;
