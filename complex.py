@@ -202,6 +202,7 @@ RANK_MIN = 1   # 최근 1년 해당 타입 거래 1건 이상이면 순위에 �
 
 
 PRE_RANKS = {}   # 분양권 단지 {주택관리번호: 순위} — presale.build 에서 씀
+PAGE_HH = {}   # 단지 페이지 세대수 {"시도/단지번호": 세대수} — 거래활발도 단지별이 같은 세대수를 쓰도록
 
 
 def price_ranks(apts, now, pre_rows=None):
@@ -332,6 +333,7 @@ def build(sd, sdir, sdb, hist_dir, oldest_ym, now, env, site, l2slug, l2_of, cke
             if tl:
                 data["tl"] = tl
         l2n = l2_name[l2k] if l2k and len(sd["l2"]) > 1 else gu   # 인기단지(실시간 검색)용: 지역 2단계 이름
+        PAGE_HH[f"{sdir}/{k}"] = info.get("hh") or 0
         pm = {"p": f"{sdir}/{APT_DIR}/{k}.html", "n": a["n"], "s": sdir, "g": l2n, "d": a["u"], "y": year, "h": info.get("hh", 0), "k": 0}
         ctx = {"pm": pm, "ranks": ranks.get(k, []), "sido_short": sd["short"], "name": a["n"], "loc": loc, "loc2": " ".join(x for x in (gu, a["u"]) if x), "poi": pcache.get(k) if (pcache.get(k) or {}).get("x") else None, "fav": [a["n"], f"{sd['short']} {gu} {a['u']}".strip(), f"{sdir}/{APT_DIR}/{k}.html"], "jibun": a["j"], "road": info.get("road", ""), "info": info,
                "meta": " · ".join(x for x in ("" if (info.get("kind") or "아파트") == "아파트" else info["kind"], built, age) if x),

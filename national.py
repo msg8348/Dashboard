@@ -423,6 +423,8 @@ def act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses=(), top=10, min_hh=
     out = []
     for it in g.values():
         hh = sum(it.pop("hhs").values()) or it["hp"]
+        pk = it["h"].replace("/apt/", "/").removesuffix(".html") if it["h"] else ""
+        hh = CX.PAGE_HH.get(pk) or hh   # 단지 페이지가 있으면 페이지와 같은 세대수(K-apt 지번 기준)
         it.pop("hp")
         if hh < min_hh:
             continue
@@ -751,12 +753,14 @@ def main():
                         pcache[ck] = (None, None, extra)
                 return pcache[ck]
             k2 = l2_of.get(t.get("c"))
-            ck = (k2, ckey(t["n"]))
+            ck = (k2, ckey(t["n"]), t.get("u") or "")   # 같은 이름이라도 법정동이 다르면 다른 단지
             if ck not in ccache:
                 rows = kapt_l2.get(k2, [])
                 same = [r for r in rows if ckey(r["name"]) == ck[1]]
-                if not same:
-                    same = [r for r in rows if ck[1] and (ck[1] in ckey(r["name"]) or ckey(r["name"]) in ck[1])][:1]
+                if not same:   # 이름이 조금 다르면: 같은 법정동을 먼저, 이름 길이 차이가 가장 작은 단지 하나
+                    cand = [r for r in rows if ck[1] and (ck[1] in ckey(r["name"]) or ckey(r["name"]) in ck[1])]
+                    cand.sort(key=lambda r: (r.get("dongri") != t.get("u"), abs(len(ckey(r["name"])) - len(ck[1]))))
+                    same = cand[:1]
                 ccache[ck] = ((sum(r["households"] for r in same) or None),
                               (min((r.get("approval_date") or "9") for r in same) if same else None)) if same else (None, None)
                 if ccache[ck][1] == "9":
