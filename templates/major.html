@@ -17,7 +17,9 @@
   .topbar{position:sticky;top:0;z-index:15;background:rgba(238,241,244,.95);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:12px 0 8px;display:flex;align-items:center;justify-content:space-between}
   .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}.menu-btn svg{width:22px;height:22px}
   .head{display:flex;align-items:center;gap:8px;margin:8px 2px 12px}.head h1{font-size:23px;font-weight:900;letter-spacing:-.4px}
-  .sels{display:flex;gap:6px;margin-bottom:10px}
+  .sels{display:flex;gap:6px;margin-bottom:10px;align-items:center}
+  .det{margin-left:auto;display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 12px;border-radius:10px;background:#fff;border:1px solid #d6dbe2;color:var(--ink);font-size:13.5px;font-weight:800}
+  .det svg{width:15px;height:15px}
   .sels select{font:inherit;font-size:14px;font-weight:700;height:38px;border:1px solid #d6dbe2;border-radius:10px;padding:0 8px;background:#fff;color:var(--ink)}
   .sheet{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:16px}
   .ttl{display:flex;align-items:baseline;gap:8px;padding-bottom:10px;border-bottom:1px solid #e9edf2;margin-bottom:10px}
@@ -71,7 +73,7 @@
 <body><div class="wrap">
 <div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
 <div class="head"><h1>주요거래</h1></div>
-<div class="sels"><select id="sido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select></div>
+<div class="sels"><select id="sido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select><a class="det" id="det" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="4.5" width="14" height="6" rx="1.6"/><rect x="5" y="13.5" width="14" height="6" rx="1.6"/></svg>상세내역 ›</a></div>
 <div class="shot" id="shot"><div class="empty">불러오는 중…</div></div>
 <div class="acts"><button class="btn" id="shareBtn" type="button" disabled>공유하기</button><button class="btn" id="saveBtn" type="button" disabled>저장하기</button></div>
 <div class="tip">국토부 실거래 · 그날 새로 공개된 매매(분양권 포함) · 타입별 금액순 15건</div>
@@ -163,7 +165,9 @@ document.getElementById('shareBtn').onclick = async () => {   // 공유하기: �
   } catch (e) {}
 };
 document.getElementById('saveBtn').onclick = () => { if (FILE) download(); };   // 저장하기: 이미지 파일로 내려받기
-sel.onchange = () => { S.s = sel.value; S.g = ''; render(); };
+const detSet = () => { document.getElementById('det').href = `${sel.value}/index.html?v=card`; };   // 상세내역: 그 시도 실거래 카드형
+detSet();
+sel.onchange = () => { S.s = sel.value; S.g = ''; detSet(); render(); };
 render();
 </script>
 <script src="search.js?v={{ today }}"></script>
