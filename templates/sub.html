@@ -20,15 +20,13 @@
   .rg{display:flex;gap:6px;overflow-x:auto;margin:0 -14px 10px;padding:0 14px 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.rg::-webkit-scrollbar{display:none}
   .rg button{flex:none;font:inherit;font-size:14px;font-weight:700;padding:8px 14px;border-radius:12px;background:#fff;border:1px solid #dfe5ea;white-space:nowrap;cursor:pointer;color:var(--ink)}
   .rg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}.rg button small{font-size:11px;opacity:.7;margin-left:4px}
-  .wk{background:#fff;border:1px solid #e3e8ee;border-radius:18px;padding:12px 14px;margin-bottom:10px}
-  .wk .h{font-size:15px;font-weight:800;margin-bottom:8px}
-  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}.days div{border-radius:10px;padding:6px 0;font-size:12px;color:var(--ink-2);font-weight:700}.days b{display:block;font-size:15px;color:var(--ink)}
-  .days .on{background:var(--vio);color:#fff}.days .on b{color:#fff}.days i{display:block;width:5px;height:5px;border-radius:50%;background:var(--red);margin:3px auto 0;visibility:hidden}.days i.y{visibility:visible}.days .on i{background:#fff}
   .c{display:block;background:#fff;border:1px solid #e3e8ee;border-radius:18px;padding:13px 14px 12px;margin-bottom:8px;cursor:pointer}
   .c .t{display:flex;align-items:center;gap:6px}.c .t b{font-size:16.5px;font-weight:800;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.c .t .go{color:#c3c9d2;font-size:18px}
-  .st{flex:none;font-size:11.5px;font-weight:800;border-radius:6px;padding:2px 7px}.st.now{background:var(--red);color:#fff}.st.soon{background:#fdecea;color:var(--red)}.st.res{background:#eef0f3;color:var(--ink-2)}
+  .st{flex:none;font-size:11.5px;font-weight:800;border-radius:6px;padding:2px 7px}.st.r{background:#fdecea;color:var(--red)}.st.b{background:#e8efff;color:var(--blue)}.st.x{background:#e4e7ec;color:#17202c}
+  .pf{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}.pf button{font:inherit;font-size:14px;font-weight:800;padding:10px 0;border-radius:12px;background:#fff;border:1px solid #dfe5ea;color:var(--ink);cursor:pointer}
+  .pf button.on{background:var(--vio);border-color:var(--vio);color:#fff}.pf button small{font-size:12px;font-weight:700;opacity:.7;margin-left:4px}
   .c .m{font-size:12.5px;color:var(--muted);margin:3px 0 8px}
-  .sch{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px}.sch div{background:#f4f6f9;border-radius:8px;padding:6px 4px;text-align:center;font-size:11px;color:var(--muted);font-weight:700}.sch b{display:block;font-size:13px;color:var(--ink)}.sch .on{background:#f4f1fe}.sch .on b{color:var(--vio2)}
+  .sch{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px}.sch div{background:#f4f6f9;border-radius:8px;padding:6px 4px;text-align:center;font-size:11px;color:var(--muted);font-weight:700}.sch b{display:block;font-size:13px;color:var(--ink)}.sch .r{box-shadow:inset 0 0 0 1.5px var(--red)}.sch .b{box-shadow:inset 0 0 0 1.5px var(--blue)}
   .ty{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.ty div{border:1px solid #eef0f4;border-radius:10px;padding:6px 8px}.ty small{display:block;font-size:11px;color:var(--muted);font-weight:700}.ty b{font-size:14.5px;color:var(--blue)}
   .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.tags i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--ink-2);background:#f2f4f7;border-radius:6px;padding:2px 7px}
   .sub{font-size:14px;font-weight:800;margin:12px 4px 6px;color:var(--ink-2)}
@@ -55,16 +53,16 @@
 <div id="list">
   <h1>청약단지</h1>
   <div class="rg" id="rg">{% for s in sidos %}<button type="button" data-v="{{ s[1] }}">{{ s[0] }}<small>{{ s[2] }}</small></button>{% endfor %}</div>
-  <div class="wk"><div class="h" id="wkh"></div><div class="days" id="days"></div></div>
+  <div class="pf" id="pf"><button type="button" data-p="">전체</button><button type="button" data-p="w">이번 주 청약</button><button type="button" data-p="m">이번 달 청약</button></div>
   <div id="cards"></div>
-  <div class="note">청약홈 모집공고 기준 (최근 60일) · 평균 분양가 = 같은 평형 타입들의 최고 분양가 평균</div>
+  <div class="note">청약홈 모집공고 기준 (26년~) · 이번 주·이번 달 = 특별공급~발표 일정이 그 기간에 걸리는 단지 · 평균 분양가 = 같은 평형 타입들의 최고 분양가 평균</div>
 </div>
 <div id="det" hidden></div>
 </div>
 <script>
 const SIDOS = {{ sidos|tojson }};
 const C = {};
-let S = { s: '', h: '' };
+let S = { s: '', h: '', p: '' };
 try { Object.assign(S, JSON.parse(sessionStorage.getItem('ndp_sub')) || {}); } catch (e) {}
 const FV = (() => { try { return localStorage.getItem('ndp_region_fav_dir') || ''; } catch (e) { return ''; } })();   // 홈 지역 즐겨찾기 (없으면 서울)
 const pickSido = (has, cur, st) => { if (st.fv !== FV) { st.fv = FV; cur = ''; } return has(cur) ? cur : has(FV) ? FV : has('seoul') ? 'seoul' : ''; };
@@ -78,12 +76,20 @@ const wd = d => '일월화수목금토'[new Date(+d.slice(0, 4), +d.slice(4, 6) 
 const ymd = dt => `${dt.getFullYear()}${String(dt.getMonth() + 1).padStart(2, '0')}${String(dt.getDate()).padStart(2, '0')}`;
 const now = new Date(Date.now() + (9 * 60 + new Date().getTimezoneOffset()) * 6e4), TODAY = ymd(now);
 const steps = h => { const s = h.sch || {}; return [['특별공급', s.sp1], ['1순위', s.r1a || s.rc1], ['2순위', s.r2], ['발표', s.win]]; };
-function status(h) {
-  const s = h.sch || {}, st = s.sp1 || s.rc1 || s.r1a, en = s.r2 || s.rc2 || s.r1b || s.r1a;
-  if (st && en && TODAY >= st && TODAY <= en) return ['now', '접수 중'];
-  if (st && TODAY < st) { const n = Math.round((new Date(+st.slice(0, 4), +st.slice(4, 6) - 1, +st.slice(6)) - new Date(+TODAY.slice(0, 4), +TODAY.slice(4, 6) - 1, +TODAY.slice(6))) / 864e5); return ['soon', n ? 'D-' + n : 'D-day']; }
-  if (s.win && TODAY < s.win) return ['res', '발표 대기'];
-  return ['res', s.win ? '발표' : '공고'];
+const dn = (a, b) => Math.round((new Date(+b.slice(0, 4), +b.slice(4, 6) - 1, +b.slice(6)) - new Date(+a.slice(0, 4), +a.slice(4, 6) - 1, +a.slice(6))) / 864e5);
+function status(h) {   // [배지 색 r·b·x, 글자, 테두리 칠할 일정 박스 번호, 정렬용 날짜, 그룹]
+  const stp = steps(h), ds = stp.slice(0, 3).map(x => x[1]).filter(Boolean), win = stp[3][1];
+  const st = ds[0], en = ds[ds.length - 1];
+  if (st && TODAY < st) return ['r', 'D-' + dn(TODAY, st), stp.findIndex(x => x[1] === st), st, 0];
+  if (st && TODAY <= en) { const nx = ds.find(x => x >= TODAY); return ['r', 'D-Day', stp.findIndex(x => x[1] === nx), TODAY, 0]; }
+  if (win && TODAY <= win) return ['b', win === TODAY ? 'D-Day' : 'D-' + dn(TODAY, win), 3, win, 1];
+  return ['x', '종료', -1, win || en || h.pbl || '', 2];
+}
+const span = h => { const v = steps(h).map(x => x[1]).filter(Boolean); return v.length ? [v[0], v[v.length - 1]] : [h.pbl, h.pbl]; };
+function period(p) {   // 주 = 월~일, 달 = 1일~말일
+  if (p === 'w') { const m = new Date(now); m.setDate(now.getDate() - (now.getDay() + 6) % 7); const e = new Date(m); e.setDate(m.getDate() + 6); return [ymd(m), ymd(e)]; }
+  if (p === 'm') return [ymd(new Date(now.getFullYear(), now.getMonth(), 1)), ymd(new Date(now.getFullYear(), now.getMonth() + 1, 0))];
+  return null;
 }
 const tagsOf = h => [h.cr ? `1순위 평균 ${h.cr} : 1` : '', ...(h.reg && h.reg.length ? h.reg : ['비규제']), h.kind].filter(Boolean);
 async function data(s) { return C[s] = C[s] || await fetch(`sub/${s}.json?v={{ today }}`).then(r => r.json()); }
@@ -94,26 +100,23 @@ async function render() {
   { const on = document.querySelector('#rg button.on'); if (on && on.parentNode.scrollTo) on.parentNode.scrollTo({ left: on.offsetLeft - 16 }); }
   if (!S.s) { $('cards').innerHTML = '<div class="empty">최근 청약 단지가 없어요</div>'; return; }
   const d = await data(S.s);
-  // 이번 주
-  const mon = new Date(now); mon.setDate(now.getDate() - (now.getDay() + 6) % 7);
-  const days = [...Array(7)].map((_, i) => { const x = new Date(mon); x.setDate(mon.getDate() + i); return ymd(x); });
-  const busy = new Set(d.h.flatMap(h => Object.values(h.sch || {})));
-  $('wkh').textContent = `이번 주 청약 · ${now.getMonth() + 1}월 ${Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)}주`;
-  $('days').innerHTML = days.map(x => `<div class="${x === TODAY ? 'on' : ''}">${wd(x)}<b>${+x.slice(6)}</b><i class="${busy.has(x) ? 'y' : ''}"></i></div>`).join('');
-  const key = h => { const s = h.sch || {}; return s.sp1 || s.rc1 || s.r1a || h.pbl || ''; };
-  const up = d.h.filter(h => { const s = h.sch || {}; return (s.win || s.r2 || s.rc2 || '') >= TODAY; }).sort((a, b) => key(a).localeCompare(key(b)));
-  const done = d.h.filter(h => !up.includes(h)).sort((a, b) => key(b).localeCompare(key(a)));
-  const card = h => {
-    const [cls, lb] = status(h), stp = steps(h);
-    const on = stp.findIndex(x => x[1] === TODAY);
+  const pr = period(S.p);
+  const inP = (h, r) => { const [a, b] = span(h); return a && b >= r[0] && a <= r[1]; };
+  document.querySelectorAll('#pf button').forEach(b => {
+    const r = period(b.dataset.p), n = r ? d.h.filter(h => inP(h, r)).length : d.h.length;
+    b.classList.toggle('on', b.dataset.p === (S.p || '')); b.innerHTML = `${b.textContent.replace(/\d+$/, '').trim()}<small>${n}</small>`;
+  });
+  const list = d.h.filter(h => !pr || inP(h, pr)).map(h => [h, status(h)])
+    .sort((a, b) => a[1][4] - b[1][4] || (a[1][4] === 2 ? b[1][3].localeCompare(a[1][3]) : a[1][3].localeCompare(b[1][3])));
+  const card = ([h, [cls, lb, on]]) => {
+    const stp = steps(h);
     const ty = ['59', '74', '84'].filter(t => h.avg[t]).map(t => `<div><small>${t} 평균 분양가</small><b>${eok(h.avg[t])}</b></div>`).join('');
     return `<a class="c" href="#${h.id}"><div class="t"><span class="st ${cls}">${lb}</span><b>${esc(h.n)}</b><span class="go">›</span></div>
       <div class="m">${[h.g + ' ' + h.d, h.tot ? h.tot.toLocaleString() + '세대' : '', h.mv ? h.mv.slice(2, 4) + '년 ' + +h.mv.slice(4) + '월 입주' : '', h.b].filter(Boolean).map(esc).join(' · ')}</div>
-      <div class="sch">${stp.map(([l, v], i) => `<div class="${i === on ? 'on' : ''}">${l}<b>${md(v)}</b></div>`).join('')}</div>
+      <div class="sch">${stp.map(([l, v], i) => `<div class="${i === on ? cls : ''}">${l}<b>${md(v)}</b></div>`).join('')}</div>
       ${ty ? `<div class="ty">${ty}</div>` : ''}<div class="tags">${tagsOf(h).map(x => `<i>${esc(x)}</i>`).join('')}</div></a>`;
   };
-  $('cards').innerHTML = (up.length ? up.map(card).join('') : '<div class="empty">진행 중이거나 다가오는 청약이 없어요</div>')
-    + (done.length ? '<div class="sub">최근 발표</div>' + done.slice(0, 10).map(card).join('') : '');
+  $('cards').innerHTML = list.length ? list.map(card).join('') : `<div class="empty">${S.p === 'w' ? '이번 주' : '이번 달'} 청약 일정이 없어요</div>`;
 }
 let NT = '59';
 async function detail(id) {
@@ -131,7 +134,7 @@ async function detail(id) {
   const nearRows = (h.near[NT] || []).map((r, i) => `<tr><td>${i + 1}. ${r[4] ? `<a href="${r[4]}">${esc(r[0])}</a>` : esc(r[0])}<br><small>${[r[1], r[5] ? r[5].toLocaleString() + '세대' : '', r[6] || ''].filter(Boolean).map(esc).join(' · ')}</small></td><td><b>${eok(r[2])}</b><br><small>${r[3].slice(2, 4)}.${r[3].slice(4, 6)}.${r[3].slice(6)}</small></td></tr>`).join('');
   $('det').innerHTML = `<button class="bk" type="button" onclick="history.back()">‹ 청약단지</button>
     <div class="hero"><h1>${esc(h.n)}</h1><div class="m">${esc(h.addr)}${h.b ? ' · ' + esc(h.b) : ''}</div>
-      <div class="tags"><i class="st ${cls}" style="${cls === 'now' ? 'background:#e0472c;color:#fff' : ''}">${lb}</i>${tagsOf(h).map(x => `<i>${esc(x)}</i>`).join('')}</div></div>
+      <div class="tags"><i class="st ${cls}">${lb}</i>${tagsOf(h).map(x => `<i>${esc(x)}</i>`).join('')}</div></div>
     <div class="sec"><h2>청약 일정</h2><div class="tl">${tl}</div></div>
     <div class="sec"><h2>공급 개요</h2><div class="kv"><div>총 공급<b>${(h.tot || 0).toLocaleString()}세대</b></div>
       <div>특별공급<b>${h.ty.some(t => t[3] != null) ? h.ty.reduce((a, t) => a + (t[3] || 0), 0).toLocaleString() + '세대' : '-'}</b></div>
@@ -155,6 +158,7 @@ function route() {
   $('list').hidden = !!id; $('det').hidden = !id;
   if (id) { detail(id); window.scrollTo(0, 0); } else render();
 }
+$('pf').onclick = e => { const b = e.target.closest('button'); if (b) { S.p = b.dataset.p; render(); } };
 $('rg').onclick = e => { const b = e.target.closest('button'); if (b) { S.s = b.dataset.v; render(); } };
 window.addEventListener('hashchange', route);
 route();

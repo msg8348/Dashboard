@@ -30,7 +30,7 @@ def _ty(a):
 
 def build(site, store, sd, sdir, sale, houses, now, alias, apt_pages, notices, cinfo=None):
     today = now.strftime("%Y%m%d")
-    d60 = (now - timedelta(days=60)).strftime("%Y-%m-%d")
+    d60 = "2026-01-01"   # 26년 모집공고부터 전부 (종료된 청약도 '종료'로 표시)
     d1y = (now - timedelta(days=365)).strftime("%Y%m%d")
     mine = [h for h in houses if sido_of(h.get("addr")) == sd["key"] and (h.get("pbl") or "") >= d60]
     if not mine:
