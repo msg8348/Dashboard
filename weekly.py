@@ -84,24 +84,40 @@ def _summarize(series, year):
         return ts[-1], (now / prev - 1) * 100, ytd
     nat, sido, sub, flat = {}, {}, defaultdict(list), []
     last = ""
+    rows = []
     for full, d in series.items():
         t, w, y = chg(d)
-        if w is None:
+        parts = [x for x in re.split(r"\s*>\s*", full or "") if x and x != "None"]
+        if w is None or not parts:
             continue
         last = max(last, t)
-        parts = [x for x in re.split(r"\s*>\s*", full) if x]
+        rows.append((parts, round(w, 2), round(y, 2) if y is not None else None))
+    parents = {p for parts, _, _ in rows for p in parts[:-1]}   # 다른 지역의 상위(예: 수원시)면 잎이 아님
+    for parts, w, y in rows:
         name = parts[-1]
-        if name in NAT:
-            nat[name] = round(w, 2)
+        if name in NAT and len(parts) == 1:
+            nat[name] = w
             continue
-        sd = next((x for x in parts if x not in NAT), name)
-        if len(parts) <= 2 or name == sd:
-            sido[sd] = round(w, 2)
+        rest = [x for x in parts if x not in NAT]
+        if not rest:
+            continue
+        sd = rest[0]
+        if len(rest) == 1:
+            sido[sd] = w
+            continue
+        if re.search(r"(권|지역)$", name) or name in parents:   # 권역 묶음·상위 시는 빼고 맨 아래 시군구만
+            continue
+        par = rest[-2]
+        if sd == "서울":
+            lab = name
+        elif par.endswith("시") and par != sd and name.endswith("구"):
+            lab = f"{par[:-1]} {name}"            # 수원 영통구
+        elif sd in ("부산", "대구", "인천", "광주", "대전", "울산"):
+            lab = f"{sd} {name}"                   # 부산 강서구
         else:
-            if re.search(r"(권|지역)$", name):   # 권역 묶음은 빼고 시군구만
-                continue
-            sub[sd].append([name, round(w, 2)])
-            flat.append([f"{sd} {name}" if sd not in ("서울",) else name, round(w, 2), round(y, 2) if y is not None else None])
+            lab = name[:-1] if name.endswith("시") and len(name) > 2 else name   # 광명 · 익산 · 군은 그대로
+        sub[sd].append([lab.replace(f"{sd} ", ""), w])   # 지도 칸 이름 (경기: 수원 영통구 · 광명)
+        flat.append([lab, w, y])
     flat.sort(key=lambda x: -x[1])
     ytd = sorted([f for f in flat if f[2] is not None], key=lambda x: -x[2])
     return {"t": last, "nat": nat, "sido": sido, "sub": dict(sub),
