@@ -47,6 +47,9 @@ def dbpath(src, key):
     return os.path.join(STORE, src, f"{key}.json.gz")
 
 
+PENDING_DAYS = {"20261122"}   # 신규에서 빼고 다음 평일 수집 때 다시 넣을 공개일 (11.22 일요일 수동 배포분)
+
+
 def load_db(src, key):
     p = dbpath(src, key)
     if os.path.exists(p):
@@ -154,6 +157,9 @@ def update(src, dbs, sidos, today, max_calls=40000, minutes=70):
                     fetched_sets[key].add(k)
     for key, g in groups.items():
         dbs[key]["trades"] = [t for (c, ym), ts in g.items() if ym >= oldest for t in ts]
+        for t in dbs[key]["trades"]:
+            if t.get("seen") == "0":   # 보류해 둔 거래는 이번 수집일의 신규로
+                t["seen"] = today_s
     for db in dbs.values():
         db["fetched"] = sorted(x for x in set(db["fetched"]) if x.split("|")[1] >= oldest)
     total = sum(len(sd["codes"]) for sd in sidos) * len(months)
@@ -617,6 +623,13 @@ def main():
     print(f"🗺️ {len(sidos)}개 시도 · {sum(len(s['codes']) for s in sidos)}개 시군구")
 
     dbs = {src: {sd["key"]: load_db(src, sd["key"]) for sd in sidos} for src in D.SOURCES}
+    for src in dbs:   # 보류한 공개일(주말 수동 배포로 잡힌 거래) → seen "0": 다음 평일 수집 때 그날 신규로 다시 셈
+        for db in dbs[src].values():
+            for t in db["trades"]:
+                if t.get("seen") in PENDING_DAYS:
+                    t["seen"] = "0"
+            for d in PENDING_DAYS:
+                (db.get("highs3_by") or {}).pop(d, None)
     if args.probe and D.MOLIT_API_KEY and not args.no_fetch and not probe(dbs, sidos, now):
         open("SKIP_DEPLOY", "w").close()
         return
@@ -922,7 +935,7 @@ def main():
             hist_d = json.load(f)
     except (OSError, ValueError):
         hist_d = {}
-    hist_d = {d: (v if isinstance(v, dict) else {"_": v}) for d, v in hist_d.items()}
+    hist_d = {d: (v if isinstance(v, dict) else {"_": v}) for d, v in hist_d.items() if d not in PENDING_DAYS}
     today_d = now.strftime("%Y%m%d")
     if not args.only:   # 일부 시도만 만든 시험 빌드는 기록하지 않음
         from collections import Counter
