@@ -65,17 +65,20 @@
 <body><div class="wrap">
 <div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
 <div class="head"><h1>주간변동률</h1></div>
-<div class="tabs" id="tabs"><button type="button" data-t="all" class="on">전국 지도</button><button type="button" data-t="rank">많이 오른 곳·내린 곳</button></div>
-<div class="ctl"><div class="seg" id="kind"><button type="button" data-k="s" class="on">매매</button><button type="button" data-k="j">전세</button></div></div>
+<div class="tabs" id="tabs"><button type="button" data-t="all" class="on">전국 지도</button><button type="button" data-t="map">지역별</button><button type="button" data-t="rank">오른·내린 곳</button></div>
+<div class="ctl"><div class="seg" id="kind"><button type="button" data-k="s" class="on">매매</button><button type="button" data-k="j">전세</button></div><select id="sido" aria-label="시군구를 볼 시도"></select></div>
 <div class="card" id="card"><div class="empty">불러오는 중…</div></div>
 <div class="acts"><button class="btn" id="shareBtn" type="button">공유하기</button><button class="btn" id="saveBtn" type="button">저장하기</button></div>
 </div>
 <script>
-const W = { t: 'all', k: 's' };
+const W = { t: 'all', k: 's', s: '' };
 try { Object.assign(W, JSON.parse(sessionStorage.getItem('ndp_weekly')) || {}); } catch (e) {}
-if (W.t !== 'rank') W.t = 'all';   // 탭: 전국 지도 · 많이 오른 곳·내린 곳
+W.t = 'all';   // 들어오면 항상 전국 지도부터 (매매·전세·시도 선택은 기억)
+const FVN = (() => { try { const k = localStorage.getItem('ndp_region_fav'); return { '11': '서울', '26': '부산', '27': '대구', '28': '인천', '29': '광주', '30': '대전', '31': '울산', '36': '세종', '41': '경기', '43': '충북', '44': '충남', '46': '전남', '12': '광주', '47': '경북', '48': '경남', '50': '제주', '51': '강원', '52': '전북' }[k] || ''; } catch (e) { return ''; } })();
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const KN = { s: '매매', j: '전세' };
+const SIDO = [['인천', 0, 0], ['서울', 1, 0], ['경기', 2, 0], ['강원', 3, 0], ['충남', 0, 1], ['세종', 1, 1], ['충북', 2, 1], ['경북', 3, 1], ['전북', 0, 2], ['대전', 1, 2], ['대구', 2, 2], ['울산', 3, 2], ['전남광주', 0, 3, 2], ['경남', 2, 3], ['부산', 3, 3], ['제주', 0, 4]];
+const SEOUL = { 강북구: [3, 0], 도봉구: [4, 0], 노원구: [5, 0], 은평구: [1, 1], 종로구: [2, 1], 성북구: [3, 1], 동대문구: [4, 1], 중랑구: [5, 1], 서대문구: [1, 2], 중구: [2, 2], 성동구: [3, 2], 광진구: [4, 2], 강동구: [5, 2], 강서구: [0, 3], 마포구: [1, 3], 용산구: [2, 3], 서초구: [3, 3], 강남구: [4, 3], 송파구: [5, 3], 양천구: [0, 4], 영등포구: [1, 4], 동작구: [2, 4], 관악구: [3, 4], 구로구: [0, 5], 금천구: [1, 5] };
 function col(v) {   // 오르면 빨강, 내리면 파랑 (클수록 진하게)
   if (v == null) return ['#f2f4f7', '#a3abb7'];
   if (v > 0) { const a = Math.min(1, v / 0.45); return [`rgba(224,71,44,${(0.12 + 0.78 * a).toFixed(2)})`, a > 0.45 ? '#fff' : '#8a2412']; }
@@ -97,13 +100,17 @@ async function render() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === W.t));
   document.querySelectorAll('#kind button').forEach(b => b.classList.toggle('on', b.dataset.k === W.k));
   D = D || await fetch('weekly.json?v={{ today }}').then(r => r.ok ? r.json() : {}).catch(() => ({}));
-  const d = D[W.k], card = document.getElementById('card');
+  const d = D[W.k], card = document.getElementById('card'), sel = document.getElementById('sido');
+  sel.hidden = W.t !== 'map';
   document.getElementById('card').classList.toggle('wide', W.t === 'all');
   if (!d || !d.sido) {
     card.innerHTML = `<div class="empty">${KN[W.k]} 주간변동률 준비 중이에요<br><small>한국부동산원 주간 아파트 동향 · 매주 목요일 갱신</small></div>`;
     document.querySelectorAll('.acts .btn').forEach(b => { b.disabled = true; }); return;
   }
   document.querySelectorAll('.acts .btn').forEach(b => { b.disabled = false; });
+  const subs = Object.keys(d.sub || {});
+  if (!subs.includes(W.s)) W.s = subs.includes(FVN) ? FVN : subs.includes('서울') ? '서울' : subs[0] || '';
+  sel.innerHTML = subs.map(s => `<option${s === W.s ? ' selected' : ''}>${esc(s)}</option>`).join('');
   const brand = document.querySelector('.topbar .brand').outerHTML;
   const head = (t, s) => `<div class="ch"><div><div class="tt">${t}</div><div class="st">${s}</div></div>${brand}</div>`;
   const foot = '<div class="foot">nextdoorprice.com · 한국부동산원 주간 아파트 동향</div>';
@@ -113,6 +120,14 @@ async function render() {
       + `<div class="sum">${nat}</div>${allMap(d)}`
       + `<div class="legend">하락${[-.35, -.15, -.04, 0, .04, .15, .4].map(v => `<i style="background:${col(v)[0]}"></i>`).join('')}상승</div>` + foot + `</div></div>`;
     fitMap();
+  } else if (W.t === 'map') {
+    const nat = ['전국', '수도권', '지방'].map(n => { const v = d.nat[n], [bg, fg] = col(v); return `<div style="background:${bg};color:${fg}"><small>${n}</small><b>${sg(v)}%</b></div>`; }).join('');
+    const rows = d.sub[W.s] || [];
+    const isSeoul = W.s === '서울';
+    const right = `<div><div class="lbl">${esc(W.s)} ${rows.length}개 시군구</div><div class="grid g">${rows.map(([n, v]) => isSeoul && SEOUL[n] ? tile(n.length > 2 ? n.replace(/구$/, '') : n, v, SEOUL[n][0], SEOUL[n][1]) : tile(n, v)).join('')}</div></div>`;
+    card.innerHTML = head(`주간 아파트 ${KN[W.k]}가격 변동률`, `${tdate(d.t)} 기준 · 전주 대비 %`)
+      + `<div class="sum">${nat}</div><div class="maps"><div><div class="lbl">시도</div><div class="grid s">${SIDO.map(([n, c, r, sp]) => tile(n, d.sido[n], c, r, sp)).join('')}</div></div>${right}</div>`
+      + `<div class="legend">하락${[-.35, -.15, -.04, 0, .04, .15, .4].map(v => `<i style="background:${col(v)[0]}"></i>`).join('')}상승</div>` + foot;
   } else {
     const lst = (t, rows, c, suf, cls) => { const mx = Math.max(...rows.map(r => Math.abs(r[1])), 0.01);
       return `<div class="sec ${cls || ''}"><span class="chip" style="background:${c}">${t}</span>${rows.map(([n, v], i) => `<div class="r"><span class="k" style="${i < 3 ? `background:${c};color:#fff` : ''}">${i + 1}</span><b class="n">${esc(n)}</b><span class="bar"><i style="width:${(Math.abs(v) / mx * 100).toFixed(0)}%;background:${c}"></i></span><b class="v" style="color:${c}">${sg(v)}${suf || ''}</b></div>`).join('')}</div>`; };
@@ -160,6 +175,7 @@ function fitMap() {
 window.addEventListener('resize', fitMap);
 document.getElementById('tabs').onclick = e => { const b = e.target.closest('button'); if (b) { W.t = b.dataset.t; render(); } };
 document.getElementById('kind').onclick = e => { const b = e.target.closest('button'); if (b) { W.k = b.dataset.k; render(); } };
+document.getElementById('sido').onchange = e => { W.s = e.target.value; render(); };
 render();
 // ── 이미지 공유·저장 (카드 그대로, 가로 540px) ──
 const loadH2C = () => window.html2canvas ? Promise.resolve() : new Promise((ok, no) => {
@@ -173,7 +189,7 @@ async function makeImage() {
       const m = c.querySelector('#mapc'); if (m) { m.style.transform = 'none'; m.parentElement.style.height = 'auto'; }
       c.querySelectorAll('.maps').forEach(x => { x.style.gridTemplateColumns = '1fr 1.25fr'; }); c.querySelectorAll('.two').forEach(x => { x.style.gridTemplateColumns = 'minmax(0,1fr) minmax(0,1fr)'; }); } });
   const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-  return new File([blob], `주간변동률_${KN[W.k]}_${W.t === 'all' ? '전국지도' : '순위'}.png`, { type: 'image/png' });
+  return new File([blob], `주간변동률_${KN[W.k]}_${W.t === 'all' ? '전국지도' : W.t === 'map' ? W.s : '순위'}.png`, { type: 'image/png' });
 }
 async function act(kind) {
   const btns = [...document.querySelectorAll('.acts .btn')], lb = btns.map(b => b.textContent);
