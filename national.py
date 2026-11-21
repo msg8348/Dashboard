@@ -396,6 +396,41 @@ def pop_live_periods(today):
             ["tm", "이번달", f(m1), f(today)], ["lm", "지난달", f(pm_end.replace(day=1)), f(pm_end)]]
 
 
+def act_cx(sdir, sdb, cinfo, l2_of, l2_name, now, top=15, min_hh=300):
+    """거래활발도 '단지별': 시도 안 모든 아파트(300세대 이상) 회전율 Top 15 — 최근 3개월 순, 1년 함께, 강세·약세."""
+    today_s = now.strftime("%Y%m%d")
+    d1 = (now - timedelta(days=365)).strftime("%Y%m%d")
+    d3 = D.months_ago(now, 3).strftime("%Y%m%d")
+    g = {}
+    for t in sdb["sale"]["trades"]:
+        dt = str(t.get("dt", ""))
+        if not (d1 < dt <= today_s):
+            continue
+        s = t.get("s")
+        k = D.APT_ALIAS[s][0] if s in D.APT_ALIAS else s if s and s in D.APT_PAGES else None
+        l2 = l2_name.get(l2_of.get(t.get("c")), "")
+        key = k or f"{t['n']}|{l2}"
+        it = g.setdefault(key, {"name": D.APT_ALIAS.get(s, (0, t["n"]))[1], "district": l2, "c1": 0, "c3": 0, "hhs": {},
+                                "h": f"{sdir}/apt/{k}.html" if k else ""})
+        it["c1"] += 1
+        it["c3"] += dt > d3
+        hh, _ = cinfo(t)
+        if hh:
+            it["hhs"][t["n"]] = hh   # 통합 단지(예: 1·2·3단지)는 이름별 세대수 합
+    out = []
+    for it in g.values():
+        hh = sum(it.pop("hhs").values())
+        if hh < min_hh:
+            continue
+        it.update(households=hh, r1=it["c1"] / hh * 100, r3=it["c3"] / hh * 100)
+        out.append(D.add_trend(it))
+    out = sorted(out, key=lambda i: (-i["r3"], -i["r1"]))[:top]
+    m3 = max([i["r3"] for i in out] + [0.01]); m1 = max([i["r1"] for i in out] + [0.01])
+    for i in out:
+        i["w3"], i["w1"] = round(i["r3"] / m3 * 100, 1), round(i["r1"] / m1 * 100, 1)
+    return out
+
+
 def pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name, houses=()):
     """site/pop/{시도}.json — {"p": 많이 산 단지 기간 [[키, 이름, 시작, 끝]], "y": [선택 연도...], "pl": 실시간 검색 기간,
     "m": {단지키: [이름, 구·군, 동, 입주년, 세대수, 분양권]}, "r": {기간키: {"": [[단지키, 건수]...], 구·군: [...]}} (상위 10)}.
@@ -781,7 +816,8 @@ def main():
             f.write(tpl.render(ctx))
         # 홈 '거래활발도': 이 시도의 지표단지·구군 조각 + 전국 순위 재료
         nm_s = "전남광주" if sd["short"] == "광주전남" else sd["short"]
-        if ind["count"] or ind["gus"]:
+        ind["cx"] = act_cx(sdir, sdb, cinfo, l2_of, l2_name, now)   # 거래활발도 '단지별' Top 15
+        if ind["count"] or ind["gus"] or ind["cx"]:
             os.makedirs(os.path.join(SITE, "act"), exist_ok=True)
             with open(os.path.join(SITE, "act", f"{sdir}.html"), "w", encoding="utf-8") as f:
                 f.write(env.get_template("_act_frag.html").render(ind=ind, region=sd["short"], l2_word=l2_word))
