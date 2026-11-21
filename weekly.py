@@ -59,26 +59,46 @@ def _find_tables():
     return {k: v[0] for k, v in found.items()}
 
 
+def _rows_at(tid, wk):
+    """그 주(YYYYWW) 자료만 — 시점 조건으로 몇백 줄만 받음."""
+    rows, _ = _get("SttsApiTblData.do", STATBL_ID=tid, DTACYCLE_CD="WK", WRTTIME_IDTFR_ID=wk, pIndex=1, pSize=1000)
+    return [r for r in rows if str(r.get("WRTTIME_IDTFR_ID") or "") == wk]
+
+
 def _series(tid, year):
-    """{지역 전체이름: {시점: 지수}} — 올해와 작년 마지막 주만 (끝 쪽 페이지부터 읽음)."""
-    _, total = _get("SttsApiTblData.do", STATBL_ID=tid, DTACYCLE_CD="WK", pIndex=1, pSize=1)
-    pages = (total + 999) // 1000
+    """{지역 전체이름: {시점: 지수}} — 최신 주 · 그 전 주 · 작년 마지막 주 세 시점만 받음.
+    (전체 17만 줄을 쪽마다 받으면 한국부동산원 서버가 끊겨서, 시점을 지정해 필요한 주만)"""
+    from datetime import date, timedelta
     out = defaultdict(dict)
-    for p in range(pages, 0, -1):
-        rows, _ = _get("SttsApiTblData.do", STATBL_ID=tid, DTACYCLE_CD="WK", pIndex=p, pSize=1000)
-        old = False
+
+    def put(rows):
         for r in rows:
-            t = str(r.get("WRTTIME_IDTFR_ID") or "")
             try:
                 v = float(r.get("DTA_VAL"))
             except (TypeError, ValueError):
                 continue
-            name = str(r.get("CLS_FULLNM") or r.get("CLS_NM") or "")
-            out[name][t] = v
-            if t[:4] < str(year - 1):
-                old = True
-        if old:
+            out[str(r.get("CLS_FULLNM") or r.get("CLS_NM") or "")][str(r.get("WRTTIME_IDTFR_ID"))] = v
+    wk = lambda d: f"{d.isocalendar()[0]}{d.isocalendar()[1]:02d}"
+    d, latest = date.today(), None
+    for _ in range(4):   # 이번 주 자료가 아직 없으면 한 주씩 앞으로
+        rows = _rows_at(tid, wk(d))
+        if rows:
+            latest = d
+            put(rows)
             break
+        d -= timedelta(days=7)
+    if latest is None:
+        DIAG["series"] = "최근 4주 자료 없음 — 시점 조건이 안 먹는 듯"
+        return out
+    put(_rows_at(tid, wk(latest - timedelta(days=7))))
+    dec = date(year - 1, 12, 28)   # 작년 마지막 주 (12/28 은 항상 그해 마지막 ISO 주)
+    for _ in range(3):
+        rows = _rows_at(tid, wk(dec))
+        if rows:
+            put(rows)
+            break
+        dec -= timedelta(days=7)
+    DIAG["series"] = {"latest": wk(latest), "regions": len(out)}
     return out
 
 
