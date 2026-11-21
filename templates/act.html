@@ -118,7 +118,7 @@ function capInfo() {
   if (A.t === '1') return { el: document.querySelector('#p1 .asec'), title: '시도별', date };
   if (A.t === '2') return { el: document.querySelector('#p2 .asec'), title: '전국 시군구 Top 20', date };
   const sn = (sel.selectedOptions[0] || {}).textContent || '';
-  if (A.t === '5') return { el: document.getElementById('frag'), title: `${sn} 단지별 Top 10`, date };
+  if (A.t === '5') return { el: document.getElementById('frag'), title: `${sn} 단지별 거래활발도`, date };
   return { el: document.getElementById('frag'), title: `${sn} ${A.t === '3' ? '지표단지' : '구·군별'} ${A.w === 'sum' ? '요약' : '상세'}`, date };
 }
 async function makeImage() {
