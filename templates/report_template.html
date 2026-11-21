@@ -350,16 +350,16 @@ async function partFile(el, limit) {   // 영역 하나를 이미지 파일로 (
           if (c.classList.contains('tq')) {   // 실거래 리스트형: 주요거래와 같은 타이틀 — 큰 지역명 · 날짜 · 맨 오른쪽 로고
             head.className = 'cap-ttl';
             head.innerHTML = `<b>${CAPRG}</b><small>${DATE.slice(2,4)}.${DATE.slice(4,6)}.${DATE.slice(6)}</small><span class="lg"></span>`;
-            Object.assign(head.style, { display: 'flex', alignItems: 'center', gap: '10px', padding: '2px 2px 14px', borderBottom: '1px solid #e9edf2', marginBottom: '16px' });
+            Object.assign(head.style, { display: 'flex', alignItems: 'flex-end', gap: '10px', padding: '2px 2px 14px', borderBottom: '1px solid #e9edf2', marginBottom: '16px' });
             Object.assign(head.children[0].style, { fontSize: CAPRG.length > 3 ? '34px' : '40px', fontWeight: '900', letterSpacing: '-1px', lineHeight: '1', color: '#111827', whiteSpace: 'nowrap' });
-            Object.assign(head.children[1].style, { fontSize: '19px', fontWeight: '800', color: '#4a5566', alignSelf: 'flex-end', marginBottom: '2px' });
-            Object.assign(head.children[2].style, { marginLeft: 'auto', display: 'flex' });
+            Object.assign(head.children[1].style, { fontSize: '19px', fontWeight: '800', color: '#4a5566', alignSelf: 'flex-end', marginBottom: '0' });
+            Object.assign(head.children[2].style, { marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', marginBottom: '1px' });   // 지역명·날짜·로고 아랫줄 맞춤
             if (br) {   // 로고는 조금 작게
               const lg = br.cloneNode(true); lg.classList.add('cap-mini'); head.children[2].appendChild(lg);
               const ic = lg.querySelector('.brand-ic'), tb = lg.querySelector('.brand-tx b'), ts = lg.querySelector('.brand-tx small');
-              if (ic) Object.assign(ic.style, { width: '31px', height: '23px' });
-              if (tb) tb.style.fontSize = '15.5px';
-              if (ts) Object.assign(ts.style, { fontSize: '8px', marginTop: '2px' });
+              if (ic) Object.assign(ic.style, { width: '27px', height: '20px' });
+              if (tb) tb.style.fontSize = '13.5px';
+              if (ts) Object.assign(ts.style, { fontSize: '7px', marginTop: '1px' });
             }
           } else if (br) { const lg = br.cloneNode(true); lg.classList.add('cap-mini'); head.insertBefore(lg, head.firstChild); }
           c.insertBefore(head, c.firstChild);
@@ -374,8 +374,8 @@ async function partFile(el, limit) {   // 영역 하나를 이미지 파일로 (
             const rs = [...c.querySelectorAll(':scope > .r')];
             if (rs.length > limit) {
               rs.slice(limit).forEach(r => r.remove());
-              const more = doc.createElement('div'); more.className = 'more-n'; more.textContent = `그 외 ${(rs.length - limit).toLocaleString()}건`;
-              Object.assign(more.style, { textAlign: 'center', fontSize: '14px', fontWeight: '800', color: '#4a5566', padding: '12px 0 12px', borderTop: '1px solid #edf1f3' });
+              const more = doc.createElement('div'); more.className = 'more-n'; more.textContent = `외 ${(rs.length - limit).toLocaleString()}건`;
+              Object.assign(more.style, { textAlign: 'center', fontSize: '13px', fontWeight: '800', color: '#4a5566', padding: '12px 0 12px', borderTop: '1px solid #edf1f3' });
               rs[limit - 1].after(more);
             }
           }   // 공유 버튼('준비 중…')은 이미지에서 빼기
