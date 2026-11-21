@@ -136,7 +136,9 @@ async function makeImage() {
         c.querySelectorAll('.v-cx').forEach(x => { Object.assign(x.style, { border: '0', padding: '0', borderRadius: '0' }); });   // 단지별: 안쪽 테두리 없이 시도별과 같은 모양
         const hd = doc.createElement('div');
         hd.style.cssText = 'display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid #e9edf2';
-        hd.innerHTML = `<div><div style="font-size:21px;font-weight:900;color:#17202c;letter-spacing:-.4px;line-height:1.2">${title}</div><div style="font-size:13px;font-weight:700;color:#4a5566;margin-top:3px">거래활발도 · ${date} 기준</div></div>`;
+        hd.innerHTML = A.t === '5'   // 단지별: 한 줄 제목 + 오른쪽에 작은 날짜
+          ? `<div style="display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;white-space:nowrap"><span style="font-size:21px;font-weight:900;color:#17202c;letter-spacing:-.4px;line-height:1.2">${title}</span><span style="font-size:13px;font-weight:700;color:#4a5566">${date}</span></div>`
+          : `<div><div style="font-size:21px;font-weight:900;color:#17202c;letter-spacing:-.4px;line-height:1.2">${title}</div><div style="font-size:13px;font-weight:700;color:#4a5566;margin-top:3px">거래활발도 · ${date} 기준</div></div>`;
         const br = doc.querySelector('.topbar .brand');
         if (br) { const lg = br.cloneNode(true); lg.style.transform = 'scale(.72)'; lg.style.transformOrigin = 'right bottom'; lg.style.flex = 'none'; hd.appendChild(lg); }
         c.prepend(hd);
