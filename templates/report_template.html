@@ -444,7 +444,7 @@ function tRows() {
 function tList(title, cls, rs, sub, rc) {
   return `<div class="q ${cls} tq" data-part="tl-${cls}"><h3>${title} ${rs.length.toLocaleString()}건 <small>${sub}</small></h3>` + (rs.length ? rs.map((r, i) => {
     const [tc, tl] = tTy(r.ty);
-    const pr = r.m ? `<span class="pr w"><span class="wtag">월</span>${r.p ? tShort(r.p) : '0'}/${r.m.toLocaleString()}</span>` : `<span class="pr${r.k === 'rent' ? ' j' : ''}">${tShort(r.p)}</span>`;
+    const pr = r.m ? `<span class="pr w${r.up ? ' hi' : ''}"><span class="wtag">월</span>${r.p ? tShort(r.p) : '0'}/${r.m.toLocaleString()}</span>` : `<span class="pr${r.k === 'rent' ? ' j' : ''}${r.up ? ' hi' : ''}">${tShort(r.p)}</span>`;
     return `<div class="r"${r.h && APTB ? ` data-h="${r.h}"` : ''}><span class="rkc ${rc} ${i >= 3 ? 'lt' : ''}">${i + 1}</span><span class="nm"><span class="ty ${tc}">${tl}</span><span class="nt">${r.n}</span>${r.ty === '기타' && r.py ? `<span class="pyg">${r.py}평</span>` : ''}${r.k === 'pre' ? '<span class="ptag">분양권</span>' : ''}${r.up ? '<span class="stk">신고가</span>' : ''}</span><span class="sub">${tFl(r.f)}</span>${pr}</div>`;
   }).join('') : '<div class="empty">해당 거래가 없습니다</div>') +
     `<div class="pshare"><button type="button" onclick="sharePart(this.closest('.q'), this)">${SHARE_I}공유</button></div></div>`;
