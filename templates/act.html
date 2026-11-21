@@ -136,7 +136,11 @@ async function makeImage() {
         c.querySelectorAll('.alg, .ahd > b').forEach(x => { x.style.display = 'none'; });
         c.querySelectorAll('.anote').forEach(x => { x.style.fontSize = '10px'; x.style.lineHeight = '1.5'; });   // 이미지 아래 설명은 항상 작게
         { const f = c.querySelector('.ar'); if (f) { f.style.borderTop = '0'; f.style.paddingTop = '4px'; } }
-        if (A.t === '5') c.querySelectorAll('.ar').forEach((r, i) => { r.style.paddingBottom = '12px'; if (i) r.style.paddingTop = '12px'; });   // 단지별 이미지만 줄간격 넓게   // 제목 밑줄과 겹치는 1위 윗줄은 빼기
+        if (A.t === '5') c.querySelectorAll('.ar').forEach((r, i) => { r.style.paddingBottom = '12px'; if (i) r.style.paddingTop = '12px'; });   // 단지별 이미지만 줄간격 넓게
+        if (A.t === '5') {   // 단지별 이미지: 단지명·회전율 글자 크게
+          c.querySelectorAll('.cxn b').forEach(x => { x.style.fontSize = '15.5px'; });
+          c.querySelectorAll('.av').forEach(x => { x.style.fontSize = '14.5px'; x.style.width = '62px'; });
+        }   // 제목 밑줄과 겹치는 1위 윗줄은 빼기
         c.querySelectorAll('.v-cx').forEach(x => { Object.assign(x.style, { border: '0', padding: '0', borderRadius: '0' }); });   // 단지별: 안쪽 테두리 없이 시도별과 같은 모양
         const hd = doc.createElement('div');
         hd.style.cssText = 'display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid #e9edf2';
