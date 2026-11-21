@@ -396,8 +396,8 @@ def pop_live_periods(today):
             ["tm", "이번달", f(m1), f(today)], ["lm", "지난달", f(pm_end.replace(day=1)), f(pm_end)]]
 
 
-def act_cx(sdir, sdb, cinfo, l2_of, l2_name, now, top=15, min_hh=300):
-    """거래활발도 '단지별': 시도 안 모든 아파트(300세대 이상) 회전율 Top 15 — 최근 3개월 순, 1년 함께, 강세·약세."""
+def act_cx(sdir, sdb, cinfo, l2_of, l2_name, now, top=15, min_hh=500):
+    """거래활발도 '단지별': 시도 안 모든 아파트(500세대 이상, 분양권 제외) 회전율 Top 15 — 최근 3개월 순, 1년 함께, 강세·약세."""
     today_s = now.strftime("%Y%m%d")
     d1 = (now - timedelta(days=365)).strftime("%Y%m%d")
     d3 = D.months_ago(now, 3).strftime("%Y%m%d")
