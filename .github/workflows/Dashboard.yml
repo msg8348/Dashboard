@@ -108,6 +108,15 @@ jobs:
       - name: GitHub Pages 배포
         if: steps.gen.outputs.skip != 'true'
         id: deployment
+        continue-on-error: true   # 방금 올린 파일을 GitHub 가 못 찾는 일시 오류가 가끔 있어 한 번 더 시도
+        uses: actions/deploy-pages@v4
+
+      - name: GitHub Pages 배포 다시 시도 (첫 시도 실패 시)
+        if: steps.gen.outputs.skip != 'true' && steps.deployment.outcome == 'failure'
+        run: sleep 45
+
+      - name: GitHub Pages 배포 (재시도)
+        if: steps.gen.outputs.skip != 'true' && steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
 
       - name: 알림 서버에 새 데이터 알리기 (관심단지 실거래 알림)
