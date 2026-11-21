@@ -32,7 +32,8 @@ def build(site, store, sd, sdir, sale, houses, now, alias, apt_pages, notices, c
     today = now.strftime("%Y%m%d")
     d60 = "2026-01-01"   # 26년 모집공고부터 전부 (종료된 청약도 '종료'로 표시)
     d1y = (now - timedelta(days=365)).strftime("%Y%m%d")
-    mine = [h for h in houses if sido_of(h.get("addr")) == sd["key"] and (h.get("pbl") or "") >= d60]
+    mine = [h for h in houses if sido_of(h.get("addr")) == sd["key"] and (h.get("pbl") or "") >= d60
+            and any((h.get("sch") or {}).get(k) for k in ("sp1", "r1a", "rc1", "r2", "rc2", "win"))]   # 청약 일정(특별공급~발표)이 없는 단지는 뺌
     if not mine:
         return 0
     codes = sd["codes"]
