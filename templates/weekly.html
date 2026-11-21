@@ -73,6 +73,7 @@
 <script>
 const W = { t: 'all', k: 's', s: '' };
 try { Object.assign(W, JSON.parse(sessionStorage.getItem('ndp_weekly')) || {}); } catch (e) {}
+W.t = 'all';   // 들어오면 항상 전국 지도부터 (매매·전세·시도 선택은 기억)
 const FVN = (() => { try { const k = localStorage.getItem('ndp_region_fav'); return { '11': '서울', '26': '부산', '27': '대구', '28': '인천', '29': '광주', '30': '대전', '31': '울산', '36': '세종', '41': '경기', '43': '충북', '44': '충남', '46': '전남', '12': '광주', '47': '경북', '48': '경남', '50': '제주', '51': '강원', '52': '전북' }[k] || ''; } catch (e) { return ''; } })();
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const KN = { s: '매매', j: '전세' };
