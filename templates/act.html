@@ -14,8 +14,8 @@
   .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid #dfe5ea;background:#fff;display:grid;place-items:center;color:var(--ink);cursor:pointer}.menu-btn svg{width:22px;height:22px}
   .topbar{margin-top:0;padding-top:12px}
   .ahead{margin:8px 2px 12px}.ahead h1{font-size:23px;font-weight:900;letter-spacing:-.4px}
-  .atabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(82px,1fr));gap:2px;background:#e2e6ec;border-radius:14px;padding:4px;margin-bottom:12px}
-  .atabs button{font:inherit;font-size:14px;font-weight:800;color:var(--ink-2);border:0;background:none;border-radius:11px;padding:10px 0;cursor:pointer;white-space:nowrap}
+  .atabs{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:#e2e6ec;border-radius:14px;padding:4px;margin-bottom:12px}
+  .atabs button{font:inherit;font-size:12.5px;letter-spacing:-.5px;font-weight:800;color:var(--ink-2);border:0;background:none;border-radius:11px;padding:10px 0;cursor:pointer;white-space:nowrap}
   .atabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(20,30,60,.12)}
   .apanel[hidden]{display:none}
   .asec{background:#fff;border:1px solid #e3e8ee;border-radius:20px;padding:14px 16px 8px}
@@ -32,7 +32,9 @@
   .anote{font-size:11.5px;color:var(--muted);text-align:right;padding:6px 0 4px}
   .actl{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
   .actl select{font:inherit;font-size:14px;font-weight:700;height:38px;border:1px solid #d6dbe2;border-radius:10px;padding:0 10px;background:#fff;color:var(--ink)}
-  #frag .v-apt-sum,#frag .v-apt-det,#frag .v-gu-sum,#frag .v-gu-det{display:none}
+  #frag .v-apt-sum,#frag .v-apt-det,#frag .v-gu-sum,#frag .v-gu-det,#frag .v-cx{display:none}
+  #frag[data-v="cx"] .v-cx{display:block}#frag .v-cx .who b a{color:inherit;text-decoration:none}#frag .v-cx .cxnote{font-size:10.5px;line-height:1.5;white-space:normal;text-align:left}
+  #avw[hidden]{display:none}
   #frag[data-v="apt-sum"] .v-apt-sum,#frag[data-v="gu-sum"] .v-gu-sum{display:grid}
   #frag[data-v="apt-det"] .v-apt-det,#frag[data-v="gu-det"] .v-gu-det{display:block}
   #frag .ind-two{grid-template-columns:1fr}
@@ -45,7 +47,7 @@
 <body><div class="wrap">
 <div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
 <div class="ahead"><h1>거래활발도</h1></div>
-<div class="atabs" id="atabs"><button type="button" data-t="1" class="on">시도별 순위</button><button type="button" data-t="2">시군구 순위</button><button type="button" data-t="3">지표단지</button><button type="button" data-t="4">구·군별</button></div>
+<div class="atabs" id="atabs"><button type="button" data-t="1" class="on">시도별 순위</button><button type="button" data-t="2">시군구 순위</button><button type="button" data-t="5">단지별</button><button type="button" data-t="3">지표단지</button><button type="button" data-t="4">구·군별</button></div>
 {% macro trendb(a) %}{% if a.trend == 'strong' %}<span class="trend strong">강세 +{{ a.change }}%</span>{% elif a.trend == 'up' %}<span class="trend up">증가 +{{ a.change }}%</span>{% elif a.trend == 'weak' %}<span class="trend weak">약세 {{ a.change }}%</span>{% elif a.trend == 'down' %}<span class="trend down">감소 {{ a.change }}%</span>{% else %}<span class="trend none">보합</span>{% endif %}{% endmacro %}
 {% macro rows(list) %}{% for r in list %}{% if r.h %}<a class="ar" href="{{ r.h }}" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% else %}<div class="ar" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% endif %}<span class="ark {% if loop.index0 < 3 %}t3{% endif %}">{{ loop.index }}</span><span class="anm"><b>{{ r.n }}</b>{{ trendb(r) }}</span><span class="av m">{{ "%.2f"|format(r.r3) }}%<small>{{ "{:,}".format(r.c3) }}건</small></span><span class="av y">{{ "%.2f"|format(r.r1) }}%<small>{{ "{:,}".format(r.c1) }}건</small></span>{% if r.h %}</a>{% else %}</div>{% endif %}{% endfor %}{% endmacro %}
 <div class="apanel" id="p1"><div class="asec"><div class="ahd"><b>시도별</b><span class="alg"><button type="button" data-k="r3" class="on"><i style="background:#f0a35e"></i>3개월<em>▼</em></button><button type="button" data-k="r1"><i style="background:#1f9b85"></i>1년<em></em></button></span></div>
@@ -73,11 +75,12 @@ async function render() {
   document.querySelectorAll('#atabs button').forEach(b => b.classList.toggle('on', b.dataset.t === A.t));
   document.getElementById('p1').hidden = A.t !== '1';
   document.getElementById('p2').hidden = A.t !== '2';
-  document.getElementById('p34').hidden = !['3', '4'].includes(A.t);
+  document.getElementById('p34').hidden = !['3', '4', '5'].includes(A.t);
+  document.getElementById('avw').hidden = A.t === '5';
   document.querySelectorAll('#avw button').forEach(b => b.classList.toggle('on', b.dataset.w === A.w));
-  if (!['3', '4'].includes(A.t)) return;
+  if (!['3', '4', '5'].includes(A.t)) return;
   const fr = document.getElementById('frag');
-  fr.dataset.v = (A.t === '3' ? 'apt-' : 'gu-') + A.w;
+  fr.dataset.v = A.t === '5' ? 'cx' : (A.t === '3' ? 'apt-' : 'gu-') + A.w;
   if (fr.dataset.s !== A.s) {
     fr.innerHTML = '<div class="aempty">불러오는 중…</div>';
     try { fc[A.s] = fc[A.s] || await fetch(`act/${A.s}.html?v={{ today }}`).then(r => r.text()); fr.innerHTML = fc[A.s]; fr.dataset.s = A.s; }
@@ -111,6 +114,7 @@ function capInfo() {
   if (A.t === '1') return { el: document.querySelector('#p1 .asec'), title: '시도별', date };
   if (A.t === '2') return { el: document.querySelector('#p2 .asec'), title: '전국 시군구 Top 20', date };
   const sn = (sel.selectedOptions[0] || {}).textContent || '';
+  if (A.t === '5') return { el: document.getElementById('frag'), title: `${sn} 단지별 Top 15`, date };
   return { el: document.getElementById('frag'), title: `${sn} ${A.t === '3' ? '지표단지' : '구·군별'} ${A.w === 'sum' ? '요약' : '상세'}`, date };
 }
 async function makeImage() {
