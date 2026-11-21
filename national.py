@@ -396,8 +396,8 @@ def pop_live_periods(today):
             ["tm", "이번달", f(m1), f(today)], ["lm", "지난달", f(pm_end.replace(day=1)), f(pm_end)]]
 
 
-def act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses=(), top=15, min_hh=500):
-    """거래활발도 '단지별': 시도 안 500세대 이상 아파트 매매(분양권 제외) 회전율 Top 15 — 최근 3개월 순, 1년 함께, 강세·약세.
+def act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses=(), top=10, min_hh=500):
+    """거래활발도 '단지별': 시도 안 500세대 이상 아파트 매매(분양권 제외) 회전율 Top 10 — 최근 3개월 순, 1년 함께, 강세·약세.
     세대수: K-apt (통합 단지는 이름별 합)."""
     today_s = now.strftime("%Y%m%d")
     d1 = (now - timedelta(days=365)).strftime("%Y%m%d")
@@ -820,7 +820,7 @@ def main():
             f.write(tpl.render(ctx))
         # 홈 '거래활발도': 이 시도의 지표단지·구군 조각 + 전국 순위 재료
         nm_s = "전남광주" if sd["short"] == "광주전남" else sd["short"]
-        ind["cx"] = act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses)   # 거래활발도 '단지별' Top 15
+        ind["cx"] = act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses)   # 거래활발도 '단지별' Top 10
         if ind["count"] or ind["gus"] or ind["cx"]:
             os.makedirs(os.path.join(SITE, "act"), exist_ok=True)
             with open(os.path.join(SITE, "act", f"{sdir}.html"), "w", encoding="utf-8") as f:
@@ -974,7 +974,7 @@ def main():
         f.write(env.get_template("pop.html").render(today=now.strftime("%Y%m%d"),
                 sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home if h["key"] in APT_SIDOS]))
     act_nat["s"].sort(key=lambda r: -r["r3"])
-    act_nat["g"] = sorted(act_nat["g"], key=lambda r: -r["r3"])[:20]   # 전국 시군구 Top 20
+    act_nat["g"] = sorted(act_nat["g"], key=lambda r: -r["r3"])[:15]   # 전국 시군구 상위 15
     with open(os.path.join(SITE, "act.html"), "w", encoding="utf-8") as f:   # 거래활발도 (시도별 · 전국 시군구 · 지표단지 · 구군별)
         f.write(env.get_template("act.html").render(today=now.strftime("%Y%m%d"), nat=act_nat, sidos=act_sidos,
                 date_label=now.strftime("%y.%m.%d")))

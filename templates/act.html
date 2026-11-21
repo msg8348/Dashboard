@@ -33,7 +33,11 @@
   .actl{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
   .actl select{font:inherit;font-size:14px;font-weight:700;height:38px;border:1px solid #d6dbe2;border-radius:10px;padding:0 10px;background:#fff;color:var(--ink)}
   #frag .v-apt-sum,#frag .v-apt-det,#frag .v-gu-sum,#frag .v-gu-det,#frag .v-cx{display:none}
-  #frag[data-v="cx"] .v-cx{display:block}#frag .v-cx .who b a{color:inherit;text-decoration:none}#frag .v-cx .cxnote{font-size:10.5px;line-height:1.5;white-space:normal;text-align:left}
+  #frag[data-v="cx"] .v-cx{display:block}
+  .cxn{min-width:0;display:flex;flex-direction:column}.cxn b{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cxn small{font-size:11.5px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .alg>span{display:inline-flex;align-items:center}
+  .anote.cxnote{font-size:10.5px;text-align:left}
+  .v-cx .cxn b{font-size:13.5px}.v-cx .cxn small{font-size:10.5px}.v-cx .av{font-size:12.5px;width:52px}.v-cx .av small{font-size:10px}.v-cx .anm .trend{font-size:10px}   /* 단지별: 조금 작은 글자 */
   #avw[hidden]{display:none}
   #frag[data-v="apt-sum"] .v-apt-sum,#frag[data-v="gu-sum"] .v-gu-sum{display:grid}
   #frag[data-v="apt-det"] .v-apt-det,#frag[data-v="gu-det"] .v-gu-det{display:block}
@@ -52,7 +56,7 @@
 {% macro rows(list) %}{% for r in list %}{% if r.h %}<a class="ar" href="{{ r.h }}" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% else %}<div class="ar" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% endif %}<span class="ark {% if loop.index0 < 3 %}t3{% endif %}">{{ loop.index }}</span><span class="anm"><b>{{ r.n }}</b>{{ trendb(r) }}</span><span class="av m">{{ "%.2f"|format(r.r3) }}%<small>{{ "{:,}".format(r.c3) }}건</small></span><span class="av y">{{ "%.2f"|format(r.r1) }}%<small>{{ "{:,}".format(r.c1) }}건</small></span>{% if r.h %}</a>{% else %}</div>{% endif %}{% endfor %}{% endmacro %}
 <div class="apanel" id="p1"><div class="asec"><div class="ahd"><b>시도별</b><span class="alg"><button type="button" data-k="r3" class="on"><i style="background:#f0a35e"></i>3개월<em>▼</em></button><button type="button" data-k="r1"><i style="background:#1f9b85"></i>1년<em></em></button></span></div>
   {{ rows(nat.s) }}<div class="anote">아파트 매매 · 회전율 = 거래 건수 ÷ 세대수 · <span class="sortlbl">최근 3개월 높은 순</span> ({{ date_label }} 기준)</div></div></div>
-<div class="apanel" id="p2" hidden><div class="asec"><div class="ahd"><b>전국 시군구 Top 20</b><span class="alg"><button type="button" data-k="r3" class="on"><i style="background:#f0a35e"></i>3개월<em>▼</em></button><button type="button" data-k="r1"><i style="background:#1f9b85"></i>1년<em></em></button></span></div>
+<div class="apanel" id="p2" hidden><div class="asec"><div class="ahd"><b>전국 시군구</b><span class="alg"><button type="button" data-k="r3" class="on"><i style="background:#f0a35e"></i>3개월<em>▼</em></button><button type="button" data-k="r1"><i style="background:#1f9b85"></i>1년<em></em></button></span></div>
   {{ rows(nat.g) }}<div class="anote"><span class="sortlbl">최근 3개월 높은 순</span> ({{ date_label }} 기준)</div><div class="anote crit">기준: 아파트 2만 세대 이상 시군구 · 아파트 매매 · 회전율 = 거래 건수 ÷ 아파트 세대수(K-apt)</div></div></div>
 <div class="apanel" id="p34" hidden>
   <div class="actl"><select id="asido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select>
@@ -111,10 +115,10 @@ const loadH2C = () => window.html2canvas ? Promise.resolve() : new Promise((ok, 
 function capInfo() {
   const tab = (document.querySelector('#atabs button.on') || {}).textContent || '';
   const date = '{{ date_label }}';
-  if (A.t === '1') return { el: document.querySelector('#p1 .asec'), title: '시도별', date };
-  if (A.t === '2') return { el: document.querySelector('#p2 .asec'), title: '전국 시군구 Top 20', date };
+  if (A.t === '1') return { el: document.querySelector('#p1 .asec'), title: '시도별 거래활발도', date };
+  if (A.t === '2') return { el: document.querySelector('#p2 .asec'), title: '전국 시군구 거래활발도', date };
   const sn = (sel.selectedOptions[0] || {}).textContent || '';
-  if (A.t === '5') return { el: document.getElementById('frag'), title: `${sn} 단지별 Top 15`, date };
+  if (A.t === '5') return { el: document.getElementById('frag'), title: `${sn} 단지별 거래활발도`, date };
   return { el: document.getElementById('frag'), title: `${sn} ${A.t === '3' ? '지표단지' : '구·군별'} ${A.w === 'sum' ? '요약' : '상세'}`, date };
 }
 async function makeImage() {
@@ -128,9 +132,23 @@ async function makeImage() {
         const c = doc.querySelector('[data-cap="1"]');
         Object.assign(c.style, { width: '500px', padding: '16px 18px 10px', background: '#fff', border: '0', borderRadius: '0', boxShadow: 'none' });
         c.querySelectorAll('.alg, .ahd > b').forEach(x => { x.style.display = 'none'; });
+        c.querySelectorAll('.anote').forEach(x => { x.style.fontSize = '10px'; x.style.lineHeight = '1.5'; });   // 이미지 아래 설명은 항상 작게
+        { const f = c.querySelector('.ar'); if (f) { f.style.borderTop = '0'; f.style.paddingTop = '2px'; } }   // 제목 밑줄과 겹치는 1위 윗줄은 빼기
+        c.querySelectorAll('.v-cx').forEach(x => { Object.assign(x.style, { border: '0', padding: '0', borderRadius: '0' }); });   // 단지별: 안쪽 테두리 없이 시도별과 같은 모양
         const hd = doc.createElement('div');
         hd.style.cssText = 'display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid #e9edf2';
-        hd.innerHTML = `<div><div style="font-size:21px;font-weight:900;color:#17202c;letter-spacing:-.4px;line-height:1.2">${title}</div><div style="font-size:13px;font-weight:700;color:#4a5566;margin-top:3px">거래활발도 · ${date} 기준</div></div>`;
+        const one = ['1', '2', '5'].includes(A.t);   // 목록형(시도별·시군구·단지별): 한 줄 제목 + 작은 날짜 · 범례 · 아래 정렬 문구 없이
+        if (one) {
+          c.querySelectorAll('.anote').forEach(x => { if (x.querySelector('.sortlbl')) { if (A.t === '1') x.textContent = '아파트 매매 · 회전율 = 거래 건수 ÷ 세대수'; else x.remove(); } });
+          c.querySelectorAll('.anote').forEach(x => { x.style.textAlign = 'left'; });
+          const lgd = doc.createElement('div'); const av = c.querySelector('.ar .av'); const w = av ? doc.defaultView.getComputedStyle(av).width : '56px';
+          lgd.style.cssText = 'display:flex;justify-content:flex-end;gap:6px;font-size:11.5px;font-weight:700;color:#4a5566;padding:0;margin-bottom:-2px';
+          lgd.innerHTML = [['#f0a35e', '3개월'], ['#1f9b85', '1년']].map(([cl, t]) => `<span style="width:${w};text-align:right;white-space:nowrap"><i style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${cl};margin-right:4px;vertical-align:0"></i>${t}</span>`).join('');
+          c.prepend(lgd);
+        }
+        hd.innerHTML = one
+          ? `<div style="display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;white-space:nowrap"><span style="font-size:21px;font-weight:900;color:#17202c;letter-spacing:-.4px;line-height:1.2">${title}</span><span style="font-size:13px;font-weight:700;color:#4a5566">${date}</span></div>`
+          : `<div><div style="font-size:21px;font-weight:900;color:#17202c;letter-spacing:-.4px;line-height:1.2">${title}</div><div style="font-size:13px;font-weight:700;color:#4a5566;margin-top:3px">거래활발도 · ${date} 기준</div></div>`;
         const br = doc.querySelector('.topbar .brand');
         if (br) { const lg = br.cloneNode(true); lg.style.transform = 'scale(.72)'; lg.style.transformOrigin = 'right bottom'; lg.style.flex = 'none'; hd.appendChild(lg); }
         c.prepend(hd);
