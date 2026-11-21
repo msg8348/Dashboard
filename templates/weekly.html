@@ -49,19 +49,29 @@
   .empty{text-align:center;color:var(--muted);font-size:14px;line-height:1.6;padding:40px 0}
   .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
   .btn{background:#fff;color:#111;border:1.5px solid #cfd6de;border-radius:14px;padding:14px;font:inherit;font-size:15px;font-weight:800;cursor:pointer}.btn:disabled{opacity:.5}
+  /* 전국 지도: 860px 판을 화면 폭에 맞춰 줄여 보여줌 (저장은 원래 크기) */
+  .mwrap{position:relative;overflow:hidden}
+  .mapc{width:860px;transform-origin:0 0}
+  .mapc .ch .tt{font-size:26px}.mapc .ch .st{font-size:13.5px}
+  .mapc .sum b{font-size:22px}
+  .mg{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:52px;gap:4px}
+  .mg .rc{background:#eef1f6;border-radius:12px;margin:-4px;z-index:0}
+  .mg .t{position:relative;z-index:1;border-radius:7px;text-align:center;display:flex;flex-direction:column;justify-content:center;min-width:0}
+  .mg .t b{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;letter-spacing:-.5px}.mg .t span{font-size:14px;font-weight:900;letter-spacing:-.4px}
+  .mg .t.h b{font-size:15px;font-weight:900}.mg .t.h span{font-size:15px}
   @media(max-width:520px){.maps{grid-template-columns:1fr}.two{grid-template-columns:minmax(0,1fr)}.ch .tt{font-size:18px}.ch .brand-tx small{display:none}.ch .brand-ic{width:32px;height:24px}.ch .brand-tx b{font-size:16px}}
 </style>
 </head>
 <body><div class="wrap">
 <div class="topbar">{{ brand('index.html') }}<button class="menu-btn" type="button" aria-label="단지 검색" onclick="openSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div>
 <div class="head"><h1>주간변동률</h1></div>
-<div class="tabs" id="tabs"><button type="button" data-t="map" class="on">지역별</button><button type="button" data-t="rank">많이 오른 곳·내린 곳</button></div>
+<div class="tabs" id="tabs"><button type="button" data-t="all" class="on">전국 지도</button><button type="button" data-t="map">지역별</button><button type="button" data-t="rank">오른·내린 곳</button></div>
 <div class="ctl"><div class="seg" id="kind"><button type="button" data-k="s" class="on">매매</button><button type="button" data-k="j">전세</button></div><select id="sido" aria-label="시군구를 볼 시도"></select></div>
 <div class="card" id="card"><div class="empty">불러오는 중…</div></div>
 <div class="acts"><button class="btn" id="shareBtn" type="button">공유하기</button><button class="btn" id="saveBtn" type="button">저장하기</button></div>
 </div>
 <script>
-const W = { t: 'map', k: 's', s: '' };
+const W = { t: 'all', k: 's', s: '' };
 try { Object.assign(W, JSON.parse(sessionStorage.getItem('ndp_weekly')) || {}); } catch (e) {}
 const FVN = (() => { try { const k = localStorage.getItem('ndp_region_fav'); return { '11': '서울', '26': '부산', '27': '대구', '28': '인천', '29': '광주', '30': '대전', '31': '울산', '36': '세종', '41': '경기', '43': '충북', '44': '충남', '46': '전남', '12': '광주', '47': '경북', '48': '경남', '50': '제주', '51': '강원', '52': '전북' }[k] || ''; } catch (e) { return ''; } })();
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -91,6 +101,7 @@ async function render() {
   D = D || await fetch('weekly.json?v={{ today }}').then(r => r.ok ? r.json() : {}).catch(() => ({}));
   const d = D[W.k], card = document.getElementById('card'), sel = document.getElementById('sido');
   sel.hidden = W.t !== 'map';
+  document.getElementById('card').classList.toggle('wide', W.t === 'all');
   if (!d || !d.sido) {
     card.innerHTML = `<div class="empty">${KN[W.k]} 주간변동률 준비 중이에요<br><small>한국부동산원 주간 아파트 동향 · 매주 목요일 갱신</small></div>`;
     document.querySelectorAll('.acts .btn').forEach(b => { b.disabled = true; }); return;
@@ -102,7 +113,13 @@ async function render() {
   const brand = document.querySelector('.topbar .brand').outerHTML;
   const head = (t, s) => `<div class="ch"><div><div class="tt">${t}</div><div class="st">${s}</div></div>${brand}</div>`;
   const foot = '<div class="foot">nextdoorprice.com · 한국부동산원 주간 아파트 동향</div>';
-  if (W.t === 'map') {
+  if (W.t === 'all') {
+    const nat = ['전국', '수도권', '지방'].map(n => { const v = d.nat[n], [bg, fg] = col(v); return `<div style="background:${bg};color:${fg}"><small>${n}</small><b>${sg(v)}%</b></div>`; }).join('');
+    card.innerHTML = `<div class="mwrap"><div class="mapc" id="mapc">` + head(`주간 아파트 ${KN[W.k]}가격 변동률`, `${tdate(d.t)} 기준 · 전주 대비 % · 한국부동산원`)
+      + `<div class="sum">${nat}</div>${allMap(d)}`
+      + `<div class="legend">하락${[-.35, -.15, -.04, 0, .04, .15, .4].map(v => `<i style="background:${col(v)[0]}"></i>`).join('')}상승</div>` + foot + `</div></div>`;
+    fitMap();
+  } else if (W.t === 'map') {
     const nat = ['전국', '수도권', '지방'].map(n => { const v = d.nat[n], [bg, fg] = col(v); return `<div style="background:${bg};color:${fg}"><small>${n}</small><b>${sg(v)}%</b></div>`; }).join('');
     const rows = d.sub[W.s] || [];
     const isSeoul = W.s === '서울';
@@ -118,6 +135,43 @@ async function render() {
       + `<div style="margin-top:8px">${lst('연초 대비 누적 상승 Top 5', d.ytd || [], '#c2410c', '%', 'ytd')}</div>` + foot;
   }
 }
+// ── 전국 지도 (지도 모양 배치: 12칸 × 행, 시도마다 연한 바탕 · 첫 칸은 시도) ──
+const SE_POS = [['은평구', '서대문구', '종로구', '성북구', '강북구'], ['마포구', '중구', '동대문구', '도봉구', '노원구'], ['강서구', '용산구', '성동구', '중랑구', '광진구'], ['양천구', '영등포구', '동작구', null, '강동구'], ['구로구', '금천구', '관악구', '서초구', '강남구']];
+const GG = { west: ['파주', '김포', '고양 일산서구', '고양 일산동구', '고양 덕양구', '부천 오정구', '부천 원미구', '부천 소사구', '광명', '시흥', '안산 단원구', '안산 상록구', '군포', '의왕', '과천', '안양 만안구'],
+  north: ['동두천', '양주', '의정부', '포천'], east: ['남양주', '구리', '하남', '성남 수정구', '성남 중원구', '성남 분당구', '광주', '용인 수지구', '이천', '용인 기흥구', '용인 처인구', '여주'],
+  south: ['안양 동안구', '수원 장안구', '수원 팔달구', '수원 권선구', '수원 영통구', '화성 효행구', '화성 병점구', '화성 동탄구', '화성 만세구', '오산', '평택', '안성'] };
+const BLOCKS = [['충남', 0, 9, 4, 3], ['세종', 4, 9, 1, 1], ['대전', 4, 10, 2, 3], ['충북', 6, 9, 3, 3], ['강원', 9, 9, 3, 3], ['전북', 0, 12, 3, 3], ['경북', 7, 12, 5, 3], ['대구', 5, 15, 3, 3], ['울산', 9, 15, 3, 2],
+  ['전남광주', 0, 15, 4, 3], ['경남', 4, 18, 5, 3], ['부산', 9, 17, 3, 6], ['제주', 0, 20, 3, 1]];
+const shortN = a => { a = String(a).split(' ').pop(); a = a.length > 2 ? a.replace(/(구|군)$/, '') : a; return { 마산합포: '합포', 마산회원: '회원' }[a] || a; };
+function allMap(d) {
+  const sub = {}; Object.entries(d.sub || {}).forEach(([k, v]) => { sub[k] = {}; v.forEach(([n, x]) => { sub[k][n] = x; sub[k][shortN(n)] = sub[k][shortN(n)] ?? x; }); });
+  const rects = [], tiles = [];
+  const T = (sd, name, c, r, head) => tiles.push([head ? sd : shortN(name), head ? d.sido[sd] : (sub[sd] || {})[name] ?? (sub[sd] || {})[shortN(name)], c, r, head]);
+  const block = (sd, c0, r0, w, h, order) => {
+    const names = order || (d.sub[sd] || []).map(x => x[0]);
+    rects.push([c0, r0, w, h]);
+    const cells = Array.from({ length: w * h }, (_, i) => [c0 + i % w, r0 + Math.floor(i / w)]);
+    T(sd, sd, ...cells[0], true);
+    names.slice(0, cells.length - 1).forEach((n, i) => T(sd, n, ...cells[i + 1]));
+  };
+  rects.push([4, 1, 5, 6]);
+  SE_POS.forEach((row, ri) => row.forEach((n, ci) => { if (n) T('서울', n, 4 + ci, 1 + ri); }));
+  T('서울', '서울', 7, 4, true); T('서울', '송파구', 8, 6);
+  rects.push([2, 0, 2, 8]); GG.west.forEach((n, i) => T('경기', n, 2 + i % 2, Math.floor(i / 2)));
+  rects.push([4, 0, 5, 1]); T('경기', '경기', 4, 0, true); GG.north.forEach((n, i) => T('경기', n, 5 + i, 0));
+  rects.push([9, 1, 3, 6]); GG.east.forEach((n, i) => T('경기', n, 9 + i % 3, 1 + Math.floor(i / 3)));
+  rects.push([4, 7, 8, 2]); GG.south.forEach((n, i) => T('경기', n, 4 + (i < 6 ? i : i - 6), 7 + (i >= 6 ? 1 : 0)));
+  block('인천', 0, 2, 2, 5, ['검단구', '계양구', '서해구', '부평구', '영종구', '미추홀구', '남동구', '제물포구', '연수구']);
+  BLOCKS.forEach(b => block(...b));
+  return `<div class="mg">` + rects.map(([c, r, w, h]) => `<i class="rc" style="grid-column:${c + 1}/span ${w};grid-row:${r + 1}/span ${h}"></i>`).join('')
+    + tiles.map(([n, v, c, r, hd]) => { const [bg, fg] = hd ? ['#2b3a67', '#fff'] : col(v); return `<div class="t${hd ? ' h' : ''}" style="grid-column:${c + 1};grid-row:${r + 1};background:${bg};color:${fg}"><b>${esc(n)}</b><span>${sg(v)}</span></div>`; }).join('') + `</div>`;
+}
+function fitMap() {
+  const m = document.getElementById('mapc'); if (!m) return;
+  const w = m.parentElement.clientWidth, sc = Math.min(1, w / 860);
+  m.style.transform = `scale(${sc})`; m.parentElement.style.height = (m.offsetHeight * sc) + 'px';
+}
+window.addEventListener('resize', fitMap);
 document.getElementById('tabs').onclick = e => { const b = e.target.closest('button'); if (b) { W.t = b.dataset.t; render(); } };
 document.getElementById('kind').onclick = e => { const b = e.target.closest('button'); if (b) { W.k = b.dataset.k; render(); } };
 document.getElementById('sido').onchange = e => { W.s = e.target.value; render(); };
@@ -129,11 +183,12 @@ const loadH2C = () => window.html2canvas ? Promise.resolve() : new Promise((ok, 
 async function makeImage() {
   await loadH2C();
   if (document.fonts && document.fonts.ready) await document.fonts.ready;
-  const canvas = await html2canvas(document.getElementById('card'), { scale: 2, backgroundColor: '#ffffff', useCORS: true, windowWidth: 600, scrollX: 0, scrollY: -window.scrollY,
-    onclone: doc => { const c = doc.getElementById('card'); c.querySelectorAll('.ch .brand').forEach(x => { x.style.display = 'inline-flex'; }); Object.assign(c.style, { width: '540px', border: '0', borderRadius: '0' });
+  const canvas = await html2canvas(document.getElementById('card'), { scale: 2, backgroundColor: '#ffffff', useCORS: true, windowWidth: W.t === 'all' ? 960 : 600, scrollX: 0, scrollY: -window.scrollY,
+    onclone: doc => { const c = doc.getElementById('card'); c.querySelectorAll('.ch .brand').forEach(x => { x.style.display = 'inline-flex'; }); Object.assign(c.style, { width: W.t === 'all' ? '896px' : '540px', border: '0', borderRadius: '0' });
+      const m = c.querySelector('#mapc'); if (m) { m.style.transform = 'none'; m.parentElement.style.height = 'auto'; }
       c.querySelectorAll('.maps').forEach(x => { x.style.gridTemplateColumns = '1fr 1.25fr'; }); c.querySelectorAll('.two').forEach(x => { x.style.gridTemplateColumns = 'minmax(0,1fr) minmax(0,1fr)'; }); } });
   const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-  return new File([blob], `주간변동률_${KN[W.k]}_${W.t === 'map' ? W.s : '순위'}.png`, { type: 'image/png' });
+  return new File([blob], `주간변동률_${KN[W.k]}_${W.t === 'all' ? '전국지도' : W.t === 'map' ? W.s : '순위'}.png`, { type: 'image/png' });
 }
 async function act(kind) {
   const btns = [...document.querySelectorAll('.acts .btn')], lb = btns.map(b => b.textContent);
