@@ -36,15 +36,16 @@ def _get(op, **params):
 
 
 def _find_tables():
+    """주간(DTACYCLE_CD=WK) 통계표 중 '매매가격지수'·'전세가격지수' — 이름에 '아파트'가 있으면 그쪽을 먼저."""
     rows, total = _get("SttsApiTbl.do", pIndex=1, pSize=1000)
+    wk = [r for r in rows if str(r.get("DTACYCLE_CD", "")).upper() == "WK" or "(주)" in str(r.get("STATBL_NM", ""))]
+    DIAG["wk_tables"] = [f"{r.get('STATBL_ID')} {r.get('STATBL_NM')}" for r in wk][:60]
     found = {}
-    for r in rows:
-        nm = str(r.get("STATBL_NM", ""))
-        if "아파트" not in nm or "지수" not in nm or not ("주간" in nm or "(주)" in nm):
-            continue
-        for k, w in (("s", "매매"), ("j", "전세")):
-            if w in nm and k not in found:
-                found[k] = (r.get("STATBL_ID"), nm)
+    for k, w in (("s", "매매가격지수"), ("j", "전세가격지수")):
+        cand = [r for r in wk if w in str(r.get("STATBL_NM", "")).replace(" ", "")]
+        cand.sort(key=lambda r: (0 if "아파트" in str(r.get("STATBL_NM", "")) else 1, len(str(r.get("STATBL_NM", "")))))
+        if cand:
+            found[k] = (cand[0].get("STATBL_ID"), cand[0].get("STATBL_NM"))
     DIAG["tables"] = {k: v[1] for k, v in found.items()}
     return {k: v[0] for k, v in found.items()}
 
