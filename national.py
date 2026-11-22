@@ -543,13 +543,16 @@ def pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name, houses=()):
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
 
 
+OLD_SIDO = {"전북": "전라북도", "강원": "강원도"}   # 청약홈 주소의 예전 시도 이름 (경북 → '경상북도' 는 sd["sido"] 로)
+
+
 def match_house(houses, sd, t):
     """분양권 거래 → 청약홈 분양 단지 (같은 시군구 + 단지명)."""
     gu = t["d"].split()[-1]
     k = ckey(t["n"])
     best = None
     for h in houses:
-        if gu not in h["addr"] or (sd["short"][:2] not in h["addr"] and sd["short"] != "광주전남"):
+        if gu not in h["addr"] or (not any(x in h["addr"] for x in (sd["short"][:2], sd["sido"], OLD_SIDO.get(sd["short"], "-"))) and sd["short"] != "광주전남"):
             continue
         hk = ckey(h["name"])
         if hk == k or (k and hk and (k in hk or hk in k)):
