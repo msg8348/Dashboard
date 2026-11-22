@@ -676,7 +676,7 @@ def main():
     months = D.month_list(now, D.WINDOW_MONTHS)
     urls = []
     home = []
-    act_nat, act_sidos = {"s": [], "g": []}, []   # 홈 '거래활발도'
+    act_nat, act_sidos = {"s": [], "g": [], "c": []}, []   # 홈 '거래활발도'
     bud_sidos = []   # 나의 예산
     sub_sidos = []   # 청약단지
     # 알림 서버(cloudflare/push)가 읽는 오늘의 알림 재료: 관심단지별 신규 거래 문구, 지역별 요약 숫자
@@ -837,7 +837,9 @@ def main():
             f.write(tpl.render(ctx))
         # 홈 '거래활발도': 이 시도의 지표단지·구군 조각 + 전국 순위 재료
         nm_s = "전남광주" if sd["short"] == "광주전남" else sd["short"]
-        ind["cx"] = act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses)   # 거래활발도 '단지별' Top 10
+        cx = act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses, top=15)
+        ind["cx"] = cx[:10]   # 거래활발도 '단지별순위' Top 10
+        act_nat["c"] += [dict(i, sido=("전남광주" if sd["short"] == "광주전남" else sd["short"])) for i in cx]   # '전국단지별' 후보 (시도별 상위 15)
         if ind["count"] or ind["gus"] or ind["cx"]:
             os.makedirs(os.path.join(SITE, "act"), exist_ok=True)
             with open(os.path.join(SITE, "act", f"{sdir}.html"), "w", encoding="utf-8") as f:
@@ -992,7 +994,8 @@ def main():
                 sidos=[["전남광주" if h["short"] == "광주전남" else h["short"], h["href"].split("/")[0]] for h in home if h["key"] in APT_SIDOS]))
     act_nat["s"].sort(key=lambda r: -r["r3"])
     act_nat["g"] = sorted(act_nat["g"], key=lambda r: -r["r3"])[:15]   # 전국 시군구 상위 15
-    with open(os.path.join(SITE, "act.html"), "w", encoding="utf-8") as f:   # 거래활발도 (시도별 · 전국 시군구 · 지표단지 · 구군별)
+    act_nat["c"] = sorted(act_nat["c"], key=lambda r: (-r["r3"], -r["r1"]))[:15]   # 전국 단지 상위 15 (500세대 이상·분양권 제외)
+    with open(os.path.join(SITE, "act.html"), "w", encoding="utf-8") as f:   # 거래활발도 (단지별순위 · 전국단지별 · 시도별순위 · 시군구순위 · 시도별상세)
         f.write(env.get_template("act.html").render(today=now.strftime("%Y%m%d"), nat=act_nat, sidos=act_sidos,
                 date_label=now.strftime("%y.%m.%d")))
     import rate, budget   # 금리 (한국은행 ECOS, 하루 한 번)
