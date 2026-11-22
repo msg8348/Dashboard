@@ -20,7 +20,7 @@ function tCard(r, i) {
   const [tc, tl] = tTy(r.ty), now = +DATE.slice(0, 4);
   const kl = r.k === 'sale' ? ['sale', '매매'] : r.k === 'pre' ? ['pre', '분양권'] : r.m ? ['wol', '월세'] : ['jeon', '전세'];
   const badge = r.up ? `<span class="tbadge hi">신고가 +${tGap(r.p - (r.b || r.p))}</span>`
-    : r.b && !r.m ? (r.b > r.p ? `<span class="tbadge to">전고점 ${(r.b / 10000).toFixed(2)}억</span>` : '<span class="tbadge to">최고가 동일</span>') : '';
+    : r.b && !r.m ? (r.b > r.p ? `<span class="tbadge to">전고점 ${parseFloat((r.b / 10000).toFixed(2))}억</span>` : '<span class="tbadge to">최고가 동일</span>') : '';
   const yr = r.ad ? (+r.ad.slice(0, 4) > now || (r.k === 'pre' && +r.ad.slice(0, 4) >= now) ? `${r.ad.slice(2, 4)}년 입주예정` : `${r.ad.slice(2, 4)}년 입주(${now - +r.ad.slice(0, 4) + 1}년차)`) : (r.k === 'pre' ? '입주예정' : '');
   const meta = [`${r.gu} ${r.u}`.trim(), yr, r.hh ? `${r.k === 'pre' ? '분양 ' : ''}${r.hh.toLocaleString()}세대` : '', `3개월 ${r.c3}건 거래`].filter(Boolean).join(' · ');
   const price = r.m ? `${r.p ? tBig(r.p) : '0'}<small>/</small>${r.m.toLocaleString()}<small>만</small>` : tBig(r.p);
@@ -35,7 +35,7 @@ function tCard(r, i) {
     <div class="c1"><span class="ty ${tc}">${tl}</span><span class="nm">${r.n}</span>${badge}</div>
     <div class="c2">${meta}</div>
     <div class="c3"><div class="price"><span class="kl ${kl[0]}">${kl[1]}</span><span class="v">${price}</span></div><button class="tshare" type="button" aria-label="공유" onclick="shareCard(this)">${SHARE_I}</button></div>
-    <div class="c4"><span class="spec">${r.tl || r.a.toFixed(2) + '㎡'}<i>·</i>${r.py}평<i>·</i>${tFl(r.f)}</span><span class="dt">${tDt(r.dt)} 계약</span></div>
+    <div class="c4"><span class="spec"><span class="kl ghost" aria-hidden="true">${kl[1]}</span>${r.tl || r.a.toFixed(2) + '㎡'}<i>·</i>${r.py}평<i>·</i>${tFl(r.f)}</span><span class="dt">${tDt(r.dt)} 계약</span></div>
     <div class="c5"><span class="ft">${foot}</span><span class="logo-slot">${GLOGO}옆집얼마</span></div></div>`;
 }
 async function shareCard(btn) {   // 카드 1장 이미지 — 실거래 탭·관심단지 공통
