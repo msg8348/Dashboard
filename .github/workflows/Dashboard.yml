@@ -66,6 +66,8 @@ jobs:
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           KAKAO_API_KEY: ${{ secrets.KAKAO_API_KEY }}
+          POI_MAX: '300'    # 단지 주변정보(좌표·학교·역·버스) 새로 찾는 수 — 시도당, 실행마다 (전 시도 오픈 후 나눠서 채움)
+          AMEN_MAX: '300'   # 학원·음식점·마트 개수 새로 찾는 수 — 시도당, 실행마다
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
           REB_API_KEY: ${{ secrets.REB_API_KEY }}
           STORE_DIR: store
