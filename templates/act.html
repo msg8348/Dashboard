@@ -130,8 +130,8 @@ function actHelp() {   // 거래활발도 설명 (제목 옆 물음표)
   el.innerHTML = '<div class="grab"></div><h3>거래활발도란?</h3><p class="d">전체 집 가운데 <b>몇 %가 실제로 사고팔렸는지</b> 보여주는 숫자예요. 요즘 거래가 얼마나 활발한지 한눈에 볼 수 있어요.</p><ol>'
     + '<li><span class="n">1</span><span><b>회전율 = 매매 건수 ÷ 세대수</b><small>1,000세대 단지에서 1년에 50건이 거래되면 5% — 100집 중 5집 주인이 바뀐 셈이에요. 세대수로 나눠서 큰 단지·작은 단지를 공정하게 비교해요.</small></span></li>'
     + '<li><span class="n">2</span><span><b>최근 3개월은 \'요즘\', 최근 1년은 \'평소\'</b><small>3개월 숫자만 보면 원래 거래가 많은 곳인지, 요즘 갑자기 늘어난 건지 알 수 없어요. 그래서 1년(평소 수준)을 함께 보여드려요.</small></span></li>'
-    + '<li><span class="n">3</span><span><b>3개월 × 4 를 1년과 비교해요</b><small>3개월 거래를 1년치로 늘려 평소보다 많은지 적은지 봐요. 예) 3개월 30건 → 1년치 120건, 실제 1년 100건이면 평소보다 20% 많아요 → 강세</small></span></li>'
-    + '<li><span class="n">4</span><span><b>스티커 읽는 법</b><span class="stk5"><span class="trend strong">강세 +10% 이상</span><span class="trend up">증가 +5%</span><span class="trend none">보합</span><span class="trend down">감소 -5%</span><span class="trend weak">약세 -10% 이하</span></span></span></li>'
+    + '<li><span class="n">3</span><span><b>3개월 × 4 를 1년과 비교해요</b><small>3개월 거래를 1년치로 늘려 평소보다 많은지 적은지 봐요. 예) 3개월 30건 → 1년치 120건, 실제 1년 100건이면 평소보다 20% 많아요 → 강세 (5~20% 많으면 증가)</small></span></li>'
+    + '<li><span class="n">4</span><span><b>스티커 읽는 법</b><span class="stk5"><span class="trend strong">강세 +20% 이상</span><span class="trend up">증가 +5~20%</span><span class="trend none">보합 ±5% 이내</span><span class="trend down">감소 -5~20%</span><span class="trend weak">약세 -20% 이하</span></span></span></li>'
     + '<li><span class="n">5</span><span><b>이렇게 참고하세요</b><small>· 새로 입주한 단지는 입주 직후 매물이 몰려 높게 나와요<br>· 회전율이 높다고 좋은 단지라는 뜻은 아니에요. \'요즘 거래가 활발하다\'는 뜻이에요<br>· 가격 흐름과 함께 보면 시장 분위기를 읽는 데 도움이 돼요</small></span></li></ol>'
     + '<div class="row2"><button type="button" onclick="closeAH()">확인</button></div>';
   el.hidden = false; document.getElementById('ahDim').hidden = false;

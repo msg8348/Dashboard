@@ -521,11 +521,11 @@ def match_complex(name_keys, district, names):
 
 
 def add_trend(it):
-    """추세: 최근 3개월 거래×4 를 1년 거래와 비교 (+10% 강세, +5% 증가, -5% 감소, -10% 약세)."""
+    """추세: 최근 3개월 거래×4 를 1년 거래와 비교 (+20% 이상 강세, +5~20% 증가, -5~-20% 감소, -20% 이하 약세)."""
     change = (it["c3"] * 4 / it["c1"] - 1) * 100 if it["c1"] else 0
     it["change"] = round(change)
-    it["trend"] = ("strong" if change >= 10 else "up" if change >= 5 else
-                   "weak" if change <= -10 else "down" if change <= -5 else "")
+    it["trend"] = ("strong" if change >= 20 else "up" if change >= 5 else
+                   "weak" if change <= -20 else "down" if change <= -5 else "")
     return it
 
 

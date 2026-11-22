@@ -175,7 +175,7 @@
   (function act() {
     const c3 = S.filter(t => t[0] >= d92).length, c1 = S.filter(t => t[0] >= d365).length;
     const ch = c1 ? Math.round((c3 * 4 / c1 - 1) * 100) : 0;
-    const tr = !c1 ? ['', '-'] : ch >= 10 ? ['strong', '▲ 강세'] : ch >= 5 ? ['up', '▲ 증가'] : ch <= -10 ? ['weak', '▼ 약세'] : ch <= -5 ? ['down', '▼ 감소'] : ['', '보합'];
+    const tr = !c1 ? ['', '-'] : ch >= 20 ? ['strong', '▲ 강세'] : ch >= 5 ? ['up', '▲ 증가'] : ch <= -20 ? ['weak', '▼ 약세'] : ch <= -5 ? ['down', '▼ 감소'] : ['', '보합'];
     const rate = n => D.hh ? `<div class="sub">회전율 ${(n / D.hh * 100).toFixed(2)}%</div>` : '';
     $('actb').innerHTML = `<div><small>최근 3개월</small><b style="color:#c46a1c">${c3}건</b>${rate(c3)}</div>` +
       `<div><small>최근 1년</small><b style="color:#137a6c">${c1}건</b>${rate(c1)}</div>` +
