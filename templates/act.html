@@ -151,7 +151,7 @@ function capInfo() {
   const date = '{{ date_label }}';
   if (A.t === '1') return { el: document.querySelector('#p1 .asec'), title: '시도별 거래활발도', date };
   if (A.t === '2') return { el: document.querySelector('#p2 .asec'), title: '전국 시군구 거래활발도', date };
-  if (A.t === '6') return { el: document.querySelector('#p6 .asec'), title: '전국단지순위 거래활발도', date };
+  if (A.t === '6') return { el: document.querySelector('#p6 .asec'), title: '전국단지 거래활발도', date };
   const sn = (sel.selectedOptions[0] || {}).textContent || '';
   if (A.t === '5') return { el: document.getElementById('frag'), title: `${sn} 단지별 거래활발도`, date };
   return { el: document.getElementById('frag'), title: `${sn} 구·군별 거래활발도`, date };
