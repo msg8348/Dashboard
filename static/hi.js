@@ -104,7 +104,9 @@
         if (!best.has(k) || p > best.get(k)[1][4]) best.set(k, [m, r, y]);
       }
       const rs = [...best.values()].sort((a, b) => b[1][4] - a[1][4]).slice(0, 20);
-      list.innerHTML = rs.length ? rs.map(([m, [mi, kind, ty, mo, p, f, dd, a], ry], i) => {
+      const rkOf = p => 1 + rs.filter(x => x[1][4] > p).length;   // 같은 금액은 같은 순위 (단지 페이지 매매가 순위와 같은 방식)
+      list.innerHTML = rs.length ? rs.map(([m, [mi, kind, ty, mo, p, f, dd, a], ry], j) => {
+        const i = rkOf(p) - 1;
         const pre = kind === 1;
         const loc = S.d ? '' : S.g ? m[3] : m[2];   // 전체: 구·군 / 구·군 선택: 동 / 동 선택: 생략
         const sub = [loc, m[4] ? String(m[4]).slice(2) + '년' + (pre ? ' 예정' : '') : ''].filter(Boolean).join(' · ');

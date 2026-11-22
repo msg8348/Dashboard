@@ -231,8 +231,9 @@ def price_ranks(apts, now, pre_rows=None):
     out = defaultdict(list)
     for g in RANK_TYPES:
         lst = sorted(pool[g], key=lambda x: -x[0])
-        for i, (avg, k, n) in enumerate(lst[:20]):
-            out[k].append([g, i + 1, f"{avg / 10000:.1f}억", n, len(lst)])
+        for avg, k, n in lst[:20]:
+            rk = 1 + sum(1 for x in lst if x[0] > avg)   # 같은 금액은 같은 순위 (최고가 페이지와 같은 방식)
+            out[k].append([g, rk, f"{avg / 10000:.1f}억", n, len(lst)])
     return out
 
 

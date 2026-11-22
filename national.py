@@ -547,18 +547,30 @@ OLD_SIDO = {"전북": "전라북도", "강원": "강원도"}   # 청약홈 주�
 
 
 def match_house(houses, sd, t):
-    """분양권 거래 → 청약홈 분양 단지 (같은 시군구 + 단지명)."""
+    """분양권 거래 → 청약홈 분양 단지 (같은 시군구 + 단지명).
+    시군구 이름이 바뀐 곳(화성 효행구·인천 영종구·세종 등)은 같은 시도 안에서 이름이 같은(또는 6자 이상 포함) 단지로 한 번 더 찾음."""
     gu = t["d"].split()[-1]
     k = ckey(t["n"])
+    in_sido = lambda h: any(x in h["addr"] for x in (sd["short"][:2], sd["sido"], OLD_SIDO.get(sd["short"], "-"))) or sd["short"] == "광주전남"
     best = None
     for h in houses:
-        if gu not in h["addr"] or (not any(x in h["addr"] for x in (sd["short"][:2], sd["sido"], OLD_SIDO.get(sd["short"], "-"))) and sd["short"] != "광주전남"):
+        if gu not in h["addr"] or not in_sido(h):
             continue
         hk = ckey(h["name"])
         if hk == k or (k and hk and (k in hk or hk in k)):
             score = (hk == k, -abs(len(hk) - len(k)), h["id"])
             if best is None or score > best[0]:
                 best = (score, h)
+    if best is None and k:
+        city = t["d"].split()[0] if " " in t["d"] else ""
+        for h in houses:
+            if not in_sido(h) or (city and city not in h["addr"]):
+                continue
+            hk = ckey(h["name"])
+            if hk == k or (min(len(hk), len(k)) >= 6 and (k in hk or hk in k)):
+                score = (hk == k, -abs(len(hk) - len(k)), h["id"])
+                if best is None or score > best[0]:
+                    best = (score, h)
     return best[1] if best else None
 
 
