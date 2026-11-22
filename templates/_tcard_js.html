@@ -20,7 +20,7 @@ function tCard(r, i) {
   const [tc, tl] = tTy(r.ty), now = +DATE.slice(0, 4);
   const kl = r.k === 'sale' ? ['sale', '매매'] : r.k === 'pre' ? ['pre', '분양권'] : r.m ? ['wol', '월세'] : ['jeon', '전세'];
   const badge = r.up ? `<span class="tbadge hi">신고가 +${tGap(r.p - (r.b || r.p))}</span>`
-    : r.b && !r.m ? (r.b > r.p ? `<span class="tbadge to">신고가까지 ${tGap(r.b - r.p)}</span>` : '<span class="tbadge to">최고가 동일</span>') : '';
+    : r.b && !r.m ? (r.b > r.p ? `<span class="tbadge to">전고점 ${(r.b / 10000).toFixed(2)}억</span>` : '<span class="tbadge to">최고가 동일</span>') : '';
   const yr = r.ad ? (+r.ad.slice(0, 4) > now || (r.k === 'pre' && +r.ad.slice(0, 4) >= now) ? `${r.ad.slice(2, 4)}년 입주예정` : `${r.ad.slice(2, 4)}년 입주(${now - +r.ad.slice(0, 4) + 1}년차)`) : (r.k === 'pre' ? '입주예정' : '');
   const meta = [`${r.gu} ${r.u}`.trim(), yr, r.hh ? `${r.k === 'pre' ? '분양 ' : ''}${r.hh.toLocaleString()}세대` : '', `3개월 ${r.c3}건 거래`].filter(Boolean).join(' · ');
   const price = r.m ? `${r.p ? tBig(r.p) : '0'}<small>/</small>${r.m.toLocaleString()}<small>만</small>` : tBig(r.p);
