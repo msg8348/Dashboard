@@ -47,6 +47,7 @@ def dbpath(src, key):
     return os.path.join(STORE, src, f"{key}.json.gz")
 
 
+HH_ALL = {}   # 시도별 역대 최고가 (저장 전에 기준값에서 다시 뺌)
 PENDING_DAYS = {"20261122"}   # 신규에서 빼고 다음 평일 수집 때 다시 넣을 공개일 (11.22 일요일 수동 배포분)
 
 
@@ -443,6 +444,25 @@ def act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses=(), top=10, min_hh=
     return out
 
 
+def hist_highs(sd):
+    """과거 매매(2006년~, history 브랜치)의 신고가 비교 단위별 역대 최고가 — 신고가·전고점을 역대 기준으로 (2026-11-22 결정)."""
+    pth = os.path.join(HIST, f"{sd['key']}.json.gz")
+    out = {}
+    if not os.path.exists(pth):
+        return out
+    with gzip.open(pth, "rt", encoding="utf-8") as f:
+        apts = json.load(f).get("apts", {})
+    for a in apts.values():
+        d = sd["codes"].get(a.get("c", ""))
+        if not d:
+            continue
+        for x in a.get("t", []):
+            k = D.high_key({"d": d, "n": a["n"], "a": x[4]})
+            if x[1] > out.get(k, 0):
+                out[k] = x[1]
+    return out
+
+
 def pop_build(sd, sdir, sdb, cinfo, l2_of, l2_name, houses=()):
     """site/pop/{시도}.json — {"p": 많이 산 단지 기간 [[키, 이름, 시작, 끝]], "y": [선택 연도...], "pl": 실시간 검색 기간,
     "m": {단지키: [이름, 구·군, 동, 입주년, 세대수, 분양권]}, "r": {기간키: {"": [[단지키, 건수]...], 구·군: [...]}} (상위 10)}.
@@ -795,7 +815,13 @@ def main():
                     return x[2] if x[2][-1].isalpha() else ""
             return ""
         D.TYPE_LABEL = tlabel
+        hh_all = hist_highs(sd)   # 역대 최고가를 신고가 기준값에 더함 (오늘·지난 날짜 화면 모두) — 저장할 때는 다시 뺌(매번 history 에서 읽음)
+        for h in [sdb["sale"].setdefault("highs3", {})] + list((sdb["sale"].get("highs3_by") or {}).values()):
+            for k, v in hh_all.items():
+                if v > h.get(k, 0):
+                    h[k] = v
         sale_ctx, rent_ctx, highs_s, highs_r = D.build_trades(subset(sdb, set(sd["codes"])), now, cinfo)
+        HH_ALL[key] = hh_all
         # 홈 '주요거래': 오늘 신규 매매·분양권 (타입별 금액순은 화면에서) — site/major/{시도}.json
         os.makedirs(os.path.join(SITE, "major"), exist_ok=True)
         with open(os.path.join(SITE, "major", f"{sdir}.json"), "w", encoding="utf-8") as f:
@@ -1034,6 +1060,11 @@ def main():
                 db = dbs[src][sd["key"]]
                 for t in db["trades"]:
                     t.pop("l2", None)
+                hh = HH_ALL.get(sd["key"]) if src == "sale" else None
+                if hh:   # 역대 최고가(history)는 매번 다시 읽으므로 저장본에서 빼서 크기를 줄임
+                    strip = lambda h: {k: v for k, v in h.items() if v > hh.get(k, 0)}
+                    db["highs3"] = strip(db.get("highs3") or {})
+                    db["highs3_by"] = {d: strip(h) for d, h in (db.get("highs3_by") or {}).items()}
                 save_db(src, sd["key"], db)
     print(f"✅ site/ 생성 완료 ({len(home)}개 시도)")
 
