@@ -404,6 +404,12 @@ def mark_highs(new, history, prior, value=lambda t: t["p"], eligible=lambda t: T
     return baseline
 
 
+def comp_type(a):
+    """전세·매매 평균 비교 단위: 59·84타입은 타입, 기타는 전용면적(반올림)끼리 — 74㎡가 101㎡ 전세와 섞이지 않게."""
+    ty = area_type(a)
+    return ty if ty != "기타" else f"{round(a)}㎡"
+
+
 def trade_card(t, cnt3, jeon1, cinfo, sale1=None):
     """실거래 카드·리스트용 압축 데이터."""
     key = t.get("s") or t["n"]
@@ -424,10 +430,11 @@ def trade_card(t, cnt3, jeon1, cinfo, sale1=None):
         r["up"] = 1
     if t.get("prev"):
         r["b"] = t["prev"]
-    if t["src"] != "rent" and jeon1.get((key, ty)):
-        r["j"] = jeon1[(key, ty)]
-    if t["src"] == "rent" and sale1 and sale1.get((key, ty)):
-        r["sv"] = sale1[(key, ty)]   # 같은 단지·타입 최근 1개월 매매 평균
+    ck = comp_type(t["a"])
+    if t["src"] != "rent" and jeon1.get((key, ck)):
+        r["j"] = jeon1[(key, ck)]
+    if t["src"] == "rent" and sale1 and sale1.get((key, ck)):
+        r["sv"] = sale1[(key, ck)]   # 같은 단지·타입(기타는 같은 면적) 최근 1개월 매매 평균
     if cinfo:
         info = cinfo(t)
         hh, ad = info[0], info[1]
@@ -475,12 +482,12 @@ def build_trades(dbs, today, cinfo=None):
     jsum = defaultdict(list)
     for t in rent:
         if not t.get("m") and t["dt"] > d1:
-            jsum[(t.get("s") or t["n"], area_type(t["a"]))].append(t["p"])
+            jsum[(t.get("s") or t["n"], comp_type(t["a"]))].append(t["p"])
     jeon1 = {k: round(sum(v) / len(v)) for k, v in jsum.items()}
     ssum = defaultdict(list)
     for t in sale:
         if t["dt"] > d1:
-            ssum[(t.get("s") or t["n"], area_type(t["a"]))].append(t["p"])
+            ssum[(t.get("s") or t["n"], comp_type(t["a"]))].append(t["p"])
     sale1 = {k: round(sum(v) / len(v)) for k, v in ssum.items()}
     cards = [trade_card(t, cnt3, jeon1, cinfo, sale1) for t in sorted(new_s, key=lambda x: -x["p"])]
     cards += [trade_card(t, cnt3, jeon1, cinfo, sale1) for t in sorted(new_rent, key=lambda x: -(x["p"] + (x.get("m") or 0) * 10000 // RENT_PER_EOK))]
