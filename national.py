@@ -1060,13 +1060,22 @@ def main():
         json.dump(sorted(search, key=lambda a: -a[3]), f, ensure_ascii=False, separators=(",", ":"))
     # 검색엔진용: 사이트맵 · robots.txt
     today_iso = now.strftime("%Y-%m-%d")
-    with open(os.path.join(SITE, "sitemap.xml"), "w", encoding="utf-8") as f:
-        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
-        menus = [f"{SITE_URL}/{m}.html" for m in ("major", "hi", "weekly", "act", "pop", "sub", "rate", "budget")   # 홈 메뉴 페이지
-                 if os.path.exists(os.path.join(SITE, f"{m}.html"))]
-        for u in [f"{SITE_URL}/"] + menus + urls:
-            f.write(f"<url><loc>{u}</loc><lastmod>{today_iso}</lastmod><changefreq>daily</changefreq></url>\n")
-        f.write("</urlset>\n")
+    menus = [f"{SITE_URL}/{m}.html" for m in ("major", "hi", "weekly", "act", "pop", "sub", "rate", "budget")   # 홈 메뉴 페이지
+             if os.path.exists(os.path.join(SITE, f"{m}.html"))]
+    allu = list(dict.fromkeys([f"{SITE_URL}/"] + menus + urls))
+    parts = [allu[i:i + 20000] for i in range(0, len(allu), 20000)]   # 사이트맵 한 파일 2만 개씩 (네이버·구글 한도 5만 개 아래로)
+    for n, part in enumerate(parts, 1):
+        with open(os.path.join(SITE, f"sitemap-{n}.xml"), "w", encoding="utf-8") as f:
+            f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
+            for u in part:
+                f.write(f"<url><loc>{u}</loc><lastmod>{today_iso}</lastmod></url>\n")
+            f.write("</urlset>\n")
+    with open(os.path.join(SITE, "sitemap.xml"), "w", encoding="utf-8") as f:   # 사이트맵 인덱스 (제출 주소는 그대로 sitemap.xml)
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
+        for n in range(1, len(parts) + 1):
+            f.write(f"<sitemap><loc>{SITE_URL}/sitemap-{n}.xml</loc><lastmod>{today_iso}</lastmod></sitemap>\n")
+        f.write("</sitemapindex>\n")
+    print(f"🗺️ 사이트맵: 주소 {len(allu):,}개 · 파일 {len(parts)}개")
     with open(os.path.join(SITE, "robots.txt"), "w", encoding="utf-8") as f:
         f.write(f"User-agent: *\nAllow: /\nDisallow: /r/\n\nSitemap: {SITE_URL}/sitemap.xml\n")
     if D.MOLIT_API_KEY:
