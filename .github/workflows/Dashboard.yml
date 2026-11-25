@@ -87,6 +87,24 @@ jobs:
           [ -d r2out ] || { echo "R2 사용 안 함"; exit 0; }
           python tools/r2_upload.py r2out store/r2_manifest.json
 
+      - name: Cloudflare Pages 배포 (정적 파일 + 단지·분양권 페이지는 R2)
+        if: steps.gen.outputs.skip != 'true'
+        continue-on-error: true   # 옮기는 동안은 GitHub Pages 가 주 배포 — 여기 실패해도 사이트는 그대로
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_PAGES_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          WRANGLER: npx --yes wrangler@3.114.0
+        run: |
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || { echo "CF_PAGES_TOKEN 없음 — 건너뜀"; exit 0; }
+          python tools/cf_split.py site cfsite r2pages
+          python tools/r2_upload.py r2pages store/r2_pages_manifest.json
+          cd cloudflare/pages
+          $WRANGLER pages project list 2>/dev/null | grep -q " nextdoorprice " || $WRANGLER pages project create nextdoorprice --production-branch main || true
+          for i in 1 2 3; do $WRANGLER pages deploy --project-name nextdoorprice --branch main --commit-dirty=true && break; sleep 30; done
+
       - name: 실거래 저장소 저장 (data 브랜치, 매번 한 커밋으로 교체)
         if: always() && steps.gen.outputs.skip != 'true'
         env:
