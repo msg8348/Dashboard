@@ -1,0 +1,9 @@
+# 옆집얼마 사이트 (Cloudflare Pages) — GitHub Actions(Dashboard.yml)가 배포
+# 정적 파일은 cfsite/, 단지·분양권 페이지는 R2(nextdoorprice-data 의 pages/)에서 Function 이 꺼내 보여줌
+name = "nextdoorprice"
+pages_build_output_dir = "../../cfsite"
+compatibility_date = "2024-11-01"
+
+[[r2_buckets]]
+binding = "SITE"
+bucket_name = "nextdoorprice-data"
