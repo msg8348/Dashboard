@@ -404,21 +404,21 @@ def pop_live_periods(today):
 
 
 def act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses=(), top=10, min_hh=500):
-    """거래활발도 '단지별': 시도 안 500세대 이상 아파트 매매(분양권 제외) 회전율 Top 10 — 최근 3개월 순, 1년 함께, 강세·약세.
-    세대수: K-apt (통합 단지는 이름별 합)."""
+    """거래활발도 '단지별': 시도 안 500세대 이상 아파트 회전율 Top — 매매+분양권 거래 모두 (단지 페이지와 같은 기준).
+    기간: 최근 3개월 = 오늘부터 92일 이내, 최근 1년 = 365일 이내 (그날 포함). 세대수: 단지 페이지와 같은 값(K-apt), 입주 전 분양권 단지는 공급세대수."""
     today_s = now.strftime("%Y%m%d")
     d1 = (now - timedelta(days=365)).strftime("%Y%m%d")
-    d3 = D.months_ago(now, 3).strftime("%Y%m%d")
+    d3 = (now - timedelta(days=92)).strftime("%Y%m%d")
     g = {}
 
     def add(key, name, l2, h, dt):
         it = g.setdefault(key, {"name": name, "district": l2, "c1": 0, "c3": 0, "hhs": {}, "hp": 0, "h": h})
         it["c1"] += 1
-        it["c3"] += dt > d3
+        it["c3"] += dt >= d3
         return it
     for t in sdb["sale"]["trades"]:
         dt = str(t.get("dt", ""))
-        if not (d1 < dt <= today_s):
+        if not (d1 <= dt <= today_s):
             continue
         s = t.get("s")
         k = D.APT_ALIAS[s][0] if s in D.APT_ALIAS else s if s and s in D.APT_PAGES else None
@@ -427,6 +427,22 @@ def act_cx(sd, sdir, sdb, cinfo, l2_of, l2_name, now, houses=(), top=10, min_hh=
         hh, _ = cinfo(t)
         if hh:
             it["hhs"][t["n"]] = hh   # 통합 단지(예: 1·2·3단지)는 이름별 세대수 합
+    pbl = {}
+    for t in sdb["pre"]["trades"]:   # 분양권: 분양권 페이지(또는 입주 후 옮겨 간 매매 단지)로 묶음 — 단지 페이지 거래 활발도와 같은 묶음
+        dt = str(t.get("dt", ""))
+        if not (d1 <= dt <= today_s):
+            continue
+        hk = (t.get("c"), t["n"])
+        if hk not in pbl:
+            h = match_house(houses, sd, t)
+            pbl[hk] = re.sub(r"\D", "", (h or {}).get("pbl") or "")[:8]
+        if dt < pbl[hk]:   # 모집공고 이전 거래는 같은 이름의 옛 단지
+            continue
+        l2 = l2_name.get(l2_of.get(t.get("c")), "")
+        hh, _, extra = cinfo(dict(t, src="pre"))
+        h = f"{sdir}/{extra['h']}.html" if extra.get("h") else ""
+        it = add(h or f"{t['n']}|{l2}", t["n"], l2, h, dt)
+        it["hp"] = max(it["hp"], hh or 0)
     out = []
     for it in g.values():
         hh = sum(it.pop("hhs").values()) or it["hp"]

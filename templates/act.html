@@ -75,7 +75,7 @@
   {{ rows(nat.g) }}<div class="anote"><span class="sortlbl">최근 3개월 높은 순</span> ({{ date_label }} 기준)</div><div class="anote crit">기준: 아파트 2만 세대 이상 시군구 · 아파트 매매 · 회전율 = 거래 건수 ÷ 아파트 세대수(K-apt)</div></div></div>
 <div class="apanel" id="p6" hidden><div class="asec v-cx"><div class="ahd"><b>전국단지순위</b><span class="alg"><button type="button" data-k="r3" class="on"><i style="background:#f0a35e"></i>3개월<em>▼</em></button><button type="button" data-k="r1"><i style="background:#1f9b85"></i>1년<em></em></button></span></div>
   {% for r in nat.c %}{% if r.h %}<a class="ar" href="{{ r.h }}" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% else %}<div class="ar" data-r3="{{ r.r3 }}" data-r1="{{ r.r1 }}">{% endif %}<span class="ark {% if loop.index0 < 3 %}t3{% endif %}">{{ loop.index }}</span><span class="anm"><span class="cxn"><b>{{ r.name }}</b><small>{{ r.sido }} {{ r.district }} · {{ "{:,}".format(r.households) }}세대</small></span>{{ trendb(r) }}</span><span class="av m">{{ "%.2f"|format(r.r3) }}%<small>{{ "{:,}".format(r.c3) }}건</small></span><span class="av y">{{ "%.2f"|format(r.r1) }}%<small>{{ "{:,}".format(r.c1) }}건</small></span>{% if r.h %}</a>{% else %}</div>{% endif %}{% endfor %}
-  <div class="anote cxnote">조건 : 500세대 이상 · 분양권 제외 · 회전율 = 거래 건수 ÷ 세대수</div></div></div>
+  <div class="anote cxnote">조건 : 500세대 이상 · 매매·분양권 포함 · 최근 3개월 = 92일 · 회전율 = 거래 건수 ÷ 세대수</div></div></div>
 <div class="apanel" id="p34" hidden>
   <div class="actl"><select id="asido" aria-label="시도">{% for s in sidos %}<option value="{{ s[1] }}">{{ s[0] }}</option>{% endfor %}</select>
     <div class="tfv" id="avw"><button type="button" data-w="sum" class="on">요약</button><button type="button" data-w="det">상세</button></div></div>
